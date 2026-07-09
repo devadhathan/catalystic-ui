@@ -1,0 +1,112 @@
+{
+  "designSystem": "Meridian",
+  "description": "A fintech design system for banking and personal-finance interfaces. Clean, trustworthy, data-dense.",
+  "source": "mock (stands in for Figma REST extraction)",
+  "components": [
+    {
+      "name": "Button",
+      "figmaType": "COMPONENT_SET",
+      "description": "Primary interactive control. Used to trigger actions like submit, confirm, pay.",
+      "variantProperties": {
+        "style": ["primary", "secondary", "ghost", "destructive"],
+        "size": ["sm", "md", "lg"],
+        "state": ["default", "hover", "disabled"]
+      },
+      "textLayers": ["label"],
+      "consequentialHint": true
+    },
+    {
+      "name": "TextInput",
+      "figmaType": "COMPONENT_SET",
+      "description": "Single-line text entry. Used for names, references, search.",
+      "variantProperties": {
+        "state": ["default", "focus", "error", "disabled"],
+        "hasLabel": ["true", "false"]
+      },
+      "textLayers": ["label", "placeholder", "helperText"],
+      "consequentialHint": false
+    },
+    {
+      "name": "AmountInput",
+      "figmaType": "COMPONENT_SET",
+      "description": "Specialised numeric input for currency values, with a currency prefix. Used in payment and transfer flows.",
+      "variantProperties": {
+        "currency": ["GBP", "USD", "EUR"],
+        "state": ["default", "error", "disabled"]
+      },
+      "textLayers": ["label", "placeholder"],
+      "consequentialHint": true
+    },
+    {
+      "name": "Card",
+      "figmaType": "COMPONENT",
+      "description": "Container that groups related content with elevation. Used for account summaries, transaction groups.",
+      "variantProperties": {
+        "elevation": ["flat", "raised"],
+        "padding": ["compact", "comfortable"]
+      },
+      "textLayers": [],
+      "consequentialHint": false
+    },
+    {
+      "name": "StatCard",
+      "figmaType": "COMPONENT",
+      "description": "Displays a single key metric with a label, value, and optional trend indicator. Used on dashboards for balances, spend, growth.",
+      "variantProperties": {
+        "trend": ["up", "down", "neutral"]
+      },
+      "textLayers": ["label", "value", "trendLabel"],
+      "consequentialHint": false
+    },
+    {
+      "name": "Select",
+      "figmaType": "COMPONENT_SET",
+      "description": "Dropdown for choosing one option from a list. Used for account selection, categories, filters.",
+      "variantProperties": {
+        "state": ["default", "open", "disabled"]
+      },
+      "textLayers": ["label", "placeholder"],
+      "consequentialHint": false
+    },
+    {
+      "name": "Toggle",
+      "figmaType": "COMPONENT_SET",
+      "description": "Binary on/off switch. Used for settings, opt-ins, feature flags.",
+      "variantProperties": {
+        "state": ["on", "off", "disabled"]
+      },
+      "textLayers": ["label"],
+      "consequentialHint": false
+    },
+    {
+      "name": "Badge",
+      "figmaType": "COMPONENT_SET",
+      "description": "Small status label. Used to show transaction status (pending, cleared, failed) or account type.",
+      "variantProperties": {
+        "tone": ["neutral", "success", "warning", "danger"]
+      },
+      "textLayers": ["text"],
+      "consequentialHint": false
+    },
+    {
+      "name": "TransactionRow",
+      "figmaType": "COMPONENT",
+      "description": "A single line in a transaction list: merchant, date, amount, status badge. Used in statements and activity feeds.",
+      "variantProperties": {
+        "direction": ["debit", "credit"]
+      },
+      "textLayers": ["merchant", "date", "amount"],
+      "consequentialHint": false
+    },
+    {
+      "name": "ConfirmSheet",
+      "figmaType": "COMPONENT",
+      "description": "A confirmation surface for consequential actions, showing a summary and confirm/cancel controls. Used before executing a payment or transfer. Its internal structure (summary rows, fee disclosure, confirm control) is fixed and must not be recomposed from primitives.",
+      "variantProperties": {
+        "kind": ["payment", "transfer", "generic"]
+      },
+      "textLayers": ["title", "summary", "confirmLabel", "cancelLabel"],
+      "consequentialHint": true
+    }
+  ]
+}

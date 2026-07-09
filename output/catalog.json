@@ -1,0 +1,497 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:a2ui:catalog:meridian",
+  "title": "Meridian Catalog",
+  "description": "A fintech design system for banking and personal-finance interfaces. Clean, trustworthy, data-dense.",
+  "catalogId": "urn:a2ui:catalog:meridian",
+  "components": {
+    "Button": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "REQUIRED for all submit, confirm, and pay actions \u2014 use this dedicated component; do not compose from primitives and do not reword its fixed content. Use style=primary for main CTA, secondary for alternatives, ghost for low-emphasis, destructive for irreversible actions. Set state=disabled when action is unavailable; bind to data model conditions rather than deferring to follow-up generation. Size: sm for dense UIs, md default, lg for prominent CTAs.",
+          "properties": {
+            "component": {
+              "const": "Button"
+            },
+            "style": {
+              "type": "string",
+              "enum": [
+                "primary",
+                "secondary",
+                "ghost",
+                "destructive"
+              ]
+            },
+            "size": {
+              "type": "string",
+              "enum": [
+                "sm",
+                "md",
+                "lg"
+              ]
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "disabled"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Concise imperative verb phrase describing the action (e.g. 'Submit', 'Confirm Payment'). Never omit. Do not alter fixed labels on consequential actions."
+            }
+          },
+          "required": [
+            "component",
+            "label"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "TextInput": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use for single-line free-text entry: names, IDs, search, references. Set state='error' with helperText explaining the issue on validation failure. Set state='disabled' when input is blocked by context. Always provide label.",
+          "properties": {
+            "component": {
+              "const": "TextInput"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "error",
+                "disabled"
+              ]
+            },
+            "hasLabel": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Concise noun phrase naming the field. Required. E.g. 'Full Name', 'Order Reference'. Never omit; use hasLabel=false only to visually hide it when context is self-evident."
+            },
+            "placeholder": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Short example value shown when empty. E.g. 'e.g. John Smith'. Do not repeat the label; omit if label is self-sufficient."
+            },
+            "helperText": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Supplementary guidance or validation error message. Use for format hints normally; switch to error message when state='error'."
+            }
+          },
+          "required": [
+            "component",
+            "label"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "AmountInput": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "CONSEQUENTIAL: Use this dedicated component for all currency amount inputs in payment and transfer flows; never compose from primitives. Set `currency` to match transaction currency. Use `state:error` for invalid amounts, `state:disabled` when input is locked.",
+          "properties": {
+            "component": {
+              "const": "AmountInput"
+            },
+            "currency": {
+              "type": "string",
+              "enum": [
+                "GBP",
+                "USD",
+                "EUR"
+              ]
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "default",
+                "error",
+                "disabled"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Required. Use concise action-oriented labels e.g. 'Amount to send', 'Payment amount'. Avoid generic 'Amount'; specify context."
+            },
+            "placeholder": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Suggest a valid format e.g. '0.00'. Omit if prefilled. Never use placeholder as a substitute for label."
+            }
+          },
+          "required": [
+            "component",
+            "label"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Card": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use Card to group related content visually. Prefer 'raised' for primary focal items (account summaries), 'flat' for secondary or nested content. Never nest raised cards inside raised cards.",
+          "properties": {
+            "component": {
+              "const": "Card"
+            },
+            "elevation": {
+              "type": "string",
+              "enum": [
+                "flat",
+                "raised"
+              ]
+            },
+            "padding": {
+              "type": "string",
+              "enum": [
+                "compact",
+                "comfortable"
+              ]
+            }
+          },
+          "required": [
+            "component"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "StatCard": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use StatCard for a single KPI on dashboards: balances, totals, spend, growth. Always set trend to match data direction; omit trendLabel only when trend context is obvious. Never compose metrics from primitives.",
+          "properties": {
+            "component": {
+              "const": "StatCard"
+            },
+            "trend": {
+              "type": "string",
+              "enum": [
+                "up",
+                "down",
+                "neutral"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Short noun phrase naming the metric (e.g. 'Monthly Spend', 'Active Users'). Avoid verbs. Keep under 4 words."
+            },
+            "value": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Formatted metric value as a string (e.g. '$12,400', '94%', '1.2k'). Apply units and formatting before passing; do not pass raw numbers."
+            },
+            "trendLabel": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Brief change descriptor (e.g. '+8% vs last month'). Set when trend is 'up' or 'down'; omit only for 'neutral' with no meaningful comparison."
+            }
+          },
+          "required": [
+            "component",
+            "label",
+            "value"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Select": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use for single-option selection from a fixed list (accounts, categories, filters). Prefer over radio groups when options exceed 4. Set state='disabled' when selection is unavailable based on context. Always provide label.",
+          "properties": {
+            "component": {
+              "const": "Select"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "disabled"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Required. Concise noun identifying the selection context, e.g. 'Account', 'Category'. Never omit; do not use as instructions."
+            },
+            "placeholder": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Prompt shown before selection, e.g. 'Select a category'. Omit if a default option should be pre-selected."
+            }
+          },
+          "required": [
+            "component",
+            "label"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Toggle": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use for binary on/off settings, opt-ins, or feature flags. Bind state directly to the data model. Prefer 'disabled' over hiding when the option is unavailable. Never compose from primitives.",
+          "properties": {
+            "component": {
+              "const": "Toggle"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "on",
+                "off",
+                "disabled"
+              ]
+            },
+            "label": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Short, noun-phrase describing the setting being toggled. Avoid verbs like 'Enable'; use 'Dark Mode' not 'Enable Dark Mode'."
+            }
+          },
+          "required": [
+            "component",
+            "label"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "Badge": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use Badge for compact status labels on transactions or account types. Choose tone based on status: neutral=informational, success=cleared/active, warning=pending/review, danger=failed/blocked. Never compose status labels from primitives.",
+          "properties": {
+            "component": {
+              "const": "Badge"
+            },
+            "tone": {
+              "type": "string",
+              "enum": [
+                "neutral",
+                "success",
+                "warning",
+                "danger"
+              ]
+            },
+            "text": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Short status label, 1\u20133 words max. E.g. 'Pending', 'Cleared', 'Failed'. Must reflect actual data state; never use placeholder text."
+            }
+          },
+          "required": [
+            "component",
+            "text"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "TransactionRow": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "Use for individual transaction entries in lists, feeds, or statements. Set direction to 'debit' for money out, 'credit' for money in. Always provide merchant and amount; include date when available.",
+          "properties": {
+            "component": {
+              "const": "TransactionRow"
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "debit",
+                "credit"
+              ]
+            },
+            "merchant": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Display the payee or sender name exactly as received. Do not truncate or infer. Use raw transaction data."
+            },
+            "date": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Provide formatted transaction date when available. Omit prop entirely if date is unknown; do not pass empty string."
+            },
+            "amount": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Pass the formatted currency string including symbol. Do not pass raw numbers. Reflect sign in direction prop, not in amount text."
+            }
+          },
+          "required": [
+            "component",
+            "merchant",
+            "amount"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "ConfirmSheet": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
+        },
+        {
+          "$ref": "#/$defs/CatalogComponentCommon"
+        },
+        {
+          "type": "object",
+          "description": "REQUIRED for all consequential payment, transfer, or irreversible actions. Never recompose from primitives. Use kind='payment' for payments, 'transfer' for fund moves, 'generic' for other destructive actions. Fixed internal structure must not be altered.",
+          "properties": {
+            "component": {
+              "const": "ConfirmSheet"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "payment",
+                "transfer",
+                "generic"
+              ]
+            },
+            "title": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "State the action concisely, e.g. 'Confirm Payment'. Do not omit; drives the user's final decision context."
+            },
+            "summary": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Describe what will happen, amounts, recipients. Be specific and complete. Do not defer details to a follow-up screen."
+            },
+            "confirmLabel": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Affirmative action label, e.g. 'Pay Now' or 'Send Transfer'. Must be action-specific, never generic like 'OK'."
+            },
+            "cancelLabel": {
+              "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/DynamicString",
+              "description": "Dismissal label, e.g. 'Cancel' or 'Go Back'. Keep short; do not use negative framing like 'Do Not Proceed'."
+            }
+          },
+          "required": [
+            "component"
+          ]
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  },
+  "$defs": {
+    "CatalogComponentCommon": {
+      "type": "object",
+      "properties": {
+        "weight": {
+          "type": "number",
+          "description": "The relative weight of this component within a Row or Column layout. Similar to the CSS 'flex-grow' property. May ONLY be set when the component is a direct descendant of a layout component."
+        }
+      }
+    },
+    "anyComponent": {
+      "oneOf": [
+        {
+          "$ref": "#/components/Button"
+        },
+        {
+          "$ref": "#/components/TextInput"
+        },
+        {
+          "$ref": "#/components/AmountInput"
+        },
+        {
+          "$ref": "#/components/Card"
+        },
+        {
+          "$ref": "#/components/StatCard"
+        },
+        {
+          "$ref": "#/components/Select"
+        },
+        {
+          "$ref": "#/components/Toggle"
+        },
+        {
+          "$ref": "#/components/Badge"
+        },
+        {
+          "$ref": "#/components/TransactionRow"
+        },
+        {
+          "$ref": "#/components/ConfirmSheet"
+        }
+      ]
+    }
+  }
+}

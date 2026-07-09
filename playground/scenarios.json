@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "id": "appointment",
+      "title": "Book an appointment",
+      "brief": "A screen to book a salon appointment: choose a service, pick a date and time, enter name and phone number, and confirm. Show a short summary before the confirm button.",
+      "data_model": {
+        "services": ["Haircut", "Colour", "Beard trim", "Styling"],
+        "selectedService": "Haircut",
+        "date": null,
+        "time": null,
+        "name": "",
+        "phone": "",
+        "price": "£45"
+      }
+    },
+    {
+      "id": "genz_budget",
+      "title": "Monthly budget for Gen Z",
+      "brief": "A playful monthly-budget screen for a Gen Z user: show income at top, let them set spend across categories (food, going out, subscriptions, savings) with sliders, and show how much is left. Include a save button.",
+      "data_model": {
+        "monthlyIncome": 1800,
+        "categories": [
+          {"name": "Food", "amount": 300},
+          {"name": "Going out", "amount": 200},
+          {"name": "Subscriptions", "amount": 60},
+          {"name": "Savings", "amount": 250}
+        ],
+        "currency": "GBP",
+        "remaining": 990
+      }
+    }
+  ]
+}

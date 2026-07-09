@@ -1,0 +1,23 @@
+REQUIRED PROPERTIES: You MUST include ALL required properties for every component.
+- For Button, you MUST provide: component, label.
+- For TextInput, you MUST provide: component, label.
+- For AmountInput, you MUST provide: component, label.
+- For Card, you MUST provide: component.
+- For StatCard, you MUST provide: component, label, value.
+- For Select, you MUST provide: component, label.
+- For Toggle, you MUST provide: component, label.
+- For Badge, you MUST provide: component, text.
+- For TransactionRow, you MUST provide: component, merchant, amount.
+- For ConfirmSheet, you MUST provide: component.
+
+CONSEQUENTIAL COMPONENTS: Button, AmountInput, and ConfirmSheet are consequential. Never recompose them from primitives.
+ConfirmSheet MUST be used for all payment, transfer, and irreversible actions. Never replace it with assembled primitives.
+AmountInput MUST be used for all currency amount entry in payment and transfer flows. Never substitute a generic TextInput.
+Button MUST be used for all submit, confirm, and pay actions. Never build a button from primitives.
+
+DO NOT pass empty strings for optional properties; omit the property entirely if the value is unknown.
+ENUM VALUES ONLY: Every property with an enum constraint must receive exactly one of its listed values; no freeform strings.
+StatCard value MUST be a pre-formatted string with units applied (e.g. "$12,400"); never pass raw numbers.
+TransactionRow amount MUST be a formatted currency string including symbol; reflect debit/credit in direction, not in the amount text.
+Badge text MUST reflect actual data state; never use placeholder text.
+Never nest raised Cards inside raised Cards.

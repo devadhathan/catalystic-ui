@@ -1,0 +1,6 @@
+[
+  { "title": "Book appointment", "instruction": "A screen to book a salon appointment: pick a service, choose date and time, enter name and phone, confirm." },
+  { "title": "Gen-Z budget", "instruction": "A playful monthly budget: show income, sliders for food, going out, subscriptions and savings, and money left. Save button." },
+  { "title": "Login", "instruction": "A clean sign-in card: email, password, a primary sign-in button and a small 'forgot password' link." },
+  { "title": "Feedback", "instruction": "A feedback form: a rating, a comment textarea, and a submit button." }
+]

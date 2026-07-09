@@ -1,0 +1,17 @@
+# deps / build caches
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+
+# secrets — never commit
+.env
+.env.*
+*.key
+
+# runtime outputs
+playground/results.json
+playground/generated/
+
+# vercel
+.vercel

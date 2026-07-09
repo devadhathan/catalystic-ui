@@ -1,0 +1,415 @@
+{
+  "Button": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "Button"
+      },
+      "style": {
+        "type": "string",
+        "enum": [
+          "primary",
+          "secondary",
+          "ghost",
+          "destructive"
+        ]
+      },
+      "size": {
+        "type": "string",
+        "enum": [
+          "sm",
+          "md",
+          "lg"
+        ]
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "disabled"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_Button_label"
+      }
+    },
+    "required": [
+      "component",
+      "label"
+    ],
+    "_meta": {
+      "description": "Primary interactive control. Used to trigger actions like submit, confirm, pay.",
+      "consequential": true
+    }
+  },
+  "TextInput": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "TextInput"
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "error",
+          "disabled"
+        ]
+      },
+      "hasLabel": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TextInput_label"
+      },
+      "placeholder": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TextInput_placeholder"
+      },
+      "helperText": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TextInput_helperText"
+      }
+    },
+    "required": [
+      "component",
+      "label"
+    ],
+    "_meta": {
+      "description": "Single-line text entry. Used for names, references, search.",
+      "consequential": false
+    }
+  },
+  "AmountInput": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "AmountInput"
+      },
+      "currency": {
+        "type": "string",
+        "enum": [
+          "GBP",
+          "USD",
+          "EUR"
+        ]
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "default",
+          "error",
+          "disabled"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_AmountInput_label"
+      },
+      "placeholder": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_AmountInput_placeholder"
+      }
+    },
+    "required": [
+      "component",
+      "label"
+    ],
+    "_meta": {
+      "description": "Specialised numeric input for currency values, with a currency prefix. Used in payment and transfer flows.",
+      "consequential": true
+    }
+  },
+  "Card": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "Card"
+      },
+      "elevation": {
+        "type": "string",
+        "enum": [
+          "flat",
+          "raised"
+        ]
+      },
+      "padding": {
+        "type": "string",
+        "enum": [
+          "compact",
+          "comfortable"
+        ]
+      }
+    },
+    "required": [
+      "component"
+    ],
+    "_meta": {
+      "description": "Container that groups related content with elevation. Used for account summaries, transaction groups.",
+      "consequential": false
+    }
+  },
+  "StatCard": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "StatCard"
+      },
+      "trend": {
+        "type": "string",
+        "enum": [
+          "up",
+          "down",
+          "neutral"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_StatCard_label"
+      },
+      "value": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_StatCard_value"
+      },
+      "trendLabel": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_StatCard_trendLabel"
+      }
+    },
+    "required": [
+      "component",
+      "label",
+      "value"
+    ],
+    "_meta": {
+      "description": "Displays a single key metric with a label, value, and optional trend indicator. Used on dashboards for balances, spend, growth.",
+      "consequential": false
+    }
+  },
+  "Select": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "Select"
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "disabled"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_Select_label"
+      },
+      "placeholder": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_Select_placeholder"
+      }
+    },
+    "required": [
+      "component",
+      "label"
+    ],
+    "_meta": {
+      "description": "Dropdown for choosing one option from a list. Used for account selection, categories, filters.",
+      "consequential": false
+    }
+  },
+  "Toggle": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "Toggle"
+      },
+      "state": {
+        "type": "string",
+        "enum": [
+          "on",
+          "off",
+          "disabled"
+        ]
+      },
+      "label": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_Toggle_label"
+      }
+    },
+    "required": [
+      "component",
+      "label"
+    ],
+    "_meta": {
+      "description": "Binary on/off switch. Used for settings, opt-ins, feature flags.",
+      "consequential": false
+    }
+  },
+  "Badge": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "Badge"
+      },
+      "tone": {
+        "type": "string",
+        "enum": [
+          "neutral",
+          "success",
+          "warning",
+          "danger"
+        ]
+      },
+      "text": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_Badge_text"
+      }
+    },
+    "required": [
+      "component",
+      "text"
+    ],
+    "_meta": {
+      "description": "Small status label. Used to show transaction status (pending, cleared, failed) or account type.",
+      "consequential": false
+    }
+  },
+  "TransactionRow": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "TransactionRow"
+      },
+      "direction": {
+        "type": "string",
+        "enum": [
+          "debit",
+          "credit"
+        ]
+      },
+      "merchant": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TransactionRow_merchant"
+      },
+      "date": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TransactionRow_date"
+      },
+      "amount": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_TransactionRow_amount"
+      }
+    },
+    "required": [
+      "component",
+      "merchant",
+      "amount"
+    ],
+    "_meta": {
+      "description": "A single line in a transaction list: merchant, date, amount, status badge. Used in statements and activity feeds.",
+      "consequential": false
+    }
+  },
+  "ConfirmSheet": {
+    "type": "object",
+    "properties": {
+      "component": {
+        "const": "ConfirmSheet"
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "payment",
+          "transfer",
+          "generic"
+        ]
+      },
+      "title": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_ConfirmSheet_title"
+      },
+      "summary": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_ConfirmSheet_summary"
+      },
+      "confirmLabel": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_ConfirmSheet_confirmLabel"
+      },
+      "cancelLabel": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "PLACEHOLDER_ConfirmSheet_cancelLabel"
+      }
+    },
+    "required": [
+      "component"
+    ],
+    "_meta": {
+      "description": "A confirmation surface for consequential actions, showing a summary and confirm/cancel controls. Used before executing a payment or transfer. Its internal structure (summary rows, fee disclosure, confirm control) is fixed and must not be recomposed from primitives.",
+      "consequential": true
+    }
+  }
+}

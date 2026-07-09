@@ -1,0 +1,14 @@
+{
+  "name": "catalyst-polaris-renderer",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild entry.jsx --bundle --format=iife --jsx=automatic --loader:.svg=text --outfile=../web/polaris-bundle.js"
+  },
+  "dependencies": {
+    "@shopify/polaris": "^13.9.5",
+    "esbuild": "^0.28.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
