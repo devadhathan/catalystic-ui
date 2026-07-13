@@ -39716,7 +39716,20 @@
       ] }, i)) })
     ] });
   }
-  var TEXT_VARIANT = { title: "headingLg", subtitle: "headingMd", label: "bodySm", muted: "bodySm", body: "bodyMd" };
+  var TEXT_VARIANT = {
+    title: "headingLg",
+    subtitle: "headingMd",
+    label: "bodySm",
+    muted: "bodySm",
+    body: "bodyMd",
+    headline: "headingLg",
+    heading: "headingMd",
+    h1: "headingLg",
+    h2: "headingMd",
+    h3: "headingSm",
+    caption: "bodySm"
+  };
+  var strChild = (c) => typeof c.children === "string" ? c.children : "";
   function Node2({ c }) {
     const { state, byId } = useDS();
     if (!c || typeof c !== "object") return null;
@@ -39748,11 +39761,11 @@
             variant: TEXT_VARIANT[c.variant] || "bodyMd",
             tone: c.variant === "muted" || c.variant === "label" ? "subdued" : void 0,
             fontWeight: c.variant === "label" ? "medium" : void 0,
-            children: bindVal(c.text, state) ?? ""
+            children: bindVal(c.text, state) ?? strChild(c)
           }
         );
       case "Link":
-        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, { url: c.href || "#", children: c.text || "" });
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Link, { url: c.href || "#", children: c.text || strChild(c) || "" });
       case "Input":
       case "Textarea":
       case "DatePicker":
@@ -39767,16 +39780,16 @@
       case "Switch":
         return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckboxC, { c });
       case "Toggle":
-        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, { pressed: c.pressed, children: c.label || "" });
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, { pressed: c.pressed, children: c.label || strChild(c) || "" });
       case "Button": {
         const v = { default: "primary", secondary: "secondary", outline: "secondary", ghost: "tertiary", destructive: "primary" }[c.variant || "default"];
-        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, { variant: v, tone: c.variant === "destructive" ? "critical" : void 0, size: c.size === "sm" ? "slim" : c.size === "lg" ? "large" : void 0, children: c.label || "" });
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, { variant: v, tone: c.variant === "destructive" ? "critical" : void 0, size: c.size === "sm" ? "slim" : c.size === "lg" ? "large" : void 0, children: c.label || strChild(c) || "" });
       }
       case "IconButton":
         return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(IconSvg, { name: c.icon }) });
       case "Badge": {
         const t = { success: "success", warning: "warning", destructive: "critical" }[c.tone];
-        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { tone: t, children: bindVal(c.label, state) || "" });
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Badge, { tone: t, children: bindVal(c.label, state) || strChild(c) || "" });
       }
       case "Avatar":
         return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Avatar, { name: c.fallback || "", source: c.url });
@@ -39801,7 +39814,8 @@
         return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tooltip, { content: c.tip || "", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, { as: "span", variant: "bodyMd", children: c.label || "" }) });
       case "Alert": {
         const t = { destructive: "critical", success: "success", warning: "warning" }[c.tone] || "info";
-        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Banner, { title: c.title || "", tone: t, children: c.description && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: c.description }) });
+        const dsc = c.description || c.message || strChild(c);
+        return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Banner, { title: c.title || "", tone: t, children: dsc && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { children: dsc }) });
       }
       case "Tabs":
         return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TabsC, { c, byId });

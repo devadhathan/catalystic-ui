@@ -170,7 +170,9 @@ function Chart({ c }) {
 }
 
 /* ---------- main dispatch ---------- */
-const TEXT_VARIANT = { title: "headingLg", subtitle: "headingMd", label: "bodySm", muted: "bodySm", body: "bodyMd" };
+const TEXT_VARIANT = { title: "headingLg", subtitle: "headingMd", label: "bodySm", muted: "bodySm", body: "bodyMd",
+  headline: "headingLg", heading: "headingMd", h1: "headingLg", h2: "headingMd", h3: "headingSm", caption: "bodySm" };
+const strChild = (c) => (typeof c.children === "string" ? c.children : "");
 function Node({ c }) {
   const { state, byId } = useDS();
   if (!c || typeof c !== "object") return null;
@@ -188,20 +190,20 @@ function Node({ c }) {
     case "Separator": case "Divider": return <Divider />;
     case "Text": return <Text as={/heading/.test(TEXT_VARIANT[c.variant] || "") ? "h2" : "p"}
       variant={TEXT_VARIANT[c.variant] || "bodyMd"} tone={c.variant === "muted" || c.variant === "label" ? "subdued" : undefined}
-      fontWeight={c.variant === "label" ? "medium" : undefined}>{bindVal(c.text, state) ?? ""}</Text>;
-    case "Link": return <Link url={c.href || "#"}>{c.text || ""}</Link>;
+      fontWeight={c.variant === "label" ? "medium" : undefined}>{bindVal(c.text, state) ?? strChild(c)}</Text>;
+    case "Link": return <Link url={c.href || "#"}>{c.text || strChild(c) || ""}</Link>;
     case "Input": case "Textarea": case "DatePicker": return <TextFieldC c={c} />;
     case "Select": return <SelectC c={c} />;
     case "RadioGroup": return <RadioC c={c} />;
     case "Slider": return <SliderC c={c} />;
     case "Checkbox": case "Switch": return <CheckboxC c={c} />;
-    case "Toggle": return <Button pressed={c.pressed}>{c.label || ""}</Button>;
+    case "Toggle": return <Button pressed={c.pressed}>{c.label || strChild(c) || ""}</Button>;
     case "Button": {
       const v = { default: "primary", secondary: "secondary", outline: "secondary", ghost: "tertiary", destructive: "primary" }[c.variant || "default"];
-      return <Button variant={v} tone={c.variant === "destructive" ? "critical" : undefined} size={c.size === "sm" ? "slim" : c.size === "lg" ? "large" : undefined}>{c.label || ""}</Button>;
+      return <Button variant={v} tone={c.variant === "destructive" ? "critical" : undefined} size={c.size === "sm" ? "slim" : c.size === "lg" ? "large" : undefined}>{c.label || strChild(c) || ""}</Button>;
     }
     case "IconButton": return <Button><IconSvg name={c.icon} /></Button>;
-    case "Badge": { const t = { success: "success", warning: "warning", destructive: "critical" }[c.tone]; return <Badge tone={t}>{bindVal(c.label, state) || ""}</Badge>; }
+    case "Badge": { const t = { success: "success", warning: "warning", destructive: "critical" }[c.tone]; return <Badge tone={t}>{bindVal(c.label, state) || strChild(c) || ""}</Badge>; }
     case "Avatar": return <Avatar name={c.fallback || ""} source={c.url} />;
     case "Image": return c.url ? <Thumbnail source={c.url} alt={c.alt || ""} size="large" /> : <div style={{ height: 120, borderRadius: 8, background: "linear-gradient(135deg,#f1f2f4,#e1e3e5)" }} />;
     case "Metric": return <Card><BlockStack gap="200">
@@ -214,7 +216,7 @@ function Node({ c }) {
     case "Progress": return <BlockStack gap="100">{c.label && <Text as="p" variant="bodySm">{c.label}</Text>}<ProgressBar progress={Number(c.value) || 0} size="small" /></BlockStack>;
     case "Skeleton": return <SkeletonBodyText lines={c.lines || 3} />;
     case "Tooltip": return <Tooltip content={c.tip || ""}><Text as="span" variant="bodyMd">{c.label || ""}</Text></Tooltip>;
-    case "Alert": { const t = { destructive: "critical", success: "success", warning: "warning" }[c.tone] || "info"; return <Banner title={c.title || ""} tone={t}>{c.description && <p>{c.description}</p>}</Banner>; }
+    case "Alert": { const t = { destructive: "critical", success: "success", warning: "warning" }[c.tone] || "info"; const dsc = c.description || c.message || strChild(c); return <Banner title={c.title || ""} tone={t}>{dsc && <p>{dsc}</p>}</Banner>; }
     case "Tabs": return <TabsC c={c} byId={byId} />;
     case "Accordion": return <BlockStack gap="300">{(c.items || []).map((it, i) => <AccordionItem key={i} it={it} byId={byId} />)}</BlockStack>;
     case "Table": {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Catalyst — Generative UI</title>
+<title>Catalyst UI — Beta</title>
 <link rel="stylesheet" href="polaris-bundle.css" />
 <style>
   :root {
@@ -28,6 +28,14 @@
     --muted: #1a1f26; --muted-foreground: #8b97a3; --border: #232a31;
     --input: #232a31; --primary: #e7ecf1; --primary-foreground: #0a0c0f; --secondary: #1a1f26;
   }
+  /* app-wide dark mode */
+  html.dark {
+    --background: #0b0e12; --card: #151a20; --foreground: #e7ecf1; --muted: #1a2027;
+    --muted-foreground: #97a3af; --border: #262d36; --input: #2b333d; --primary: #e7ecf1;
+    --primary-foreground: #0b0e12; --secondary: #1a2027; --ring: #3b4855;
+  }
+  html.dark .logo-img { filter: brightness(0) invert(1); opacity: .92; }
+  html.dark .ds-toggle button.active { background: var(--card); }
   * { box-sizing: border-box; }
   html, body { height: 100%; background: var(--background); }
   body { margin: 0; background: var(--background); color: var(--foreground);
@@ -37,12 +45,68 @@
            align-items: center; gap: 12px; padding: 0 20px; flex-shrink: 0; background: var(--background); }
   header .logo { font-weight: 600; letter-spacing: -.01em; }
   header .logo-img { height: 30px; width: auto; display: block; }
+  header .brand-name { font-weight: 650; letter-spacing: -.01em; font-size: 15px; }
+  header .beta-badge { font-size: 9px; font-weight: 700; letter-spacing: .08em; padding: 3px 6px; border-radius: 6px;
+     background: var(--primary); color: var(--primary-foreground); }
   header .tag { color: var(--muted-foreground); font-size: 12px; }
   header .spacer { flex: 1; }
   .ds-toggle { display: flex; gap: 2px; background: var(--muted); padding: 3px; border-radius: 8px; margin-left: 4px; }
   .ds-toggle button { border: 0; background: transparent; padding: 5px 12px; border-radius: 6px;
      font-size: 12px; cursor: pointer; color: var(--muted-foreground); font-weight: 500; }
   .ds-toggle button.active { background: #fff; color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .ds-select { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
+     border-radius: 9px; padding: 7px 30px 7px 12px; font: inherit; font-size: 13px; font-weight: 500;
+     color: var(--foreground); cursor: pointer; margin-left: 4px; transition: border-color .15s, box-shadow .15s;
+     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+     background-repeat: no-repeat; background-position: right 9px center; }
+  .ds-select:hover { border-color: var(--ring); }
+  .ds-select:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .ds-import-btn { border: 1px solid var(--border); background: var(--card); border-radius: 8px; padding: 6px 11px;
+     font: inherit; font-size: 13px; cursor: pointer; color: var(--foreground); display: inline-flex;
+     align-items: center; gap: 6px; }
+  .ds-import-btn svg { width: 15px; height: 15px; }
+  .ds-import-btn:hover { border-color: var(--ring); }
+  /* clean grouped header toolbar */
+  .hdr-right { display: flex; align-items: center; gap: 8px; }
+  #credits-modal { position: fixed; inset: 0; z-index: 70; background: rgba(15,20,26,.5);
+     display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #credits-modal[hidden] { display: none; }
+  .credit-packs { display: flex; gap: 10px; margin: 6px 0 4px; }
+  .credit-pack { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
+     border: 1px solid var(--border); border-radius: 14px; background: var(--background); color: var(--foreground);
+     padding: 16px 10px 13px; cursor: pointer; transition: border-color .12s, transform .12s; }
+  .credit-pack:hover { border-color: var(--ring); transform: translateY(-2px); }
+  .credit-pack.popular { border-color: var(--ring); }
+  .credit-pack b { font-size: 21px; font-weight: 700; }
+  .credit-pack span { font-size: 11px; color: var(--muted-foreground); }
+  .credit-pack em { font-style: normal; font-size: 13px; font-weight: 600; margin-top: 5px; }
+  .pack-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: var(--primary);
+     color: var(--primary-foreground); font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+     padding: 2px 8px; border-radius: 999px; }
+  .credit-demo-note { margin-top: 14px; font-size: 11.5px; color: var(--muted-foreground); text-align: center; line-height: 1.5; }
+  .hdr-tools { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 9px;
+     overflow: hidden; background: var(--card); }
+  .hdr-tools button { border: 0; background: transparent; padding: 7px 10px; cursor: pointer;
+     color: var(--muted-foreground); display: inline-flex; align-items: center; justify-content: center; }
+  .hdr-tools button + button { border-left: 1px solid var(--border); }
+  .hdr-tools button:hover { background: var(--muted); color: var(--foreground); }
+  .hdr-tools button svg { width: 16px; height: 16px; }
+  .hdr-icon { border: 1px solid var(--border); background: var(--card); border-radius: 9px; padding: 7px 9px;
+     cursor: pointer; color: var(--muted-foreground); display: inline-flex; align-items: center; }
+  .hdr-icon svg { width: 16px; height: 16px; }
+  .hdr-icon:hover { color: var(--foreground); border-color: var(--ring); }
+
+  /* front landing page */
+  #landing { position: fixed; inset: 0; z-index: 300; background: var(--background);
+     display: flex; align-items: center; justify-content: center; padding: 32px; }
+  #landing[hidden] { display: none; }
+  .landing-inner { max-width: 540px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .landing-art { width: min(340px, 66vw); height: auto; }
+  .landing-brand { font-size: 27px; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; }
+  .landing-tag { font-size: 15px; color: var(--muted-foreground); line-height: 1.6; max-width: 440px; }
+  #landing-go { height: 46px; padding: 0 28px; border-radius: 12px; font-size: 15px; margin-top: 8px;
+     border: 0; background: var(--primary); color: var(--primary-foreground); cursor: pointer; font-weight: 500; }
+  #landing-go:hover { opacity: .9; }
 
   /* ---- Polaris (Shopify) skin: re-skins the same component tree via tokens ---- */
   #surface[data-ds="polaris"] {
@@ -62,19 +126,34 @@
   .stat { font-size: 12px; color: var(--muted-foreground); display: flex; gap: 14px; }
   .stat b { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  main { flex: 1; display: flex; min-height: 0; }
+  main { flex: 1; display: flex; min-height: 0; position: relative; padding-left: 62px; }
 
   #chat { width: 360px; border-right: 1px solid var(--border); display: flex;
           flex-direction: column; min-height: 0; background: var(--background); }
+  .side-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .side-tabs button { flex: 1; background: none; border: 0; padding: 11px 8px; cursor: pointer; font-size: 13px;
+     color: var(--muted-foreground); border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .side-tabs button.active { color: var(--foreground); border-bottom-color: var(--primary); }
+  .side-badge { font-size: 9px; background: var(--muted); color: var(--muted-foreground); padding: 2px 6px; border-radius: 999px; }
+  .side-body { display: none; flex-direction: column; flex: 1; min-height: 0; }
+  .side-body.active { display: flex; }
+  #tab-agent { overflow: auto; }
   #messages { flex: 1; overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-  .msg { max-width: 90%; padding: 10px 13px; border-radius: var(--radius); font-size: 13.5px; line-height: 1.5; }
-  .msg.user { align-self: flex-end; background: var(--primary); color: var(--primary-foreground); }
-  .msg.bot { align-self: flex-start; background: var(--muted); color: var(--foreground); }
-  .msg.pending { color: var(--muted-foreground); background: linear-gradient(90deg,
-     var(--muted) 25%, var(--border) 50%, var(--muted) 75%); background-size: 200% 100%;
-     animation: shimmer 1.3s linear infinite; display: inline-flex; align-items: center; gap: 8px; }
-  .think-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--muted-foreground);
-     animation: blink 1s ease-in-out infinite; }
+  .msg { max-width: 80%; width: fit-content; padding: 9px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45; }
+  .msg.user { align-self: flex-end; background: var(--primary); color: var(--primary-foreground); border-bottom-right-radius: 6px; }
+  .msg.bot { align-self: flex-start; background: var(--muted); color: var(--foreground); border-bottom-left-radius: 6px; }
+  .msg.bot strong { font-weight: 650; }
+  .msg.bot ul { margin: 6px 0; padding-left: 18px; }
+  .msg.bot li { margin: 2px 0; }
+  .msg.bot .md-line { margin: 0; }
+  .msg.bot .md-line + .md-line { margin-top: 4px; }
+  /* agent is thinking — a blue highlight sweeps across the muted text (a real shimmer, not a blink) */
+  .msg.thinking { align-self: flex-start; background: transparent; padding: 6px 4px; font-size: 14px; font-weight: 500;
+     background-image: linear-gradient(100deg, var(--muted-foreground) 0%, var(--muted-foreground) 38%,
+        #2f6bff 50%, var(--muted-foreground) 62%, var(--muted-foreground) 100%);
+     background-size: 220% 100%; -webkit-background-clip: text; background-clip: text;
+     -webkit-text-fill-color: transparent; color: transparent; animation: shine 1.7s ease-in-out infinite; }
+  @keyframes shine { 0% { background-position: 120% 0; } 100% { background-position: -20% 0; } }
   @keyframes blink { 50% { opacity: .3; } }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   .msg-meta { align-self: flex-start; font-size: 11px; color: var(--muted-foreground);
@@ -85,7 +164,7 @@
      animation: shimmer 1.3s linear infinite; }
   .sk-card { border: 1px solid var(--border); border-radius: 12px; padding: 20px; background: var(--card);
      display: flex; flex-direction: column; gap: 12px; }
-  #composer { border-top: 1px solid var(--border); padding: 14px; }
+  #composer { padding: 14px; }
   #composer-box { position: relative; border: 1px solid var(--input); border-radius: 18px;
      background: var(--card); padding: 14px 16px 48px; transition: border-color .15s, box-shadow .15s; }
   #composer-box:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
@@ -281,11 +360,374 @@
      background: var(--primary); color: var(--primary-foreground); padding: 9px 15px; border-radius: var(--radius);
      font-size: 12px; opacity: 0; transition: .25s; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===================== NEW SHELL: rail + center chat + inline UI ===================== */
+  /* leftmost agent rail */
+  /* rail: a slim icon strip that expands on hover to reveal labels (overlays, no reflow) */
+  #rail { position: absolute; left: 0; top: 0; bottom: 0; width: 62px; z-index: 40; overflow: hidden;
+     border-right: 1px solid var(--border); background: var(--background);
+     display: flex; flex-direction: column; gap: 6px; padding: 12px 10px;
+     transition: width .18s ease, box-shadow .18s ease; }
+  #rail:hover { width: 216px; box-shadow: 6px 0 24px rgba(0,0,0,.08); }
+  .rail-item, #rail-add { height: 42px; width: 42px; border-radius: 12px; cursor: pointer; white-space: nowrap;
+     display: flex; align-items: center; gap: 12px; padding: 0 11px; overflow: hidden; transition: width .18s ease, background .15s, border-color .15s; }
+  .rail-item { border: 1px solid transparent; background: var(--muted); color: var(--muted-foreground); }
+  #rail-add { border: 1px dashed var(--border); background: transparent; color: var(--muted-foreground); margin-top: 2px; }
+  #rail-add.connected { border-style: solid; border-color: hsl(142 60% 45%); color: hsl(142 55% 40%); background: hsl(142 60% 45% / .08); }
+  .rail-item svg, #rail-add svg { width: 20px; height: 20px; flex: 0 0 20px; }
+  .rail-item:hover, #rail-add:hover { border-color: var(--ring); color: var(--foreground); }
+  .rail-item.active { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 2px 6px rgba(0,0,0,.16); }
+  .rail-label { font-size: 13.5px; font-weight: 500; opacity: 0; transition: opacity .12s ease; }
+  #rail:hover .rail-item, #rail:hover #rail-add { width: 196px; }
+  #rail:hover .rail-label { opacity: 1; }
+
+  /* chat now fills the center */
+  #chat { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background); }
+  #messages { flex: 1; overflow: auto; padding: 24px 20px 8px; display: flex; flex-direction: column; gap: 12px;
+     width: 100%; max-width: 640px; margin: 0 auto; scrollbar-width: none; }
+  #messages::-webkit-scrollbar { width: 0; height: 0; }
+  /* hide the general presets while an agent is running */
+  #chat[data-mode="food"] .presets, #chat[data-mode="booking"] .presets { display: none; }
+  #mode-hint { width: calc(100% - 48px); max-width: 600px; margin: 12px auto 0; font-size: 12px;
+     color: var(--muted-foreground); background: var(--muted); border: 1px solid var(--border);
+     border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+  #mode-hint[hidden] { display: none; }
+  #composer { padding: 14px 24px 18px; }
+  #composer-box, .presets { max-width: 600px; margin-left: auto; margin-right: auto; }
+
+  /* ---- agent workspace: persistent right panel (agent modes only) ---- */
+  #agent-panel { display: none; flex-direction: column; width: var(--ap-w, 400px); flex: 0 0 var(--ap-w, 400px);
+     border-left: 1px solid var(--border); background: var(--muted); min-height: 0; position: relative; }
+  #agent-panel.open { display: flex; }
+  .ap-resize { position: absolute; left: -3px; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 5; }
+  .ap-resize::after { content: ""; position: absolute; left: 3px; top: 0; bottom: 0; width: 1px; background: transparent; transition: background .12s; }
+  .ap-resize:hover::after, body.ap-resizing .ap-resize::after { background: var(--ring); }
+  body.ap-resizing { cursor: col-resize; user-select: none; }
+  .ap-head { display: flex; align-items: center; gap: 9px; padding: 16px 18px 12px; }
+  .ap-head .ap-title { font-size: 14px; font-weight: 650; }
+  .ap-head .ap-mode { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+     color: var(--muted-foreground); background: var(--background); border: 1px solid var(--border);
+     border-radius: 999px; padding: 2px 9px; }
+  .ap-sec { padding: 0 18px 14px; }
+  .ap-sec-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .ap-sec-h label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+     color: var(--muted-foreground); }
+  .ap-sec-h .ap-actions { display: flex; gap: 6px; }
+  .ap-sec-h button { font-size: 11px; padding: 3px 10px; border-radius: 7px; border: 1px solid var(--border);
+     background: var(--background); color: var(--foreground); cursor: pointer; transition: border-color .12s; }
+  .ap-sec-h button:hover { border-color: var(--ring); }
+  .ap-sec-h button.primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+  #ap-prompt { width: 100%; min-height: 118px; max-height: 240px; resize: vertical; border: 1px solid var(--input);
+     border-radius: 12px; background: var(--background); color: var(--foreground);
+     padding: 10px 12px; font: inherit; font-size: 12.5px; line-height: 1.5; outline: none; }
+  #ap-prompt:focus { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .ap-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+  .ap-select-wrap { position: relative; }
+  .ap-select { width: 100%; appearance: none; border: 1px solid var(--input); border-radius: 12px;
+     background: var(--background); color: var(--foreground); padding: 9px 34px 9px 12px; font: inherit;
+     font-size: 12.5px; cursor: pointer; outline: none; }
+  .ap-select:focus { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .ap-select-wrap::after { content: ""; position: absolute; right: 13px; top: 50%; width: 7px; height: 7px;
+     border: solid var(--muted-foreground); border-width: 0 1.6px 1.6px 0; transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .ap-conn { display: flex; flex-direction: column; gap: 8px; }
+  .ap-conn-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border);
+     border-radius: 12px; background: var(--background); padding: 9px 11px; }
+  .ap-conn-ic { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px; background: var(--muted);
+     display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); }
+  .ap-conn-ic svg { width: 15px; height: 15px; }
+  .ap-conn-body { flex: 1; min-width: 0; }
+  .ap-conn-name { font-size: 12.5px; font-weight: 550; }
+  .ap-conn-sub { font-size: 11px; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ap-toggle { width: 38px; height: 22px; flex: 0 0 38px; border-radius: 999px; border: 0; cursor: pointer;
+     background: var(--border); position: relative; transition: background .15s; padding: 0; }
+  .ap-toggle span { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+     background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+  .ap-toggle.on { background: hsl(142 60% 42%); }
+  .ap-toggle.on span { transform: translateX(16px); }
+  .ap-link-btn { font-size: 11px; padding: 4px 11px; border-radius: 8px; border: 1px solid var(--border);
+     background: var(--background); color: var(--foreground); cursor: pointer; white-space: nowrap; transition: border-color .12s; }
+  .ap-link-btn:hover { border-color: var(--ring); }
+  .ap-link-btn.connected { border-color: hsl(142 60% 45%); color: hsl(142 55% 40%); background: hsl(142 60% 45% / .08); }
+  .ap-trace-wrap { padding: 0 18px 18px; }
+  /* tabs */
+  /* in agent mode the panel owns UI + Components, so drop them from the global header */
+  body.agent-mode #ds-select, body.agent-mode #gallery-btn { display: none; }
+  .ap-tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--border); }
+  .ap-tab { border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer;
+     font: inherit; font-size: 12.5px; font-weight: 550; padding: 9px 10px 10px; position: relative; }
+  .ap-tab:hover { color: var(--foreground); }
+  .ap-tab.active { color: var(--foreground); }
+  .ap-tab.active::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px;
+     background: var(--foreground); border-radius: 2px; }
+  .ap-panes { flex: 1; min-height: 0; display: flex; }
+  .ap-pane { display: none; flex: 1; min-height: 0; flex-direction: column; }
+  .ap-pane.active { display: flex; }
+  /* UI tab */
+  .ap-ds-note, .ap-comp-note { font-size: 11.5px; color: var(--muted-foreground); line-height: 1.5; margin-top: 9px; }
+  .ap-wide-btn { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+     border: 1px solid var(--border); border-radius: 12px; background: var(--background); color: var(--foreground);
+     font: inherit; font-size: 12.5px; padding: 10px; cursor: pointer; transition: border-color .12s; }
+  .ap-wide-btn:hover { border-color: var(--ring); }
+  .ap-wide-btn svg { width: 15px; height: 15px; }
+  /* Components tab */
+  .ap-ds-tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-foreground);
+     background: var(--background); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; }
+  .ap-comp-surface { margin: 0 18px 18px; border-radius: 14px; }
+  /* Settings · usage */
+  .ap-usage-head { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; color: var(--foreground); }
+  .ap-usage-head .ap-usage-left { margin-left: auto; font-size: 11.5px; color: var(--muted-foreground); }
+  .ap-usage-bar { margin-top: 8px; height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden; border: 1px solid var(--border); }
+  .ap-usage-fill { height: 100%; width: 0%; border-radius: 999px; background: hsl(142 60% 42%); transition: width .3s ease; }
+  .ap-usage-bar.low .ap-usage-fill { background: hsl(0 72% 51%); }
+  .ap-usage-note { margin-top: 9px; font-size: 11.5px; color: var(--muted-foreground); line-height: 1.5; }
+  /* eval checks */
+  .ap-checks { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 5px; }
+  .ap-checks-h { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-foreground); margin-bottom: 2px; }
+  .ap-check { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .ap-check .ck { width: 14px; height: 14px; flex: 0 0 14px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+     font-size: 10px; font-weight: 700; color: #fff; }
+  .ap-check[data-ok="1"] .ck { background: hsl(142 60% 42%); }
+  .ap-check[data-ok="0"] .ck { background: hsl(0 72% 51%); }
+  .ap-check .ap-ck-detail { color: var(--muted-foreground); font-size: 11px; margin-left: auto; text-align: right; }
+  .ap-empty { font-size: 12.5px; color: var(--muted-foreground); padding: 8px 2px; line-height: 1.5; }
+  .ap-turn { border: 1px solid var(--border); border-radius: 12px; background: var(--background);
+     padding: 11px 13px; margin-bottom: 10px; animation: rise .3s cubic-bezier(.22,.61,.36,1); }
+  .ap-turn-q { font-size: 12px; color: var(--muted-foreground); margin-bottom: 9px;
+     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ap-steps { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .ap-step { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--foreground); }
+  .ap-step .dot { width: 14px; height: 14px; flex: 0 0 14px; border-radius: 50%;
+     border: 2px solid var(--border); position: relative; box-sizing: border-box; }
+  .ap-step[data-state="run"] .dot { border-color: var(--ring); border-top-color: transparent; animation: apspin .7s linear infinite; }
+  .ap-step[data-state="done"] .dot { border-color: hsl(142 60% 42%); background: hsl(142 60% 42%); }
+  .ap-step[data-state="done"] .dot::after { content: ""; position: absolute; left: 3px; top: 0;
+     width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .ap-step[data-state="fail"] .dot { border-color: hsl(0 72% 51%); background: hsl(0 72% 51%); }
+  .ap-step[data-state="wait"] { opacity: .42; }
+  .ap-step .ap-sub { color: var(--muted-foreground); font-size: 11.5px; margin-left: auto; text-align: right; }
+  @keyframes apspin { to { transform: rotate(360deg); } }
+  .ap-turn-meta { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border);
+     font-size: 11px; color: var(--muted-foreground); display: flex; flex-wrap: wrap; gap: 3px 12px; }
+
+  /* inline generated UI in the thread — Chat wraps it in a grey box; agents render bare */
+  .gen-surface { align-self: stretch; width: 100%; background: var(--muted); border: 1px solid var(--border);
+     border-radius: 16px; padding: 20px; }
+  .gen-surface[data-agent] { background: transparent; border: 0; padding: 2px 0; }
+  .gen-surface[data-width="sm"] { max-width: 100%; }
+  .gen-surface[data-width="lg"] { max-width: 100%; }
+  .gen-surface.rise { animation: rise .32s cubic-bezier(.22,.61,.36,1); }
+  /* agent mode: cards/buttons are tap-to-select choices */
+  .gen-surface[data-agent] .ui-card { cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s; }
+  .gen-surface[data-agent] .ui-card:hover { border-color: var(--ring); box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
+  /* choices lay out as a side-scrolling card rail — match ANY Row/Stack/Grid holding ≥2
+     Cards, at any nesting depth (the model isn't consistent about structure) */
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card),
+  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card),
+  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) {
+     display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important;
+     align-items: stretch !important; overflow-x: auto; gap: 12px; padding-bottom: 8px;
+     scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) > .ui-card,
+  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card) > .ui-card,
+  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) > .ui-card {
+     flex: 0 0 auto !important; width: 210px; align-self: stretch; }
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar,
+  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card)::-webkit-scrollbar,
+  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card)::-webkit-scrollbar { height: 8px; }
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb,
+  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb,
+  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  /* uniform card internals — the actual skew fix */
+  .gen-surface[data-agent] .ui-card { overflow: hidden; }
+  .gen-surface[data-agent] .ui-card .ui-image,
+  .gen-surface[data-agent] .ui-card .ui-image-ph { max-height: 240px; object-fit: cover !important; border-radius: 10px; }
+  /* inside a rail: compact uniform image + clamp long titles so every card matches height */
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) .ui-image,
+  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card) .ui-image,
+  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) .ui-image { height: 120px !important; min-height: 120px; }
+  .gen-surface[data-agent] .ui-card .ui-text.v-title {
+     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
+
+  /* "building UI…" skeleton shown briefly before the agent's UI renders in */
+  .sk-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sk-tag { font-size: 11px; color: var(--muted-foreground); }
+  .sk-row { display: flex; gap: 12px; overflow: hidden; }
+  .shimmer-tile { flex: 0 0 auto; width: 200px; height: 132px; border-radius: 12px;
+     background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
+     background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
+
+  /* inline generated UI — Polaris skin (mirror of #surface rules) */
+  .gen-surface[data-ds="polaris"] {
+     --foreground: #202223; --muted-foreground: #6d7175; --border: #e1e3e5; --input: #aeb4b9;
+     --muted: #f1f2f4; --card: #ffffff; --primary: #008060; --primary-foreground: #ffffff;
+     --secondary: #f1f2f4; --radius: 8px;
+     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif; }
+  .gen-surface[data-ds="polaris"] .ui-card {
+     border-radius: 12px; border-color: transparent;
+     box-shadow: 0 0 0 1px rgba(22,29,37,.05), 0 1px 3px rgba(22,29,37,.1); }
+  .gen-surface[data-ds="polaris"] .ui-btn { font-weight: 600; }
+  .gen-surface[data-ds="polaris"] .ui-btn.v-default:hover { background: #006e52; }
+  .gen-surface[data-ds="polaris"] .ui-text.v-title { font-weight: 650; letter-spacing: -.005em; }
+  .gen-surface[data-ds="polaris"] .ui-badge.v-success { background: #e3f1df; color: #008060; }
+
+  /* collapsible reasoning + JSON under an assistant reply */
+  .search-note { align-self: flex-start; font-size: 11px; color: var(--muted-foreground);
+     margin: -4px 0 2px 4px; display: inline-flex; align-items: center; gap: 4px; }
+  .turn-tools { align-self: flex-start; display: flex; flex-direction: column; gap: 2px; margin-top: -4px; }
+  details.reason { font-size: 12px; }
+  details.reason > summary { cursor: pointer; color: var(--muted-foreground); list-style: none;
+     display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px; user-select: none; }
+  details.reason > summary::-webkit-details-marker { display: none; }
+  details.reason > summary::before { content: "▸"; font-size: 10px; transition: transform .15s; }
+  details.reason[open] > summary::before { transform: rotate(90deg); }
+  details.reason .reason-body { margin: 2px 0 8px 16px; padding: 10px 12px; border-left: 2px solid var(--border);
+     color: #444; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; }
+  details.reason pre.json-pre { margin: 2px 0 8px 16px; padding: 12px; background: var(--muted); border-radius: 8px;
+     font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.6;
+     white-space: pre-wrap; word-break: break-word; color: #334; max-height: 340px; overflow: auto; }
+  .reason-tools { display: flex; gap: 6px; margin: 0 0 6px 16px; }
+  .reason-tools button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border);
+     background: var(--card); color: var(--foreground); border-radius: 7px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  .reason-tools button:hover { background: var(--muted); }
+  .reason-tools button svg { width: 12px; height: 12px; }
+
+  /* Import modal — the Figma / design-system agent lives here */
+  #ag-modal { position: fixed; inset: 0; background: rgba(15,20,26,.5); display: flex; align-items: center;
+     justify-content: center; z-index: 60; padding: 28px; }
+  #ag-modal[hidden] { display: none; }
+  .ag-modal-card { position: relative; width: 100%; max-width: 620px; max-height: 86vh; overflow: auto;
+     background: var(--background); border: 1px solid var(--border); border-radius: 18px;
+     box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  #ag-modal-close, #prompt-close { position: absolute; top: 12px; right: 14px; width: 30px; height: 30px; border: 0;
+     border-radius: 8px; background: var(--muted); color: var(--foreground); font-size: 14px; cursor: pointer; z-index: 2; }
+  #tab-agent { padding: 24px; }
+
+  /* agent system-prompt editor */
+  #prompt-modal { position: fixed; inset: 0; background: rgba(15,20,26,.5); display: flex; align-items: center;
+     justify-content: center; z-index: 60; padding: 28px; }
+  #prompt-modal[hidden] { display: none; }
+  .prompt-card { max-width: 720px; }
+  .prompt-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .prompt-body h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .prompt-sub { margin: 0; font-size: 12px; color: var(--muted-foreground); }
+  #prompt-text { width: 100%; min-height: 320px; resize: vertical; border: 1px solid var(--input); border-radius: 12px;
+     padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.6;
+     color: var(--foreground); background: var(--card); }
+  #prompt-text:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .prompt-actions { display: flex; align-items: center; gap: 10px; }
+  .p-btn { border: 1px solid var(--border); background: var(--card); color: var(--foreground); border-radius: 9px;
+     padding: 8px 16px; font: inherit; font-size: 13px; cursor: pointer; }
+  .p-btn:hover { border-color: var(--ring); }
+  .p-btn.primary { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+
+  /* connect-your-agent modal */
+  #connect-modal { position: fixed; inset: 0; z-index: 60; background: rgba(15,20,26,.5);
+     display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #connect-modal[hidden] { display: none; }
+  #connect-close { position: absolute; top: 12px; right: 14px; width: 30px; height: 30px; border: 0;
+     border-radius: 8px; background: var(--muted); color: var(--foreground); font-size: 14px; cursor: pointer; z-index: 2; }
+  #connect-url { width: 100%; height: 42px; padding: 0 13px; border: 1px solid var(--input); border-radius: 10px;
+     font: inherit; font-size: 14px; background: var(--card); color: var(--foreground); }
+  #connect-url:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .connect-contract { display: flex; flex-direction: column; gap: 6px; background: var(--muted); border: 1px solid var(--border);
+     border-radius: 10px; padding: 12px; font-size: 12.5px; color: var(--muted-foreground); }
+  .connect-contract .ct-tag { display: inline-block; width: 62px; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+  .connect-contract code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--foreground); }
+  .connect-status { font-size: 12.5px; padding: 8px 10px; border-radius: 8px; }
+  .connect-status[hidden] { display: none; }
+  .connect-status.ok { background: hsl(142 71% 45% / .12); color: hsl(142 60% 38%); }
+  .connect-status.bad { background: hsl(0 72% 51% / .1); color: var(--destructive); }
+  .connect-docs { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px; }
+  .connect-docs .doc-head { font-size: 12px; font-weight: 600; color: var(--foreground); margin-bottom: 8px; }
+  .doc-tabs { display: inline-flex; gap: 3px; background: var(--muted); padding: 3px; border-radius: 9px; }
+  .doc-tab { border: 0; background: transparent; padding: 5px 12px; border-radius: 7px; font: inherit; font-size: 12.5px;
+     cursor: pointer; color: var(--muted-foreground); }
+  .doc-tab.active { background: var(--card); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .doc-code { position: relative; margin-top: 10px; }
+  .doc-code pre { margin: 0; background: #0e1116; color: #e6edf3; border-radius: 10px; padding: 14px; overflow: auto;
+     max-height: 300px; white-space: pre; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.6; }
+  .doc-copy { position: absolute; top: 8px; right: 8px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08);
+     color: #e6edf3; border-radius: 7px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  .doc-copy:hover { background: rgba(255,255,255,.18); }
+
+  /* component gallery */
+  #gallery-modal { position: fixed; inset: 0; z-index: 60; background: rgba(15,20,26,.5);
+     display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #gallery-modal[hidden] { display: none; }
+  .gallery-card { width: 100%; max-width: 1000px; max-height: 88vh; display: flex; flex-direction: column;
+     background: var(--background); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+     box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .gallery-hd { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--border); }
+  .gallery-hd b { font-size: 15px; }
+  .gallery-hd .gallery-sub { font-size: 12px; color: var(--muted-foreground); }
+  #gallery-close { width: 30px; height: 30px; border: 0; border-radius: 8px; background: var(--muted); color: var(--foreground); cursor: pointer; }
+  .gallery-bd { overflow: auto; padding: 22px; background: var(--muted); }
+  #gallery-surface.gen-surface { width: 100%; align-self: stretch; background: var(--background) !important;
+     border: 0 !important; border-radius: 12px; padding: 24px; }
+
+  /* beta auth gate */
+  #auth-gate { position: fixed; inset: 0; z-index: 200; background: var(--background);
+     display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #auth-gate[hidden] { display: none; }
+  .auth-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 11px; text-align: center; }
+  .auth-title { font-size: 20px; font-weight: 650; letter-spacing: -.01em; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .auth-sub { font-size: 13px; color: var(--muted-foreground); margin-bottom: 4px; }
+  .auth-card input { height: 42px; padding: 0 13px; border: 1px solid var(--input); border-radius: 10px;
+     font: inherit; font-size: 14px; background: var(--card); color: var(--foreground); }
+  .auth-card input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .auth-card .p-btn.primary { height: 42px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-top: 2px; }
+  .auth-err { font-size: 12.5px; color: var(--destructive); text-align: left; }
+  .auth-err[hidden] { display: none; }
+  .auth-switch { font-size: 13px; color: var(--muted-foreground); margin-top: 2px; }
+  .auth-switch a { color: var(--primary); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; margin-left: 4px; }
+  #google-wrap { display: flex; flex-direction: column; gap: 12px; }
+  #google-wrap[hidden] { display: none; }
+  #google-btn { display: flex; justify-content: center; min-height: 40px; }
+  .auth-or { display: flex; align-items: center; gap: 10px; color: var(--muted-foreground); font-size: 12px; }
+  .auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .gen-map { width: 100%; height: 260px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+  .gen-map .leaflet-container { height: 100%; width: 100%; font: inherit; }
+  .loc-btn svg { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>try { if (localStorage.getItem("catalyst.theme") === "dark") document.documentElement.classList.add("dark"); } catch (e) {}</script>
 </head>
 <body>
+  <!-- front landing page -->
+  <div id="landing">
+    <div class="landing-inner">
+      <img class="landing-art" src="empty.svg" alt="" />
+      <div class="landing-brand">Catalyst UI <span class="beta-badge">BETA</span></div>
+      <div class="landing-tag">Generative UI, in your design system — an agent that turns intent into real, on-brand, interactive screens.</div>
+      <button id="landing-go">Get started</button>
+    </div>
+  </div>
+
+  <!-- beta auth gate (shown only once a datastore is configured) -->
+  <div id="auth-gate" hidden>
+    <div class="auth-card">
+      <img class="logo-img" src="logo.svg" alt="Catalyst UI" style="height:32px;margin:0 auto 2px" />
+      <div class="auth-title">Catalyst UI <span class="beta-badge">BETA</span></div>
+      <div class="auth-sub" id="auth-sub">Create an account to try the beta.</div>
+      <div id="google-wrap" hidden>
+        <div id="google-btn"></div>
+        <div class="auth-or"><span>or</span></div>
+      </div>
+      <input id="auth-email" type="email" placeholder="you@email.com" autocomplete="email" />
+      <input id="auth-pass" type="password" placeholder="Password (8+ characters)" autocomplete="current-password" />
+      <div id="auth-err" class="auth-err" hidden></div>
+      <button id="auth-submit" class="p-btn primary">Create account</button>
+      <div class="auth-switch"><span id="auth-switch-text">Already have an account?</span>
+        <a id="auth-switch-link">Sign in</a></div>
+    </div>
+  </div>
+
   <header>
-    <img class="logo-img" src="logo.svg" alt="Catalyst" />
+    <img class="logo-img" src="logo.svg" alt="Catalyst UI" />
+    <span class="brand-name">Catalyst UI</span>
+    <span class="beta-badge">BETA</span>
     <span class="tag">Generative UI</span>
     <span class="spacer"></span>
     <div class="stat" id="stat" style="visibility:hidden">
@@ -296,21 +738,58 @@
       <span>· <b id="s-model">–</b></span>
     </div>
     <span class="spacer"></span>
-    <div class="ds-toggle" id="ds-toggle">
+    <div class="hdr-right">
+      <button id="theme-btn" class="hdr-icon" title="Toggle light / dark"></button>
+      <select id="ds-select" class="ds-select" title="Design system">
+        <option value="shadcn">shadcn</option>
+        <option value="polaris">Polaris</option>
+      </select>
+      <div class="hdr-tools">
+        <button id="ds-import-btn" title="Import a design system">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
+        <button id="gallery-btn" title="Component gallery">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></button>
+        <button id="agent-prompt-btn" title="Edit the agent's system prompt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg></button>
+      </div>
+      <span id="account-email" class="tag" hidden></span>
+      <button id="signout-btn" class="hdr-icon" hidden title="Sign out">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
+    </div>
+    <div class="ds-toggle" id="ds-toggle" style="display:none">
       <button data-ds="shadcn" class="active">shadcn</button>
       <button data-ds="polaris">Polaris</button>
     </div>
   </header>
 
   <main>
+    <nav id="rail">
+      <button class="rail-item active" data-mode="chat" title="Chat — build any screen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span class="rail-label">Chat</span>
+      </button>
+      <button class="rail-item" data-mode="food" data-seed="I want to order some food" title="Food ordering agent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="rail-label">Food ordering</span>
+      </button>
+      <button class="rail-item" data-mode="booking" data-seed="Book a hair appointment" title="Booking agent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <span class="rail-label">Booking</span>
+      </button>
+      <button id="rail-add" title="New agent (soon)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="rail-label">Connect agent</span>
+      </button>
+    </nav>
     <section id="chat">
+      <div id="mode-hint" hidden></div>
       <div id="messages">
-        <div class="msg bot">Describe a screen and I'll build it. Then tell me what to change.</div>
+        <div class="msg bot">Describe a screen — it renders right here in the chat. Or pick an agent on the left for a guided flow.</div>
       </div>
       <div class="presets" id="presets"></div>
       <div id="composer">
         <div id="composer-box">
-          <textarea id="input" placeholder="Message… (e.g. a cost dashboard, dark theme)"></textarea>
+          <textarea id="input" placeholder="Message…"></textarea>
           <button id="send" aria-label="Send" title="Send">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -318,42 +797,229 @@
         </div>
       </div>
     </section>
-
-    <section id="preview">
-      <div id="surface" data-width="sm">
-        <div class="empty">
-          <img class="empty-art" src="empty.svg" alt="" />
-          <div class="empty-text">Describe a screen in the chat — your generated UI appears here.</div>
+    <aside id="agent-panel">
+      <div class="ap-resize" id="ap-resize" title="Drag to resize"></div>
+      <div class="ap-head">
+        <span class="ap-title">Agent</span>
+        <span class="ap-mode" id="ap-mode">food</span>
+      </div>
+      <div class="ap-tabs" role="tablist">
+        <button class="ap-tab active" data-tab="config" role="tab">Config</button>
+        <button class="ap-tab" data-tab="ui" role="tab">UI</button>
+        <button class="ap-tab" data-tab="trace" role="tab">Trace</button>
+        <button class="ap-tab" data-tab="settings" role="tab">Settings</button>
+      </div>
+      <div class="ap-panes">
+      <div class="ap-pane active" data-pane="config">
+      <div class="ap-scroll">
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Model preference</label></div>
+          <div class="ap-select-wrap">
+            <select id="ap-model" class="ap-select"><option value="auto">Auto (recommended)</option></select>
+          </div>
+        </div>
+        <div class="ap-sec">
+          <div class="ap-sec-h">
+            <label>System prompt</label>
+            <div class="ap-actions">
+              <button id="ap-reset" title="Reset to default">Reset</button>
+              <button id="ap-save" class="primary">Save</button>
+            </div>
+          </div>
+          <textarea id="ap-prompt" placeholder="Describe how this agent should behave…"></textarea>
+        </div>
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Connectors</label></div>
+          <div class="ap-conn">
+            <div class="ap-conn-row">
+              <div class="ap-conn-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+              <div class="ap-conn-body">
+                <div class="ap-conn-name">Web search</div>
+                <div class="ap-conn-sub">Pull real, current data into the screen</div>
+              </div>
+              <button class="ap-toggle on" id="ap-web" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="ap-conn-row">
+              <div class="ap-conn-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              </div>
+              <div class="ap-conn-body">
+                <div class="ap-conn-name" id="ap-agent-name">Your agent endpoint</div>
+                <div class="ap-conn-sub" id="ap-agent-sub">Route this chat to your own API</div>
+              </div>
+              <button class="ap-link-btn" id="ap-agent-btn">Connect</button>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
-
-    <aside id="inspector">
-      <div class="tabs">
-        <button data-tab="json" class="active">JSON</button>
-        <button data-tab="think">Thinking</button>
       </div>
-      <div id="pane-json" class="pane active">
-        <pre id="json-pre"></pre>
-        <div class="json-tools" id="json-tools" hidden>
-          <button id="copy-json" title="Copy JSON">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span>
+      <div class="ap-pane" data-pane="ui">
+      <div class="ap-scroll">
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Design system</label></div>
+          <div class="ap-select-wrap">
+            <select id="ap-ds" class="ap-select"></select>
+          </div>
+          <div class="ap-ds-note">The screen the agent builds renders in this design system. Swap it anytime — the same A2UI tree re-renders.</div>
+          <button class="ap-wide-btn" id="ap-ds-import">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            Import a design system
           </button>
-          <button id="dl-json" title="Download JSON">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg><span>Download</span>
+        </div>
+        <div class="ap-sec" style="padding-bottom:6px">
+          <div class="ap-sec-h"><label>Components</label><span class="ap-ds-tag" id="ap-comp-ds">shadcn</span></div>
+          <div class="ap-comp-note">Every component the agent may compose with, in the selected design system.</div>
+        </div>
+        <div class="ap-comp-surface gen-surface" id="ap-components"></div>
+      </div>
+      </div>
+      <div class="ap-pane" data-pane="trace">
+      <div class="ap-scroll">
+        <div class="ap-trace-wrap" id="ap-trace">
+          <div class="ap-empty">Send a message — each turn's steps and eval checks show up here.</div>
+        </div>
+      </div>
+      </div>
+      <div class="ap-pane" data-pane="settings">
+      <div class="ap-scroll">
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Usage</label></div>
+          <div class="ap-usage-head"><span id="ap-usage-used">0</span> of <span id="ap-usage-total">20</span> credits used<span class="ap-usage-left" id="ap-usage-left">20 left</span></div>
+          <div class="ap-usage-bar"><div class="ap-usage-fill" id="ap-usage-fill"></div></div>
+          <div class="ap-usage-note">Each new generation uses 1 credit; cached renders are free.</div>
+          <button class="ap-wide-btn" id="ap-buy-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7z"/></svg>
+            Buy more credits
           </button>
         </div>
       </div>
-      <div id="pane-think" class="pane"></div>
+      </div>
+      </div>
     </aside>
   </main>
 
+  <!-- Bring-your-own-agent — point Catalyst at your own endpoint -->
+  <div id="connect-modal" hidden>
+    <div class="ag-modal-card prompt-card">
+      <button id="connect-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3>Connect your agent</h3>
+        <p class="prompt-sub">Point Catalyst at your own agent endpoint. It receives the conversation and returns UI, rendered in your selected design system. Your agent framework doesn't matter — it just speaks this JSON.</p>
+        <input id="connect-url" type="url" placeholder="https://your-api.com/agent" spellcheck="false" />
+        <div class="connect-contract">
+          <div><span class="ct-tag">receives</span><code>POST { history, components, mode }</code></div>
+          <div><span class="ct-tag">returns</span><code>{ reply, components }</code> — an A2UI tree, or <code>[]</code> for a text-only reply</div>
+        </div>
+        <div id="connect-status" class="connect-status" hidden></div>
+        <div class="prompt-actions">
+          <button id="connect-clear" class="p-btn">Disconnect</button>
+          <button id="connect-test" class="p-btn">Test</button>
+          <span style="flex:1"></span>
+          <button id="connect-save" class="p-btn primary">Connect</button>
+        </div>
+        <div class="connect-docs">
+          <div class="doc-head">Build your endpoint</div>
+          <div class="doc-tabs">
+            <button class="doc-tab active" data-lang="curl">cURL</button>
+            <button class="doc-tab" data-lang="python">Python</button>
+            <button class="doc-tab" data-lang="ts">TypeScript</button>
+            <button class="doc-tab" data-lang="node">Node</button>
+          </div>
+          <div class="doc-code"><button class="doc-copy">Copy</button><pre id="doc-snippet"></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component gallery — every renderer component in the selected design system -->
+  <div id="gallery-modal" hidden>
+    <div class="gallery-card">
+      <div class="gallery-hd">
+        <b>Components</b><span class="gallery-sub">in your selected design system</span>
+        <select id="gallery-ds" class="ds-select"></select>
+        <span style="flex:1"></span>
+        <button id="gallery-close" title="Close">✕</button>
+      </div>
+      <div class="gallery-bd"><div id="gallery-surface" class="gen-surface"></div></div>
+    </div>
+  </div>
+
+  <!-- Agent system-prompt editor — opened by ⚙ Prompt -->
+  <div id="prompt-modal" hidden>
+    <div class="ag-modal-card prompt-card">
+      <button id="prompt-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3 id="prompt-title">Agent system prompt</h3>
+        <p class="prompt-sub">Tweak how this agent behaves. Saved in this browser; applies from your next message.</p>
+        <textarea id="prompt-text" spellcheck="false"></textarea>
+        <div class="prompt-actions">
+          <button id="prompt-reset" class="p-btn">Reset to default</button>
+          <span style="flex:1"></span>
+          <button id="prompt-save" class="p-btn primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Figma / design-system agent — its own modal, opened by ⚡ Import -->
+  <div id="ag-modal" hidden>
+    <div class="ag-modal-card">
+      <div id="tab-agent"></div>
+      <button id="ag-modal-close" title="Close">✕</button>
+    </div>
+  </div>
+
+  <!-- Credits — buy more generations (demo: no real charge) -->
+  <div id="credits-modal" hidden>
+    <div class="ag-modal-card prompt-card">
+      <button id="credits-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3>Credits</h3>
+        <p class="prompt-sub">Each new generation costs <b>1 credit</b>. Cached renders are free. You have <b id="credits-bal">20</b> left.</p>
+        <div class="credit-packs" id="credit-packs">
+          <button class="credit-pack" data-add="50" data-price="5"><b>50</b><span>credits</span><em>$5</em></button>
+          <button class="credit-pack popular" data-add="200" data-price="15"><span class="pack-tag">Popular</span><b>200</b><span>credits</span><em>$15</em></button>
+          <button class="credit-pack" data-add="500" data-price="30"><b>500</b><span>credits</span><em>$30</em></button>
+        </div>
+        <div class="credit-demo-note">Demo mode — no real payment is taken and no card is charged. Buying adds credits instantly.</div>
+      </div>
+    </div>
+  </div>
+
 <script src="renderer.js"></script>
 <script src="polaris-bundle.js"></script>
+<script src="tokens-panel.js"></script>
 <script>
   const $ = (s) => document.querySelector(s);
   let history = [];
   let components = null;
+  let currentSurface = null;   // latest inline generated-UI mount in the thread
+  let currentDS = "shadcn";    // renderer: "shadcn" (vanilla) or "polaris" (real React)
+  let activeSkin = null;       // imported/token design-system id layered on the shadcn renderer
+  let mode = "chat";
+  // deterministic agent state — cart/checkout/pay are handled in code (no model call, 0 tokens)
+  let agentState = { cart: [], lastMenu: null, coords: null };
+
+  // exposed for tokens-panel.js (Import agent) + the DS dropdown so they can
+  // re-skin / re-render the newest inline UI instead of a fixed #surface.
+  window.__cat = {
+    get surface() { return currentSurface; },
+    get ds() { return currentDS; },
+    render() { renderCurrent(); },
+  };
+
+  const scrollDown = () => { const m = $("#messages"); m.scrollTop = m.scrollHeight; };
+  function pickWidth(comps) {
+    const s = JSON.stringify(comps || {});
+    return (/"(Chart|Table|Grid)"/.test(s) || /"width"\s*:\s*"lg"/.test(s)) ? "lg" : "sm";
+  }
+  const SKELETON =
+    '<div class="sk-head"><span class="shimmer-bar" style="width:44%;height:15px"></span>' +
+    '<span class="sk-tag">✦ building UI…</span></div>' +
+    '<div class="sk-row"><div class="shimmer-tile"></div><div class="shimmer-tile"></div><div class="shimmer-tile"></div></div>';
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function boot() {
     const presets = await (await fetch("/presets.json")).json();
@@ -365,124 +1031,1014 @@
       box.appendChild(c);
     });
   }
+  // tiny, safe markdown for assistant bubbles: escape first, then bold / bullets / line breaks
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function mdFormat(text) {
+    const lines = esc(text).split(/\r?\n/);
+    let html = "", inList = false;
+    for (let line of lines) {
+      line = line.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>");
+      const b = line.match(/^\s*[-*]\s+(.*)/);
+      if (b) { if (!inList) { html += "<ul>"; inList = true; } html += "<li>" + b[1] + "</li>"; }
+      else { if (inList) { html += "</ul>"; inList = false; } if (line.trim()) html += '<div class="md-line">' + line + "</div>"; }
+    }
+    if (inList) html += "</ul>";
+    return html;
+  }
   function addMsg(role, text, cls) {
     const m = document.createElement("div");
-    m.className = "msg " + (cls || (role === "user" ? "user" : "bot"));
-    m.textContent = text;
+    const klass = cls || (role === "user" ? "user" : "bot");
+    m.className = "msg " + klass;
+    if (klass.indexOf("bot") !== -1) m.innerHTML = mdFormat(text); else m.textContent = text;
     $("#messages").appendChild(m); $("#messages").scrollTop = $("#messages").scrollHeight;
     return m;
   }
-  function addMeta(text) {
-    const m = document.createElement("div");
-    m.className = "msg-meta";
-    m.innerHTML = '<span class="spark">✦</span>' + text;
-    $("#messages").appendChild(m); $("#messages").scrollTop = $("#messages").scrollHeight;
-  }
-  function shimmerPreview() {
-    if (window.unmountPolaris) window.unmountPolaris($("#surface"));  // don't clobber a live React root
-    $("#surface").innerHTML =
-      '<div class="sk-card"><div class="shimmer-bar" style="width:45%"></div>' +
-      '<div class="shimmer-bar" style="width:85%"></div><div class="shimmer-bar" style="width:70%"></div>' +
-      '<div class="shimmer-bar" style="width:90%;height:60px"></div></div>';
+  // collapsible "Reasoning" + Component JSON, rendered under each assistant reply
+  function addTurnTools(out, sec) {
+    const wrap = document.createElement("div");
+    wrap.className = "turn-tools";
+    const think = (out.thinking && out.thinking.trim()) ? out.thinking : "(no reasoning trace returned)";
+    const latLabel = out.cached ? "instant · cached" : sec + "s";
+    const hasUI = Array.isArray(out.components) && out.components.length;
+    const json = JSON.stringify(out.components, null, 2);
+    const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+    const dlSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
+    wrap.innerHTML =
+      '<details class="reason"><summary>✦ Reasoning · ' + latLabel + ' · ' + out.model + ' · ' + out.tier + '</summary>' +
+        '<div class="reason-body"></div></details>' +
+      (hasUI ?
+      '<details class="reason"><summary>&lt;/&gt; Component JSON · ' +
+        out.usage.input + ' in / ' + out.usage.output + ' out</summary>' +
+        '<div class="reason-tools">' +
+          '<button class="copy-json">' + copySvg + '<span>Copy</span></button>' +
+          '<button class="dl-json">' + dlSvg + '<span>Download</span></button>' +
+        '</div><pre class="json-pre"></pre></details>' : '');
+    wrap.querySelector(".reason-body").textContent =
+      "Model: " + out.model + "   ·   tier: " + out.tier + "   ·   " + sec + "s\n" +
+      "Tokens: " + out.usage.input + " in / " + out.usage.output + " out\n──────────\n\n" + think;
+    if (hasUI) {
+      wrap.querySelector(".json-pre").textContent = json;
+      wrap.querySelector(".copy-json").onclick = () => {
+        navigator.clipboard.writeText(json);
+        const s = wrap.querySelector(".copy-json span"), t = s.textContent;
+        s.textContent = "Copied"; setTimeout(() => (s.textContent = t), 1200);
+      };
+      wrap.querySelector(".dl-json").onclick = () => {
+        const blob = new Blob([json], { type: "application/json" });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+        a.download = "catalyst-ui.json"; a.click(); URL.revokeObjectURL(a.href);
+      };
+    }
+    $("#messages").appendChild(wrap); scrollDown();
   }
 
-  async function send() {
-    const text = $("#input").value.trim();
+  async function send(preset) {
+    const text = (preset != null ? preset : $("#input").value).trim();
     if (!text) return;
-    $("#input").value = "";
+    if (credits <= 0) { openCredits(); return; }   // out of credits — prompt to buy, keep the text
+    if (preset == null) $("#input").value = "";
     addMsg("user", text); history.push({ role: "user", content: text });
     const btn = $("#send"); btn.disabled = true;
 
     // shimmering "thinking" bubble with a live seconds counter
+    const AGENT_PHASES = ["Understanding your request", "Searching the web", "Reading results", "Putting it together"];
     const t0 = performance.now();
     const pending = document.createElement("div");
-    pending.className = "msg bot pending";
-    pending.innerHTML = '<span class="think-dot"></span><span class="secs">Thinking 0.0s</span>';
-    $("#messages").appendChild(pending); $("#messages").scrollTop = $("#messages").scrollHeight;
+    pending.className = "msg thinking";
+    pending.textContent = mode === "chat" ? "Thinking…" : AGENT_PHASES[0] + "…";
+    $("#messages").appendChild(pending); scrollDown();
+    const apTurn = mode !== "chat" ? apStartTurn(text) : null;   // right-panel live trace for this turn
     const timer = setInterval(() => {
-      pending.querySelector(".secs").textContent =
-        "Thinking " + Math.floor((performance.now() - t0) / 1000) + "s";
+      const n = Math.floor((performance.now() - t0) / 1000);
+      if (mode === "chat") pending.textContent = "Thinking " + n + "s…";
+      else {
+        pending.textContent = AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
+        if (n >= 6) apAdvance(apTurn, "compose");
+        else if (n >= 3) apAdvance(apTurn, "search");
+      }
     }, 250);
-    shimmerPreview();
 
     try {
-      const r = await fetch("/api/chat", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history, components }),
-      });
+      const payload = { history, components, mode, agentPrompt: promptOverrides[mode] || undefined,
+        model: (mode !== "chat" && apModel && apModel !== "auto") ? apModel : undefined,
+        webSearch: (mode !== "chat" && !apWeb) ? false : undefined };
+      const r = agentEndpoint
+        ? await fetch("/api/proxy", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: agentEndpoint, body: payload }) })
+        : await fetch("/api/chat", { method: "POST",
+            headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
+            body: JSON.stringify(payload) });
       const out = await r.json();
       clearInterval(timer); pending.remove();
-      if (out.error) { addMsg("bot", "⚠ " + out.error); $("#surface").innerHTML = '<div class="empty">—</div>'; return; }
+      if (r.status === 401) { apFail(apTurn); $("#auth-gate").hidden = false; return; }
+      if (out.error) { apFail(apTurn); addMsg("bot", "⚠ " + out.error); return; }
+      // reconcile the trace with what actually happened this turn
+      apMark(apTurn, "understand", "done");
+      apMark(apTurn, "search", "done", out.searched ? (out.searched > 1 ? out.searched + " web queries" : "1 web query") : "no web search");
       history.push({ role: "assistant", content: out.reply });
       components = out.components;
+      if (!out.cached) { credits = Math.max(0, credits - 1); saveCredits(); }   // charge 1 per real generation; cache is free
+      if (mode !== "chat") captureAgentState(components);   // for deterministic follow-ups
       const sec = Math.round(out.latency_ms / 1000);
       addMsg("bot", out.reply);
-      addMeta("Thought for " + sec + "s · " + out.model + " · " + out.tier);
-      renderCurrent();
-      $("#json-pre").textContent = JSON.stringify(components, null, 2);
-      $("#json-tools").hidden = false;
-      $("#pane-think").textContent =
-        "Model: " + out.model + "   ·   tier: " + out.tier + "   ·   " + sec + "s\n" +
-        "Tokens: " + out.usage.input + " in / " + out.usage.output + " out\n" +
-        "──────────\n\n" + (out.thinking || "(none)");
+      if (out.searched) {
+        const note = document.createElement("div");
+        note.className = "search-note";
+        note.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
+          "searched the web" + (out.searched > 1 ? " · " + out.searched + " queries" : "");
+        $("#messages").appendChild(note); scrollDown();
+      }
+      addTurnTools(out, sec);
+      // only build a screen when the agent actually produced one (otherwise it's just talking)
+      if (Array.isArray(components) && components.length) {
+        apMark(apTurn, "compose", "done", apComponentSummary(components));
+        apMark(apTurn, "render", "run");
+        const surf = document.createElement("div");
+        surf.className = "gen-surface";
+        surf.dataset.width = pickWidth(components);
+        if (mode !== "chat") { surf.dataset.agent = ""; attachAgentClicks(surf); }
+        surf.innerHTML = SKELETON;
+        $("#messages").appendChild(surf);
+        currentSurface = surf;
+        scrollDown();
+        await sleep(560);          // brief build beat, so it reads as the agent working
+        surf.innerHTML = "";
+        renderCurrent();
+        apMark(apTurn, "render", "done");
+        scrollDown();
+      } else {
+        apMark(apTurn, "compose", "done", "text reply — no screen");
+        apMark(apTurn, "render", "done", "—");
+      }
+      apFinish(apTurn, out, sec);
+      // header stat line
       $("#stat").style.visibility = "visible";
       $("#s-lat").textContent = sec + "s";
       $("#s-in").textContent = out.usage.input;
       $("#s-out").textContent = out.usage.output;
       $("#s-tot").textContent = out.usage.total;
       $("#s-model").textContent = out.model;
-    } catch (e) { clearInterval(timer); pending.remove(); addMsg("bot", "⚠ request failed: " + e.message); }
+    } catch (e) { clearInterval(timer); pending.remove(); apFail(apTurn); addMsg("bot", "⚠ request failed: " + e.message); }
     finally { btn.disabled = false; $("#input").focus(); }
   }
-  $("#send").onclick = send;
-  $("#input").addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  });
-  document.querySelectorAll(".tabs > button").forEach((b) => {
-    b.onclick = () => {
-      document.querySelectorAll(".tabs > button").forEach((x) => x.classList.remove("active"));
-      document.querySelectorAll(".pane").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active"); $("#pane-" + b.dataset.tab).classList.add("active");
-    };
-  });
-  $("#copy-json").onclick = () => {
-    if (!components) return;
-    navigator.clipboard.writeText(JSON.stringify(components, null, 2));
-    const s = $("#copy-json").querySelector("span"), t = s.textContent;
-    s.textContent = "Copied"; setTimeout(() => (s.textContent = t), 1200);
-  };
-  $("#dl-json").onclick = () => {
-    if (!components) return;
-    const blob = new Blob([JSON.stringify(components, null, 2)], { type: "application/json" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = "catalyst-ui.json"; a.click(); URL.revokeObjectURL(a.href);
-  };
+  // ---- special components handled client-side (renderers stay untouched) ----
+  // Map + LocationRequest aren't in the renderer's vocabulary, so we swap them for
+  // renderable placeholders before rendering, then upgrade them after.
+  const BLANK_IMG = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+  function transformSpecial(node) {
+    if (Array.isArray(node)) return node.map(transformSpecial);
+    if (node && typeof node === "object") {
+      if (node.component === "Map")
+        return { component: "Image", url: BLANK_IMG, alt: "cat-map:" + [node.lat || 0, node.lon || 0, node.zoom || 14, (node.label || "")].join("|") };
+      if (node.component === "LocationRequest" || node.component === "LocationButton")
+        return { component: "Button", label: "cat-loc:" + (node.label || "Use my current location"), variant: node.variant || "outline" };
+      const out = {};
+      for (const k in node) out[k] = transformSpecial(node[k]);
+      return out;
+    }
+    return node;
+  }
+  function mountSpecial(surface) {
+    surface.querySelectorAll("img").forEach((img) => {
+      if (!(img.alt || "").startsWith("cat-map:")) return;
+      const parts = img.alt.slice(8).split("|"), lat = +parts[0], lon = +parts[1], zoom = +parts[2] || 14, label = parts[3] || "";
+      const div = document.createElement("div"); div.className = "gen-map";
+      img.replaceWith(div);
+      if (window.L) {
+        try {
+          const map = L.map(div, { scrollWheelZoom: false }).setView([lat, lon], zoom);
+          const dark = document.documentElement.classList.contains("dark");
+          const tiles = dark
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+          L.tileLayer(tiles, { maxZoom: 20, attribution: "© OpenStreetMap © CARTO" }).addTo(map);
+          const mk = L.marker([lat, lon]).addTo(map); if (label) mk.bindPopup(label).openPopup();
+          setTimeout(() => map.invalidateSize(), 120);
+        } catch (e) { div.textContent = "Map unavailable"; }
+      } else { div.textContent = "Map loading…"; }
+    });
+    surface.querySelectorAll("button").forEach((btn) => {
+      if (!(btn.textContent || "").startsWith("cat-loc:")) return;
+      const label = btn.textContent.slice(8) || "Use my current location";
+      btn.classList.add("loc-btn");
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>' + label;
+      btn.addEventListener("click", (e) => { e.stopPropagation(); requestLocation(btn, label); }, true);
+    });
+  }
+  async function requestLocation(btn, label) {
+    if (!navigator.geolocation) { addMsg("bot", "Location isn't available in this browser — type your area instead."); return; }
+    btn.disabled = true; const svg = btn.querySelector("svg"); btn.textContent = "Locating…"; if (svg) btn.prepend(svg);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      let place = "";
+      try {
+        const r = await fetch("https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=" + lat + "&lon=" + lon);
+        const a = (await r.json()).address || {};
+        place = [a.suburb || a.neighbourhood || a.city_district, a.city || a.town || a.village || a.county, a.postcode].filter(Boolean).join(", ");
+      } catch (e) {}
+      send(place ? "My location is " + place + " (" + lat.toFixed(4) + ", " + lon.toFixed(4) + ")"
+                 : "My location is " + lat.toFixed(4) + ", " + lon.toFixed(4));
+    }, () => {
+      btn.disabled = false; btn.textContent = label;
+      addMsg("bot", "Couldn't get your location — you can type your area instead.");
+    }, { enableHighAccuracy: false, timeout: 10000 });
+  }
 
-  // design-system toggle — vanilla shadcn skin vs REAL @shopify/polaris (React)
-  let currentDS = "shadcn";
-  $("#surface").dataset.ds = currentDS;
+  // render `components` into the newest inline surface, using the current design system
   function renderCurrent() {
-    const surface = $("#surface");
-    if (!components) return;
+    const surface = currentSurface;
+    if (!surface || !components) return;
+    const tree = transformSpecial(components);   // swap Map / LocationRequest for placeholders
     if (currentDS === "polaris") {
       surface.dataset.ds = "polaris";
-      try { window.renderPolaris(components, surface); }
+      try { window.renderPolaris(tree, surface); }
       catch (e) { surface.innerHTML = '<div class="empty">Polaris error: ' + e.message + "</div>"; }
     } else {
       if (window.unmountPolaris) window.unmountPolaris(surface);  // tear down React root
       surface.dataset.ds = "shadcn";
-      try { renderA2UI(components, {}, surface); }
+      try { renderA2UI(tree, {}, surface); }
       catch (e) { surface.innerHTML = '<div class="empty">render error: ' + e.message + "</div>"; }
     }
+    // layer the selected imported design-system skin onto this surface (or clear it)
+    if (window.__skins) {
+      if (activeSkin && currentDS === "shadcn") window.__skins.apply(surface, activeSkin);
+      else window.__skins.clear(surface);
+    }
+    mountSpecial(surface);   // upgrade placeholders → live map + geolocation button
     surface.classList.remove("rise"); void surface.offsetWidth; surface.classList.add("rise");  // ease-in
   }
-  document.querySelectorAll("#ds-toggle button").forEach((b) => {
+
+  const titleOf = (root) => {
+    const t = root && root.querySelector(".ui-text.v-title, .ui-text.v-subtitle, .ui-label, .ui-text");
+    return t ? t.textContent.trim() : "";
+  };
+  const priceOf = (root) => {
+    const m = (root && root.textContent || "").match(/[£$€]\s?(\d+(?:\.\d{1,2})?)/);
+    return m ? parseFloat(m[1]) : 0;
+  };
+  const cartTotal = () => agentState.cart.reduce((s, i) => s + (i.price || 0), 0);
+
+  // In agent mode the generated UI is interactive. Deterministic actions (Add / Remove /
+  // Checkout / Pay) are handled IN CODE — zero model calls, instant. Only open-ended taps
+  // (pick a restaurant, free choices) go to the model.
+  function attachAgentClicks(surf) {
+    surf.addEventListener("click", (e) => {
+      if (mode === "chat" || surf !== currentSurface) return;
+      if ($("#send").disabled) return;                 // a turn is already in flight
+      const btn = e.target.closest(".ui-btn, .ui-radio, .ui-check");
+      const card = e.target.closest(".ui-card");
+      const clickable = btn || card;
+      if (!clickable || !surf.contains(clickable)) return;
+
+      if (btn) {  // ---- deterministic, no model ----
+        const t = (btn.textContent || "").trim(), low = t.toLowerCase();
+        if (/add more|back to menu/.test(low)) return showLastMenu();
+        if (/^remove\b/.test(low)) return cartRemove(t);
+        if (/^add\b/.test(low)) return cartAdd(btn.closest(".ui-card"));
+        if (/checkout|proceed/.test(low)) return showPayment();
+        if (/^pay\b|confirm & pay|confirm and pay/.test(low)) return showConfirmation();
+      }
+
+      // ---- everything else: send to the model ----
+      let label;
+      if (btn) {
+        const title = titleOf(btn.closest(".ui-card"));
+        const action = (btn.textContent || "").trim();
+        label = title ? (action ? action + " — " + title : title) : action;
+      } else {
+        label = titleOf(card) || (card.textContent || "").trim();
+      }
+      label = (label || "").trim().replace(/\s+/g, " ").slice(0, 100);
+      if (!label) return;
+      send(label);
+    });
+  }
+
+  // ---- deterministic cart / checkout / pay (client-side, 0 tokens) ----
+  function showLocalScreen(reply, tree) {
+    addMsg("bot", reply);
+    history.push({ role: "assistant", content: reply });   // compact history — no JSON replay
+    components = tree;
+    const surf = document.createElement("div");
+    surf.className = "gen-surface"; surf.dataset.width = "sm"; surf.dataset.agent = "";
+    attachAgentClicks(surf);
+    $("#messages").appendChild(surf);
+    currentSurface = surf;
+    renderCurrent();
+    scrollDown();
+  }
+  function cartAdd(card) {
+    if (!card) return;
+    agentState.cart.push({ name: titleOf(card) || "Item", price: priceOf(card) });
+    showCart();
+  }
+  function cartRemove(btnText) {
+    const name = btnText.replace(/^remove\s*[—–-]?\s*/i, "").trim().toLowerCase();
+    const i = agentState.cart.findIndex((x) => x.name.toLowerCase() === name);
+    if (i >= 0) agentState.cart.splice(i, 1);
+    showCart();
+  }
+  function showLastMenu() {
+    if (agentState.lastMenu) showLocalScreen("Here's the menu — add what you'd like.", agentState.lastMenu);
+    else showCart();
+  }
+  function showCart() {
+    const cart = agentState.cart, total = cartTotal();
+    const lines = cart.length ? cart.map((i) => ({ component: "Row", justify: "between", gap: "md", align: "center", children: [
+      { component: "Text", text: i.name, variant: "body" },
+      { component: "Row", gap: "sm", align: "center", children: [
+        { component: "Text", text: "£" + i.price.toFixed(2), variant: "body" },
+        { component: "Button", label: "Remove — " + i.name, variant: "ghost", size: "sm" } ] } ] }))
+      : [{ component: "Text", text: "Your cart is empty.", variant: "muted" }];
+    const tree = [{ component: "Screen", children: [{ component: "Card", children: [
+      { component: "Text", text: "Your order", variant: "title" },
+      ...lines,
+      { component: "Separator" },
+      { component: "Row", justify: "between", children: [
+        { component: "Text", text: "Total", variant: "subtitle" },
+        { component: "Text", text: "£" + total.toFixed(2), variant: "subtitle" } ] },
+      { component: "Row", gap: "sm", children: [
+        { component: "Button", label: "Add more", variant: "secondary" },
+        { component: "Button", label: "Checkout", variant: "default" } ] } ] }] }];
+    showLocalScreen(cart.length ? "Added — " + cart.length + " item" + (cart.length > 1 ? "s" : "") + " in your order." : "Your cart is empty.", tree);
+  }
+  function showPayment() {
+    const total = cartTotal();
+    const tree = [{ component: "Screen", children: [{ component: "Card", children: [
+      { component: "Text", text: "Payment", variant: "title" },
+      { component: "Text", text: "Order total: £" + total.toFixed(2), variant: "muted" },
+      { component: "Input", label: "Card number", placeholder: "1234 5678 9012 3456" },
+      { component: "Row", gap: "md", children: [
+        { component: "Input", label: "Expiry", placeholder: "MM/YY" },
+        { component: "Input", label: "CVC", placeholder: "123" } ] },
+      { component: "Input", label: "Name on card", placeholder: "Your name" },
+      { component: "Button", label: "Pay £" + total.toFixed(2), variant: "default" } ] }] }];
+    showLocalScreen("Almost there — enter your payment details. (Demo — nothing is charged.)", tree);
+  }
+  function showConfirmation() {
+    const total = cartTotal(), c = agentState.coords || { lat: 55.9533, lon: -3.1883 };
+    const tree = [{ component: "Screen", children: [
+      { component: "Card", children: [
+        { component: "Alert", variant: "success", title: "Order confirmed!", description: "Thanks — your order is on its way." },
+        { component: "Text", text: "Total paid: £" + total.toFixed(2) + " (demo)", variant: "muted" } ] },
+      { component: "Card", children: [
+        { component: "Text", text: "Delivery tracking", variant: "subtitle" },
+        { component: "Map", lat: c.lat, lon: c.lon, zoom: 14, label: "Your driver" },
+        { component: "Text", text: "Alex · bicycle · arriving in ~25 min", variant: "muted" },
+        { component: "Progress", value: 35 } ] } ] }];
+    showLocalScreen("Your order is confirmed! Here's your live delivery tracking.", tree);
+    agentState.cart = [];
+  }
+  // capture state from a model-generated screen so deterministic follow-ups have context
+  function captureAgentState(comps) {
+    const s = JSON.stringify(comps || []);
+    const m = s.match(/"lat"\s*:\s*(-?\d+\.?\d*)\s*,\s*"lon"\s*:\s*(-?\d+\.?\d*)/);
+    if (m) agentState.coords = { lat: +m[1], lon: +m[2] };
+    const cards = (s.match(/"Card"/g) || []).length;
+    if (cards >= 2 && /[£$€]/.test(s)) agentState.lastMenu = comps;   // looks like a menu
+  }
+
+  $("#send").onclick = () => send();
+  $("#input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  // the design-system dropdown is the single source of truth. It applies to the current
+  // screen AND every future one (persists across chat turns and agent steps) via renderCurrent.
+  window.__cat.applyDS = function (id) {
+    if (id === "polaris") { currentDS = "polaris"; activeSkin = null; }
+    else { currentDS = "shadcn"; activeSkin = (id === "shadcn") ? null : id; }  // imported skins ride shadcn
+    const sel = $("#ds-select"); if (sel && sel.value !== id) sel.value = id;
+    renderCurrent();
+    if (typeof apSyncDS === "function") apSyncDS();   // keep the panel's UI-tab picker in step
+  };
+  $("#ds-select").addEventListener("change", (e) => window.__cat.applyDS(e.target.value));
+
+  // ---- agent rail: toggle the chat's mode (Chat = any screen, task agents = one use-case) ----
+  // Selecting an agent just opens a fresh, scoped chat with a greeting — the USER starts talking.
+  const GREET = {
+    chat: "New chat. Describe a screen and I'll build it right here.",
+    food: "Hey — I'm your food-ordering agent. What are you in the mood for?",
+    booking: "Hi — I'm your booking agent. What would you like to book?",
+  };
+  function startMode(b) {
+    if (b.classList.contains("active")) { $("#input").focus(); return; }  // re-click = keep going
+    document.querySelectorAll(".rail-item").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    mode = b.dataset.mode;
+    $("#chat").dataset.mode = mode;   // hides the general presets while an agent runs
+    apOpen(mode !== "chat", mode);    // agent modes get the persistent right-hand workspace
+    // switching starts a FRESH chat scoped to this mode; no auto-generation
+    history = []; components = null; currentSurface = null;
+    agentState = { cart: [], lastMenu: null, coords: null };
+    $("#stat").style.visibility = "hidden";
+    $("#mode-hint").hidden = true;
+    $("#messages").innerHTML = '<div class="msg bot">' + (GREET[mode] || GREET.chat) + '</div>';
+    $("#input").value = ""; $("#input").focus();
+  }
+  document.querySelectorAll(".rail-item").forEach((b) => { b.onclick = () => startMode(b); });
+
+  // ---- agent system-prompt editor (⚙ Prompt) ----
+  let agentPromptDefaults = {};
+  let promptOverrides = {};
+  try { promptOverrides = JSON.parse(localStorage.getItem("catalyst.agentPrompts") || "{}"); } catch (e) {}
+  fetch("/api/chat").then((r) => r.json()).then((d) => {
+    agentPromptDefaults = d.prompts || {};
+    apFillModels(d.models);
+    // if the panel is already open and the user hasn't customized this mode, fill in the freshly-loaded default
+    if ($("#agent-panel").classList.contains("open") && promptOverrides[mode] == null) $("#ap-prompt").value = effectivePrompt(mode);
+  }).catch(() => {});
+  const effectivePrompt = (m) => (promptOverrides[m] != null ? promptOverrides[m] : (agentPromptDefaults[m] || ""));
+  $("#agent-prompt-btn").onclick = () => {
+    $("#prompt-title").textContent = "Agent system prompt · " + (mode === "chat" ? "Chat (extra instructions)" : mode);
+    $("#prompt-text").value = effectivePrompt(mode);
+    $("#prompt-modal").hidden = false; $("#prompt-text").focus();
+  };
+  $("#prompt-close").onclick = () => { $("#prompt-modal").hidden = true; };
+  $("#prompt-modal").addEventListener("click", (e) => { if (e.target === $("#prompt-modal")) $("#prompt-modal").hidden = true; });
+  $("#prompt-save").onclick = () => {
+    const v = $("#prompt-text").value;
+    if (v.trim() === (agentPromptDefaults[mode] || "").trim()) delete promptOverrides[mode];
+    else promptOverrides[mode] = v;
+    localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+    $("#prompt-modal").hidden = true;
+    addMsg("bot", "✓ Saved the " + (mode === "chat" ? "chat" : mode + " agent") + " prompt — it applies from your next message.");
+  };
+  $("#prompt-reset").onclick = () => {
+    delete promptOverrides[mode];
+    localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+    $("#prompt-text").value = agentPromptDefaults[mode] || "";
+  };
+
+  // ---- agent workspace panel (right side; shown in agent modes only) ----
+  // Left column stays the chat; this panel persists the agent's editable prompt
+  // and a live, per-turn trace of what it actually did.
+  const AP_STEPS = [
+    { key: "understand", label: "Understanding the request" },
+    { key: "search", label: "Searching the web" },
+    { key: "compose", label: "Composing the screen" },
+    { key: "render", label: "Rendering" },
+  ];
+  function apOpen(on, m) {
+    $("#agent-panel").classList.toggle("open", !!on);
+    document.body.classList.toggle("agent-mode", !!on);   // hides the header DS picker + gallery; the panel owns them now
+    if (on) {
+      $("#ap-mode").textContent = m; $("#ap-prompt").value = effectivePrompt(m);
+      apSyncAgent(); apSyncDS(); apClearTrace(); apTab("config"); apCompRendered = false;
+    }
+  }
+  function apClearTrace() {
+    $("#ap-trace").innerHTML = '<div class="ap-empty">Send a message — the agent’s steps for each turn show up here.</div>';
+  }
+  function apStartTurn(text) {
+    const wrap = $("#ap-trace"); const empty = wrap.querySelector(".ap-empty"); if (empty) empty.remove();
+    const turn = document.createElement("div");
+    turn.className = "ap-turn";
+    turn.innerHTML = '<div class="ap-turn-q"></div><ul class="ap-steps"></ul><div class="ap-turn-meta" hidden></div>';
+    turn.querySelector(".ap-turn-q").textContent = "“" + text + "”";
+    const ul = turn.querySelector(".ap-steps");
+    AP_STEPS.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.className = "ap-step"; li.dataset.step = s.key; li.dataset.state = i === 0 ? "run" : "wait";
+      li.innerHTML = '<span class="dot"></span><span>' + s.label + '</span><span class="ap-sub"></span>';
+      ul.appendChild(li);
+    });
+    wrap.appendChild(turn); wrap.scrollTop = wrap.scrollHeight;
+    return turn;
+  }
+  function apMark(turn, key, state, sub) {
+    if (!turn) return;
+    const li = turn.querySelector('.ap-step[data-step="' + key + '"]'); if (!li) return;
+    li.dataset.state = state;
+    if (sub != null) li.querySelector(".ap-sub").textContent = sub;
+  }
+  function apAdvance(turn, key) {  // mark prior steps done, `key` running (for the live wait)
+    if (!turn) return; let hit = false;
+    turn.querySelectorAll(".ap-step").forEach((li) => {
+      if (li.dataset.step === key) { if (li.dataset.state !== "done") li.dataset.state = "run"; hit = true; }
+      else if (!hit && li.dataset.state !== "done") li.dataset.state = "done";
+    });
+  }
+  function apFinish(turn, out, sec) {
+    if (!turn) return;
+    turn.querySelectorAll(".ap-step").forEach((li) => { if (li.dataset.state !== "done" && li.dataset.state !== "fail") li.dataset.state = "done"; });
+    // eval checks — verify the turn's output, not just log it
+    const checks = apEvalChecks(out), pass = checks.filter((c) => c.ok).length;
+    const box = document.createElement("div");
+    box.className = "ap-checks";
+    box.innerHTML = '<div class="ap-checks-h">Eval · ' + pass + "/" + checks.length + " passed</div>" +
+      checks.map((c) => '<div class="ap-check" data-ok="' + (c.ok ? 1 : 0) + '"><span class="ck">' +
+        (c.ok ? "✓" : "✕") + '</span><span>' + c.label + '</span><span class="ap-ck-detail">' + c.detail + "</span></div>").join("");
+    const meta = turn.querySelector(".ap-turn-meta");
+    turn.insertBefore(box, meta);
+    meta.hidden = false;
+    meta.innerHTML = "<span>" + out.model + "</span><span>" + sec + "s</span><span>" +
+      out.usage.input + " in / " + out.usage.output + " out</span>";
+  }
+  function apFail(turn) {
+    if (!turn) return;
+    const run = turn.querySelector('.ap-step[data-state="run"]');
+    if (run) { run.dataset.state = "fail"; run.querySelector(".ap-sub").textContent = "failed"; }
+  }
+  function apComponentSummary(list) {
+    const names = (list || []).map((c) => c && (c.component || c.componentName || c.type)).filter(Boolean);
+    if (!names.length) return "0 components";
+    const counts = {}; names.forEach((n) => (counts[n] = (counts[n] || 0) + 1));
+    const top = Object.keys(counts).slice(0, 4).map((n) => (counts[n] > 1 ? n + "×" + counts[n] : n)).join(", ");
+    return names.length + " component" + (names.length > 1 ? "s" : "") + " · " + top;
+  }
+  $("#ap-save").onclick = () => {
+    const v = $("#ap-prompt").value;
+    if (v.trim() === (agentPromptDefaults[mode] || "").trim()) delete promptOverrides[mode];
+    else promptOverrides[mode] = v;
+    localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+    const b = $("#ap-save"), t = b.textContent; b.textContent = "Saved"; setTimeout(() => (b.textContent = t), 1100);
+  };
+  $("#ap-reset").onclick = () => {
+    delete promptOverrides[mode];
+    localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+    $("#ap-prompt").value = agentPromptDefaults[mode] || "";
+  };
+
+  // model preference (threads to /api/chat as `model`; "auto" lets the server pick per turn)
+  let apModel = localStorage.getItem("catalyst.apModel") || "auto";
+  function apFillModels(models) {
+    const sel = $("#ap-model");
+    const opts = (models && models.length) ? models : [{ id: "auto", label: "Auto (recommended)" }];
+    sel.innerHTML = opts.map((m) => '<option value="' + m.id + '">' + m.label + "</option>").join("");
+    if (![...sel.options].some((o) => o.value === apModel)) apModel = "auto";
+    sel.value = apModel;
+  }
+  $("#ap-model").addEventListener("change", (e) => {
+    apModel = e.target.value; localStorage.setItem("catalyst.apModel", apModel);
+  });
+
+  // web-search connector (threads to /api/chat as `webSearch`; default on for agents)
+  let apWeb = localStorage.getItem("catalyst.apWeb");
+  apWeb = apWeb == null ? true : apWeb === "1";
+  function apSyncWeb() { $("#ap-web").classList.toggle("on", apWeb); $("#ap-web").setAttribute("aria-checked", apWeb ? "true" : "false"); }
+  apSyncWeb();
+  $("#ap-web").onclick = () => { apWeb = !apWeb; localStorage.setItem("catalyst.apWeb", apWeb ? "1" : "0"); apSyncWeb(); };
+
+  // "your agent endpoint" connector reuses the existing bring-your-own-agent modal
+  $("#ap-agent-btn").onclick = () => $("#rail-add").click();
+  function apSyncAgent() {
+    const on = !!agentEndpoint, b = $("#ap-agent-btn");
+    b.textContent = on ? "Manage" : "Connect"; b.classList.toggle("connected", on);
+    $("#ap-agent-name").textContent = on ? "Your agent — connected" : "Your agent endpoint";
+    $("#ap-agent-sub").textContent = on ? agentEndpoint : "Route this chat to your own API";
+  }
+
+  // drag-to-resize the panel (persisted, clamped)
+  (function () {
+    const rz = $("#ap-resize"); const clampW = (w) => Math.max(320, Math.min(640, w));
+    let apW = clampW(parseInt(localStorage.getItem("catalyst.apWidth") || "400", 10) || 400);
+    document.documentElement.style.setProperty("--ap-w", apW + "px");
+    let dragging = false;
+    rz.addEventListener("pointerdown", (e) => {
+      dragging = true; document.body.classList.add("ap-resizing");
+      try { rz.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
+    });
+    rz.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      apW = clampW(window.innerWidth - e.clientX);
+      document.documentElement.style.setProperty("--ap-w", apW + "px");
+    });
+    const stop = (e) => {
+      if (!dragging) return; dragging = false; document.body.classList.remove("ap-resizing");
+      localStorage.setItem("catalyst.apWidth", String(apW));
+      try { rz.releasePointerCapture(e.pointerId); } catch (_) {}
+    };
+    rz.addEventListener("pointerup", stop); rz.addEventListener("pointercancel", stop);
+  })();
+
+  // ---- panel tabs: Config · UI · Components · Trace ----
+  let apCompRendered = false;
+  function apTab(name) {
+    document.querySelectorAll(".ap-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+    document.querySelectorAll(".ap-pane").forEach((p) => p.classList.toggle("active", p.dataset.pane === name));
+    if (name === "ui") apRenderComponents();
+  }
+  document.querySelectorAll(".ap-tab").forEach((t) => (t.onclick = () => apTab(t.dataset.tab)));
+
+  // UI tab: design-system picker mirrors the header select (which drives window.__cat.applyDS)
+  function apSyncDS() {
+    const src = $("#ds-select"), dst = $("#ap-ds"); if (!dst) return;
+    dst.innerHTML = src.innerHTML; dst.value = src.value;
+    const tag = $("#ap-comp-ds"); if (tag) tag.textContent = src.options[src.selectedIndex] ? src.options[src.selectedIndex].text : src.value;
+  }
+  $("#ap-ds").addEventListener("change", (e) => {
+    window.__cat.applyDS(e.target.value); apSyncDS();
+    if (document.querySelector('.ap-pane[data-pane="ui"]').classList.contains("active")) apRenderComponents(true);
+  });
+  $("#ap-ds-import").onclick = () => $("#ds-import-btn").click();
+
+  // Components tab: render the whole catalog for the selected design system
+  function apRenderComponents(force) {
+    if (apCompRendered && !force) return;
+    try { renderTree(GALLERY, $("#ap-components")); apCompRendered = true; }
+    catch (e) { $("#ap-components").innerHTML = '<div class="ap-empty">' + e.message + "</div>"; }
+  }
+
+  // ---- eval checks: verify what the agent produced each turn ----
+  function _collectVocab(node, set) {
+    if (Array.isArray(node)) return node.forEach((n) => _collectVocab(n, set));
+    if (node && typeof node === "object") {
+      if (typeof node.component === "string") set.add(node.component);
+      Object.values(node).forEach((v) => _collectVocab(v, set));
+    }
+  }
+  let _vocab = null;
+  function catalogVocab() {
+    if (_vocab) return _vocab;
+    _vocab = new Set(); _collectVocab(GALLERY, _vocab);
+    ["Screen", "Stack", "Row", "Column", "Grid", "Map", "LocationRequest", "LocationButton"].forEach((x) => _vocab.add(x));
+    return _vocab;
+  }
+  function apEvalChecks(out) {
+    const comps = Array.isArray(out.components) ? out.components : null;
+    const checks = [];
+    checks.push({ label: "Valid component tree", ok: comps !== null,
+      detail: comps !== null ? (comps.length + " node" + (comps.length !== 1 ? "s" : "")) : "not an array" });
+    const vocab = catalogVocab(), bad = new Set();
+    (function walk(n) {
+      if (Array.isArray(n)) return n.forEach(walk);
+      if (n && typeof n === "object") { if (typeof n.component === "string" && !vocab.has(n.component)) bad.add(n.component); Object.values(n).forEach(walk); }
+    })(comps || []);
+    checks.push({ label: "Catalog components only", ok: bad.size === 0, detail: bad.size ? [...bad].join(", ") : "all known" });
+    checks.push({ label: "Latency < 20s", ok: (out.latency_ms || 0) < 20000, detail: (Math.round((out.latency_ms || 0) / 100) / 10) + "s" });
+    checks.push({ label: "Agent replied", ok: !!(out.reply && out.reply.trim()), detail: (out.reply && out.reply.trim()) ? "yes" : "empty" });
+    return checks;
+  }
+
+  // ---- credits (demo): each new generation uses 1; cached renders are free; buying adds instantly ----
+  // Shown as "usage" in Settings — credits = remaining, creditsTotal = allotment (grows when you buy).
+  let credits = parseInt(localStorage.getItem("catalyst.credits") || "20", 10);
+  if (isNaN(credits)) credits = 20;
+  let creditsTotal = parseInt(localStorage.getItem("catalyst.creditsTotal") || "", 10);
+  if (isNaN(creditsTotal) || creditsTotal < credits) creditsTotal = Math.max(20, credits);
+  function renderCredits() {
+    const used = Math.max(0, creditsTotal - credits);
+    const usedEl = $("#ap-usage-used"), totEl = $("#ap-usage-total"), leftEl = $("#ap-usage-left"), fill = $("#ap-usage-fill");
+    if (usedEl) usedEl.textContent = used;
+    if (totEl) totEl.textContent = creditsTotal;
+    if (leftEl) leftEl.textContent = credits + " left";
+    if (fill) fill.style.width = (creditsTotal ? Math.round((used / creditsTotal) * 100) : 0) + "%";
+    const bar = document.querySelector(".ap-usage-bar"); if (bar) bar.classList.toggle("low", credits <= 3);
+    const bal = $("#credits-bal"); if (bal) bal.textContent = credits;
+  }
+  function saveCredits() {
+    localStorage.setItem("catalyst.credits", String(credits));
+    localStorage.setItem("catalyst.creditsTotal", String(creditsTotal));
+    renderCredits();
+  }
+  function openCredits() { renderCredits(); $("#credits-modal").hidden = false; }
+  $("#ap-buy-btn").onclick = openCredits;
+  $("#credits-close").onclick = () => { $("#credits-modal").hidden = true; };
+  $("#credits-modal").addEventListener("click", (e) => { if (e.target === $("#credits-modal")) $("#credits-modal").hidden = true; });
+  document.querySelectorAll(".credit-pack").forEach((b) => {
     b.onclick = () => {
-      currentDS = b.dataset.ds;
-      document.querySelectorAll("#ds-toggle button").forEach((x) => x.classList.toggle("active", x === b));
-      renderCurrent();
+      const add = parseInt(b.dataset.add, 10); credits += add; creditsTotal += add; saveCredits();
+      const s = b.querySelector("em"), t = s.textContent; s.textContent = "Added ✓";
+      setTimeout(() => { s.textContent = t; $("#credits-modal").hidden = true; }, 750);
     };
   });
+  renderCredits();
+
+  // ---- Import modal: the Figma / design-system agent lives here (not in the chat) ----
+  $("#ds-import-btn").onclick = () => { $("#ag-modal").hidden = false; };
+  $("#ag-modal-close").onclick = () => { $("#ag-modal").hidden = true; };
+  $("#ag-modal").addEventListener("click", (e) => { if (e.target === $("#ag-modal")) $("#ag-modal").hidden = true; });
+
+  // ---- bring-your-own-agent: route the chat to a team's own endpoint ----
+  let agentEndpoint = localStorage.getItem("catalyst.agentEndpoint") || "";
+  function updateConnectUI() {
+    const on = !!agentEndpoint;
+    const add = $("#rail-add");
+    add.classList.toggle("connected", on);
+    add.querySelector(".rail-label").textContent = on ? "Your agent" : "Connect agent";
+    add.title = on ? "Your agent is connected — click to manage" : "Connect your own agent";
+    apSyncAgent();
+  }
+  function connectStatus(msg, ok) {
+    const s = $("#connect-status"); s.textContent = msg; s.className = "connect-status " + (ok ? "ok" : "bad"); s.hidden = false;
+  }
+  async function proxyCall(endpoint, body) {
+    const r = await fetch("/api/proxy", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint, body }) });
+    return r.json();
+  }
+  $("#rail-add").onclick = () => {
+    $("#connect-url").value = agentEndpoint; $("#connect-status").hidden = true;
+    $("#connect-modal").hidden = false; $("#connect-url").focus();
+  };
+  $("#connect-close").onclick = () => { $("#connect-modal").hidden = true; };
+  $("#connect-modal").addEventListener("click", (e) => { if (e.target === $("#connect-modal")) $("#connect-modal").hidden = true; });
+  $("#connect-test").onclick = async () => {
+    const url = $("#connect-url").value.trim();
+    if (!url) { connectStatus("Enter your endpoint URL first.", false); return; }
+    connectStatus("Testing…", true);
+    try {
+      const out = await proxyCall(url, { history: [{ role: "user", content: "hello" }], components: null, mode: "chat" });
+      if (out.error) connectStatus("✕ " + out.error, false);
+      else connectStatus("✓ Responded — reply + " + ((out.components || []).length) + " component(s).", true);
+    } catch (e) { connectStatus("✕ " + e.message, false); }
+  };
+  $("#connect-save").onclick = () => {
+    const url = $("#connect-url").value.trim();
+    if (url && !/^https:\/\//i.test(url)) { connectStatus("Endpoint must be an https:// URL.", false); return; }
+    agentEndpoint = url;
+    if (url) localStorage.setItem("catalyst.agentEndpoint", url); else localStorage.removeItem("catalyst.agentEndpoint");
+    updateConnectUI(); $("#connect-modal").hidden = true;
+    addMsg("bot", url ? "Connected to your agent — your next messages go to it, rendered in the selected design system."
+                      : "Disconnected — back to Catalyst's built-in agent.");
+  };
+  $("#connect-clear").onclick = () => {
+    $("#connect-url").value = ""; agentEndpoint = ""; localStorage.removeItem("catalyst.agentEndpoint");
+    updateConnectUI(); $("#connect-modal").hidden = true;
+    addMsg("bot", "Disconnected — back to Catalyst's built-in agent.");
+  };
+  updateConnectUI();
+
+  // integration snippets: implement the endpoint that speaks the contract
+  const DOCS = {
+    curl: "# Catalyst POSTs each turn to your endpoint:\n" +
+      "curl -X POST https://your-api.com/agent \\\n" +
+      "  -H \"Content-Type: application/json\" \\\n" +
+      "  -d '{\n" +
+      "    \"history\": [{ \"role\": \"user\", \"content\": \"a login screen\" }],\n" +
+      "    \"components\": null,\n" +
+      "    \"mode\": \"chat\"\n" +
+      "  }'\n\n" +
+      "# Your endpoint returns:\n" +
+      "# { \"reply\": \"Here you go\", \"components\": [ /* A2UI tree */ ] }",
+    python: "# FastAPI — your agent endpoint\n" +
+      "from fastapi import FastAPI, Request\n" +
+      "app = FastAPI()\n\n" +
+      "@app.post(\"/agent\")\n" +
+      "async def agent(req: Request):\n" +
+      "    body = await req.json()\n" +
+      "    user_msg = body[\"history\"][-1][\"content\"]\n" +
+      "    # → run your agent, build an A2UI component tree\n" +
+      "    return {\n" +
+      "        \"reply\": \"Here's your screen\",\n" +
+      "        \"components\": [\n" +
+      "            {\"component\": \"Screen\", \"children\": [\n" +
+      "                {\"component\": \"Text\", \"text\": user_msg, \"variant\": \"title\"},\n" +
+      "                {\"component\": \"Button\", \"label\": \"Continue\", \"variant\": \"default\"},\n" +
+      "            ]},\n" +
+      "        ],\n" +
+      "    }",
+    ts: "// Next.js route — app/agent/route.ts\n" +
+      "export async function POST(req: Request) {\n" +
+      "  const { history, components, mode } = await req.json();\n" +
+      "  const userMsg = history.at(-1)?.content ?? \"\";\n" +
+      "  // → run your agent, build an A2UI component tree\n" +
+      "  return Response.json({\n" +
+      "    reply: \"Here's your screen\",\n" +
+      "    components: [\n" +
+      "      { component: \"Screen\", children: [\n" +
+      "        { component: \"Text\", text: userMsg, variant: \"title\" },\n" +
+      "        { component: \"Button\", label: \"Continue\", variant: \"default\" },\n" +
+      "      ]},\n" +
+      "    ],\n" +
+      "  });\n" +
+      "}",
+    node: "// Express — your agent endpoint\n" +
+      "import express from \"express\";\n" +
+      "const app = express();\n" +
+      "app.use(express.json());\n\n" +
+      "app.post(\"/agent\", (req, res) => {\n" +
+      "  const userMsg = req.body.history.at(-1)?.content ?? \"\";\n" +
+      "  // → run your agent, build an A2UI component tree\n" +
+      "  res.json({\n" +
+      "    reply: \"Here's your screen\",\n" +
+      "    components: [\n" +
+      "      { component: \"Screen\", children: [\n" +
+      "        { component: \"Text\", text: userMsg, variant: \"title\" },\n" +
+      "      ]},\n" +
+      "    ],\n" +
+      "  });\n" +
+      "});\n" +
+      "app.listen(3000);",
+  };
+  function setDoc(lang) {
+    document.querySelectorAll(".doc-tab").forEach((t) => t.classList.toggle("active", t.dataset.lang === lang));
+    $("#doc-snippet").textContent = DOCS[lang];
+  }
+  document.querySelectorAll(".doc-tab").forEach((t) => { t.onclick = () => setDoc(t.dataset.lang); });
+  document.querySelector(".doc-copy").onclick = () => {
+    navigator.clipboard.writeText($("#doc-snippet").textContent);
+    const b = document.querySelector(".doc-copy"), o = b.textContent;
+    b.textContent = "Copied"; setTimeout(() => (b.textContent = o), 1200);
+  };
+  setDoc("curl");
+
+  // ---- component gallery: render every component in the current design system ----
+  function renderTree(comps, surface) {
+    const tree = transformSpecial(comps);
+    if (currentDS === "polaris") {
+      surface.dataset.ds = "polaris";
+      try { window.renderPolaris(tree, surface); } catch (e) { surface.innerHTML = "Polaris error: " + e.message; }
+    } else {
+      if (window.unmountPolaris) window.unmountPolaris(surface);
+      surface.dataset.ds = "shadcn";
+      try { renderA2UI(tree, {}, surface); } catch (e) { surface.innerHTML = "render error: " + e.message; }
+    }
+    if (window.__skins) {
+      if (activeSkin && currentDS === "shadcn") window.__skins.apply(surface, activeSkin);
+      else window.__skins.clear(surface);
+    }
+    mountSpecial(surface);
+  }
+  const sect = (t) => ({ component: "Text", text: t, variant: "title" });
+  const GALLERY = [{ component: "Screen", children: [
+    sect("Typography"),
+    { component: "Card", children: [
+      { component: "Text", text: "Title text", variant: "title" },
+      { component: "Text", text: "Subtitle text", variant: "subtitle" },
+      { component: "Text", text: "Body — the quick brown fox jumps over the lazy dog.", variant: "body" },
+      { component: "Text", text: "Muted secondary text", variant: "muted" },
+      { component: "Link", text: "A link" } ] },
+    sect("Buttons"),
+    { component: "Card", children: [
+      { component: "Row", gap: "sm", wrap: true, children: [
+        { component: "Button", label: "Default", variant: "default" },
+        { component: "Button", label: "Secondary", variant: "secondary" },
+        { component: "Button", label: "Outline", variant: "outline" },
+        { component: "Button", label: "Ghost", variant: "ghost" },
+        { component: "Button", label: "Destructive", variant: "destructive" } ] },
+      { component: "Row", gap: "sm", children: [
+        { component: "IconButton", icon: "download", label: "Download" },
+        { component: "IconButton", icon: "settings", label: "Settings" },
+        { component: "Toggle", label: "Toggle", pressed: true } ] } ] },
+    sect("Form controls"),
+    { component: "Card", children: [
+      { component: "Input", label: "Email", placeholder: "you@email.com", type: "email" },
+      { component: "Textarea", label: "Message", placeholder: "Type here…" },
+      { component: "Select", label: "Choose", options: ["Option A", "Option B", "Option C"], value: "Option A" },
+      { component: "DatePicker", label: "Date" },
+      { component: "RadioGroup", label: "Pick one", options: ["One", "Two", "Three"], value: "Two" },
+      { component: "Slider", label: "Volume", min: 0, max: 100, value: 60 },
+      { component: "Row", gap: "lg", children: [
+        { component: "Checkbox", label: "Checkbox", checked: true },
+        { component: "Switch", label: "Switch", checked: true } ] } ] },
+    sect("Data display"),
+    { component: "Card", children: [
+      { component: "Row", gap: "sm", wrap: true, children: [
+        { component: "Badge", label: "Default" },
+        { component: "Badge", label: "Success", tone: "success" },
+        { component: "Badge", label: "Warning", tone: "warning" },
+        { component: "Badge", label: "Destructive", tone: "destructive" } ] },
+      { component: "Row", gap: "md", align: "center", children: [
+        { component: "Avatar", fallback: "CU" },
+        { component: "Progress", label: "Progress", value: 65 } ] },
+      { component: "Separator" },
+      { component: "Metric", label: "Revenue", value: "£12,480", delta: "12%", deltaTone: "up", description: "vs last month" } ] },
+    sect("KPI grid"),
+    { component: "Grid", cols: 3, children: [
+      { component: "Metric", label: "Users", value: "1,204", delta: "3%", deltaTone: "up" },
+      { component: "Metric", label: "Revenue", value: "£8.2k", delta: "5%", deltaTone: "up" },
+      { component: "Metric", label: "Churn", value: "1.1%", delta: "0.3%", deltaTone: "down" } ] },
+    sect("Feedback"),
+    { component: "Stack", gap: "sm", children: [
+      { component: "Alert", title: "Heads up", description: "This is an informational alert.", variant: "default" },
+      { component: "Alert", title: "Success", description: "That worked.", variant: "success" },
+      { component: "Alert", title: "Warning", description: "Careful now.", variant: "warning" },
+      { component: "Alert", title: "Error", description: "Something went wrong.", variant: "destructive" } ] },
+    sect("Table"),
+    { component: "Card", children: [
+      { component: "Table", columns: ["Name", "Role", "Status"], rows: [
+        ["Ada Lovelace", "Engineer", "Active"], ["Alan Turing", "Researcher", "Active"], ["Grace Hopper", "Admiral", "Away"] ] } ] },
+    sect("Charts"),
+    { component: "Grid", cols: 2, children: [
+      { component: "Card", children: [
+        { component: "BarChart", title: "Weekly orders", labels: ["Mon", "Tue", "Wed", "Thu", "Fri"], series: [{ name: "Orders", data: [12, 19, 9, 17, 14] }] } ] },
+      { component: "Card", children: [
+        { component: "LineChart", title: "Revenue trend", labels: ["Jan", "Feb", "Mar", "Apr", "May"], series: [{ name: "2025", data: [8, 12, 10, 15, 18] }, { name: "2024", data: [6, 9, 8, 11, 13] }] } ] },
+      { component: "Card", children: [
+        { component: "Donut", title: "Traffic sources", data: [{ label: "Direct", value: 40 }, { label: "Search", value: 35 }, { label: "Social", value: 25 }] } ] } ] },
+    sect("Media & misc"),
+    { component: "Card", children: [
+      { component: "Image", url: "https://picsum.photos/seed/catalyst/520/180", alt: "sample image" },
+      { component: "Row", gap: "md", align: "center", wrap: true, children: [
+        { component: "Avatar", url: "https://i.pravatar.cc/80?img=5" },
+        { component: "Avatar", fallback: "AB" },
+        { component: "Tooltip", label: "Hover me", tip: "A helpful tooltip" },
+        { component: "Badge", label: "Beta", tone: "secondary" } ] },
+      { component: "Divider" },
+      { component: "Skeleton" } ] },
+    sect("Live map & location"),
+    { component: "Card", children: [
+      { component: "Map", lat: 55.9533, lon: -3.1883, zoom: 13, label: "Edinburgh" },
+      { component: "LocationRequest", label: "Use my current location" } ] },
+    sect("Tabs & Accordion"),
+    { component: "Card", children: [
+      { component: "Tabs", tabs: [
+        { label: "Overview", children: [{ component: "Text", text: "Overview content", variant: "body" }] },
+        { label: "Details", children: [{ component: "Text", text: "Details content", variant: "body" }] } ] },
+      { component: "Accordion", items: [
+        { label: "Section one", title: "Section one", children: [{ component: "Text", text: "Hidden content one", variant: "muted" }] },
+        { label: "Section two", title: "Section two", children: [{ component: "Text", text: "Hidden content two", variant: "muted" }] } ] } ] } ] }];
+  function openGallery() {
+    const gsel = $("#gallery-ds"); gsel.innerHTML = $("#ds-select").innerHTML; gsel.value = $("#ds-select").value;
+    $("#gallery-modal").hidden = false;
+    renderTree(GALLERY, $("#gallery-surface"));
+  }
+  $("#gallery-btn").onclick = openGallery;
+  $("#gallery-close").onclick = () => { if (window.unmountPolaris) window.unmountPolaris($("#gallery-surface")); $("#gallery-modal").hidden = true; };
+  $("#gallery-modal").addEventListener("click", (e) => { if (e.target === $("#gallery-modal")) $("#gallery-close").click(); });
+  $("#gallery-ds").addEventListener("change", (e) => { window.__cat.applyDS(e.target.value); renderTree(GALLERY, $("#gallery-surface")); });
+
+  // ---- beta auth (email + password; gate appears only when the datastore is live) ----
+  let authToken = localStorage.getItem("catalyst.token") || "";
+  let authMode = "signup";
+  function setAuthMode(m) {
+    authMode = m;
+    $("#auth-sub").textContent = m === "signup" ? "Create an account to try the beta." : "Welcome back — sign in.";
+    $("#auth-submit").textContent = m === "signup" ? "Create account" : "Sign in";
+    $("#auth-switch-text").textContent = m === "signup" ? "Already have an account?" : "New here?";
+    $("#auth-switch-link").textContent = m === "signup" ? "Sign in" : "Create account";
+    $("#auth-err").hidden = true;
+  }
+  async function authPost(action, extra) {
+    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ action }, extra || {})) });
+    return r.json();
+  }
+  function onSignedIn(email) {
+    $("#auth-gate").hidden = true;
+    $("#signout-btn").hidden = false;
+    $("#account-email").textContent = email; $("#account-email").hidden = false;
+  }
+  async function onGoogleCred(resp) {
+    $("#auth-err").hidden = true;
+    try {
+      const out = await authPost("google", { credential: resp.credential });
+      if (out.error) { $("#auth-err").textContent = out.error; $("#auth-err").hidden = false; return; }
+      authToken = out.token; localStorage.setItem("catalyst.token", authToken); onSignedIn(out.email);
+    } catch (e) { $("#auth-err").textContent = "Google sign-in failed — try again."; $("#auth-err").hidden = false; }
+  }
+  function setupGoogle(clientId) {
+    const init = () => {
+      if (!(window.google && google.accounts && google.accounts.id)) return false;
+      google.accounts.id.initialize({ client_id: clientId, callback: onGoogleCred });
+      google.accounts.id.renderButton($("#google-btn"), { theme: "outline", size: "large", text: "continue_with", width: 300 });
+      $("#google-wrap").hidden = false;
+      return true;
+    };
+    if (init()) return;
+    let n = 0; const iv = setInterval(() => { if (init() || ++n > 50) clearInterval(iv); }, 100);
+  }
+  async function initAuth() {
+    let st; try { st = await authPost("status"); } catch (e) { st = { enabled: false }; }
+    if (!st.enabled) { $("#auth-gate").hidden = true; return; }   // datastore not set up → app open
+    if (authToken) {
+      const me = await authPost("me", { token: authToken });
+      if (me.email) { onSignedIn(me.email); return; }
+      authToken = ""; localStorage.removeItem("catalyst.token");
+    }
+    if (st.googleClientId) setupGoogle(st.googleClientId);
+    setAuthMode("signup"); $("#auth-gate").hidden = false;
+  }
+  $("#auth-submit").onclick = async () => {
+    const email = $("#auth-email").value.trim(), password = $("#auth-pass").value;
+    $("#auth-err").hidden = true;
+    const btn = $("#auth-submit"); btn.disabled = true;
+    try {
+      const out = await authPost(authMode, { email, password });
+      if (out.error) { $("#auth-err").textContent = out.error; $("#auth-err").hidden = false; return; }
+      authToken = out.token; localStorage.setItem("catalyst.token", authToken); onSignedIn(out.email);
+    } catch (e) { $("#auth-err").textContent = "Something went wrong — try again."; $("#auth-err").hidden = false; }
+    finally { btn.disabled = false; }
+  };
+  $("#auth-switch-link").onclick = () => setAuthMode(authMode === "signup" ? "login" : "signup");
+  $("#auth-pass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#auth-submit").click(); });
+  $("#signout-btn").onclick = async () => {
+    try { await authPost("logout", { token: authToken }); } catch (e) {}
+    authToken = ""; localStorage.removeItem("catalyst.token");
+    $("#signout-btn").hidden = true; $("#account-email").hidden = true;
+    setAuthMode("login"); $("#auth-gate").hidden = false;
+  };
+  initAuth();
+
+  // ---- light / dark theme ----
+  const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+  const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+  function setTheme(t) {
+    document.documentElement.classList.toggle("dark", t === "dark");
+    try { localStorage.setItem("catalyst.theme", t); } catch (e) {}
+    $("#theme-btn").innerHTML = t === "dark" ? SUN : MOON;
+  }
+  $("#theme-btn").onclick = () => setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark");
+  setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+
+  // ---- front landing page ----
+  try { if (localStorage.getItem("catalyst.landingSeen")) $("#landing").hidden = true; } catch (e) {}
+  $("#landing-go").onclick = () => {
+    $("#landing").hidden = true;
+    try { localStorage.setItem("catalyst.landingSeen", "1"); } catch (e) {}
+  };
 
   boot();
 </script>

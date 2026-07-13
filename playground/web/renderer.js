@@ -92,6 +92,11 @@ function iconSvg(name) {
   path.setAttribute("d", p); s.appendChild(path); return s;
 }
 
+// Text variant aliases the model sometimes uses, mapped to our real variants.
+const TVAR = { headline: "title", heading: "title", h1: "title", h2: "subtitle", h3: "subtitle", caption: "muted", small: "muted" };
+// Some models put the text content in `children` as a string instead of the text/label prop.
+const strChild = (c) => (typeof c.children === "string" ? c.children : "");
+
 function node(c, byId) {
   if (!c || typeof c !== "object") return document.createComment("empty");
   const K = (b) => kids(c, byId).forEach((k) => b.appendChild(node(k, byId)));
@@ -122,8 +127,11 @@ function node(c, byId) {
     case "Separator": case "Divider": return el("hr", "ui-separator");
 
     /* ---- typography ---- */
-    case "Text": return el("p", "ui-text v-" + (c.variant || "body"), bindVal(c.text) ?? "");
-    case "Link": { const a = el("a", "ui-link", c.text || c.label || ""); a.href = c.href || "#"; a.onclick = (e) => e.preventDefault(); return a; }
+    case "Text": {
+      const t = bindVal(c.text) ?? (typeof c.children === "string" ? c.children : "");
+      return el("p", "ui-text v-" + (TVAR[c.variant] || c.variant || "body"), t);
+    }
+    case "Link": { const a = el("a", "ui-link", c.text || c.label || strChild(c) || ""); a.href = c.href || "#"; a.onclick = (e) => e.preventDefault(); return a; }
 
     /* ---- inputs ---- */
     case "Input": {
@@ -191,9 +199,10 @@ function node(c, byId) {
       b.onclick = () => b.classList.toggle("on"); return b;
     }
     case "Button": {
-      const b = el("button", "ui-btn v-" + (c.variant || "default") + " s-" + (c.size || "md"), c.label || "");
-      if (!c.label && (c.child || c.children)) { b.textContent = ""; K(b); }
-      b.onclick = () => toast((c.label || "action") + " →"); return b;
+      const label = c.label || strChild(c);
+      const b = el("button", "ui-btn v-" + (c.variant || "default") + " s-" + (c.size || "md"), label);
+      if (!label && (c.child || Array.isArray(c.children))) { b.textContent = ""; K(b); }
+      b.onclick = () => toast((label || "action") + " →"); return b;
     }
     case "IconButton": {
       const b = el("button", "ui-iconbtn"); b.appendChild(iconSvg(c.icon));
@@ -202,7 +211,7 @@ function node(c, byId) {
     }
 
     /* ---- display ---- */
-    case "Badge": return el("span", "ui-badge v-" + (c.tone || "default"), bindVal(c.label) || "");
+    case "Badge": return el("span", "ui-badge v-" + (c.tone || "default"), bindVal(c.label) || strChild(c) || "");
     case "Avatar": {
       const fb = () => el("span", "ui-avatar ui-avatar-fallback", (c.fallback || "?").slice(0, 2));
       if (!c.url) return fb();
@@ -233,7 +242,8 @@ function node(c, byId) {
     case "Alert": {
       const a = el("div", "ui-alert v-" + (c.tone || "default"));
       if (c.title) a.appendChild(el("div", "ui-alert-title", c.title));
-      if (c.description) a.appendChild(el("div", "ui-alert-desc", c.description));
+      const adesc = c.description || c.message || strChild(c);
+      if (adesc) a.appendChild(el("div", "ui-alert-desc", adesc));
       return a;
     }
     case "Metric": {
