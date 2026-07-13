@@ -1,0 +1,19 @@
+{
+  "$description": "Sample W3C Design Tokens (DTCG format). This is the standard, tool-neutral shape Figma MCP will export a design system's variables into — the ingestion target for Catalyst.",
+  "color": {
+    "brand":      { "$type": "color", "$value": "#4f46e5" },
+    "background":{ "$type": "color", "$value": "#ffffff" },
+    "surface":    { "$type": "color", "$value": "#ffffff" },
+    "text":       { "$type": "color", "$value": "#0b1220" },
+    "muted":      { "$type": "color", "$value": "#f1f3f7" },
+    "mutedText":  { "$type": "color", "$value": "#5b6472" },
+    "border":     { "$type": "color", "$value": "#e5e8ee" },
+    "onBrand":    { "$type": "color", "$value": "#ffffff" }
+  },
+  "font": {
+    "family": { "sans": { "$type": "fontFamily", "$value": "Inter, ui-sans-serif, system-ui, sans-serif" } }
+  },
+  "radius": {
+    "md": { "$type": "dimension", "$value": "10px" }
+  }
+}

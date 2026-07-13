@@ -1,0 +1,17 @@
+{
+  "id": "acme",
+  "name": "Acme",
+  "vars": {
+    "--primary": "#1676e7",
+    "--primary-foreground": "#ffffff",
+    "--background": "#ffffff",
+    "--card": "#ffffff",
+    "--foreground": "#161b21",
+    "--muted": "#f6f8fa",
+    "--muted-foreground": "#656d76",
+    "--border": "#e0e7ee",
+    "--input": "#e0e7ee",
+    "--radius": "10px"
+  },
+  "css": ""
+}

@@ -1,0 +1,20 @@
+{
+  "cssVars": {
+    "--primary": "#4f46e5",
+    "--primary-foreground": "#ffffff",
+    "--background": "#ffffff",
+    "--card": "#ffffff",
+    "--foreground": "#0b1220",
+    "--muted": "#f1f3f7",
+    "--muted-foreground": "#5b6472",
+    "--border": "#e5e8ee",
+    "--input": "#e5e8ee",
+    "--radius": "10px",
+    "--font-sans": "Inter, ui-sans-serif, system-ui, sans-serif"
+  },
+  "a2uiTheme": {
+    "primaryColor": "#4f46e5",
+    "agentDisplayName": "Sample W3C Design Tokens (DTCG format). This is the standard, tool-neutral shape Figma MCP will export a design system's variables into \u2014 the ingestion target for Catalyst."
+  },
+  "unmapped": []
+}

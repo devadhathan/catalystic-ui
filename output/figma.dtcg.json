@@ -1,0 +1,42 @@
+{
+  "color": {
+    "brand": {
+      "$type": "color",
+      "$value": "#1676e7"
+    },
+    "on-brand": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "background": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "#ffffff"
+    },
+    "text": {
+      "$type": "color",
+      "$value": "#161b21"
+    },
+    "muted": {
+      "$type": "color",
+      "$value": "#f6f8fa"
+    },
+    "muted-text": {
+      "$type": "color",
+      "$value": "#656d76"
+    },
+    "border": {
+      "$type": "color",
+      "$value": "#e0e7ee"
+    }
+  },
+  "radius": {
+    "md": {
+      "$type": "dimension",
+      "$value": "10px"
+    }
+  }
+}

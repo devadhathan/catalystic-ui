@@ -1,0 +1,19 @@
+{
+  "$comment": "Shape returned by Figma REST GET /v1/files/:key/variables/local — the modern token source. The agent walks this to build a design system.",
+  "meta": {
+    "variableCollections": {
+      "VC:1": { "id": "VC:1", "name": "Acme Tokens", "defaultModeId": "M:1", "modes": [{ "modeId": "M:1", "name": "Light" }] }
+    },
+    "variables": {
+      "V:1":  { "name": "color/brand",         "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 0.086, "g": 0.463, "b": 0.906, "a": 1 } } },
+      "V:2":  { "name": "color/on-brand",       "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 1, "g": 1, "b": 1, "a": 1 } } },
+      "V:3":  { "name": "color/background",     "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 1, "g": 1, "b": 1, "a": 1 } } },
+      "V:4":  { "name": "color/surface",        "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 1, "g": 1, "b": 1, "a": 1 } } },
+      "V:5":  { "name": "color/text",           "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 0.086, "g": 0.106, "b": 0.129 } } },
+      "V:6":  { "name": "color/muted",          "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 0.965, "g": 0.973, "b": 0.980 } } },
+      "V:7":  { "name": "color/muted-text",     "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 0.396, "g": 0.427, "b": 0.463 } } },
+      "V:8":  { "name": "color/border",         "resolvedType": "COLOR", "valuesByMode": { "M:1": { "r": 0.878, "g": 0.906, "b": 0.933 } } },
+      "V:9":  { "name": "radius/md",            "resolvedType": "FLOAT", "valuesByMode": { "M:1": 10 } }
+    }
+  }
+}
