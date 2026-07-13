@@ -461,11 +461,13 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
     msgs = ([{"role": "user", "content": "[Current context]\n" + dyn}] + hist) if dyn else hist
 
     # PHASE 2: build the screen in JSON mode (no web search) → reliable components.
+    repaired = False
     text, u2, lat2, _ = _complete(provider, model, static_system, msgs, json_mode=True, effort=effort, web_search=False)
     try:
         data = parse_json_object(text)
     except Exception:
         # One-shot repair on the FAST model — mechanical, cheap, quick.
+        repaired = True
         fix, u3, lat3, _ = _complete(
             provider, fast,
             "Return ONLY the corrected, valid JSON object with keys reply, thinking, "
@@ -481,6 +483,7 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
         "thinking": data.get("thinking", ""),
         "components": data.get("components", []),
         "usage": usage, "latency_ms": lat1 + lat2, "searched": searches,
+        "research_ms": lat1, "build_ms": lat2, "repaired": repaired,
         "model": model, "provider": provider, "tier": tier, "cached": False,
     }
     _CACHE[ckey] = result
@@ -511,7 +514,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                               ctype="application/javascript")
         if p == "/polaris-bundle.css":
             return self._send((WEB / "polaris-bundle.css").read_bytes(), ctype="text/css")
-        if p in ("/logo.svg", "/empty.svg"):
+        if p in ("/logo.svg", "/empty.svg", "/agent-mark.svg"):
             return self._send((WEB / p.lstrip("/")).read_bytes(), ctype="image/svg+xml")
         if p == "/presets.json":
             return self._send((WEB / "presets.json").read_bytes())

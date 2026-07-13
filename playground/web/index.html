@@ -84,6 +84,7 @@
      color: var(--primary-foreground); font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
      padding: 2px 8px; border-radius: 999px; }
   .credit-demo-note { margin-top: 14px; font-size: 11.5px; color: var(--muted-foreground); text-align: center; line-height: 1.5; }
+  .cm-usage-head { font-size: 12.5px; color: var(--muted-foreground); margin: 2px 0 8px; }
   .hdr-tools { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 9px;
      overflow: hidden; background: var(--card); }
   .hdr-tools button { border: 0; background: transparent; padding: 7px 10px; cursor: pointer;
@@ -95,6 +96,19 @@
      cursor: pointer; color: var(--muted-foreground); display: inline-flex; align-items: center; }
   .hdr-icon svg { width: 16px; height: 16px; }
   .hdr-icon:hover { color: var(--foreground); border-color: var(--ring); }
+  /* profile menu */
+  .profile-wrap { position: relative; }
+  #profile-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 80; width: 232px;
+     background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 6px;
+     box-shadow: 0 12px 32px rgba(0,0,0,.14); }
+  #profile-menu[hidden] { display: none; }
+  .pm-email { font-size: 12.5px; color: var(--muted-foreground); padding: 8px 9px 6px; word-break: break-all; }
+  .pm-sep { height: 1px; background: var(--border); margin: 4px 0; }
+  .pm-item { width: 100%; display: flex; align-items: center; gap: 9px; border: 0; background: transparent;
+     color: var(--foreground); cursor: pointer; font: inherit; font-size: 13px; padding: 8px 9px; border-radius: 8px; text-align: left; }
+  .pm-item svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--muted-foreground); }
+  .pm-item:hover { background: var(--muted); }
+  #chat .stat { max-width: 600px; margin: 0 auto 8px; justify-content: center; font-size: 11px; }
 
   /* front landing page */
   #landing { position: fixed; inset: 0; z-index: 300; background: var(--background);
@@ -361,30 +375,87 @@
      font-size: 12px; opacity: 0; transition: .25s; }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ===================== NEW SHELL: rail + center chat + inline UI ===================== */
-  /* leftmost agent rail */
-  /* rail: a slim icon strip that expands on hover to reveal labels (overlays, no reflow) */
-  #rail { position: absolute; left: 0; top: 0; bottom: 0; width: 62px; z-index: 40; overflow: hidden;
+  /* ===================== NEW SHELL: sidebar + center chat + inline UI ===================== */
+  /* left sidebar: always expanded (Chat / Agent tabs); collapses to a thin icon strip */
+  #rail { position: absolute; left: 0; top: 0; bottom: 0; width: 230px; z-index: 40; overflow: hidden;
      border-right: 1px solid var(--border); background: var(--background);
-     display: flex; flex-direction: column; gap: 6px; padding: 12px 10px;
-     transition: width .18s ease, box-shadow .18s ease; }
-  #rail:hover { width: 216px; box-shadow: 6px 0 24px rgba(0,0,0,.08); }
-  .rail-item, #rail-add { height: 42px; width: 42px; border-radius: 12px; cursor: pointer; white-space: nowrap;
-     display: flex; align-items: center; gap: 12px; padding: 0 11px; overflow: hidden; transition: width .18s ease, background .15s, border-color .15s; }
+     display: flex; flex-direction: column; gap: 8px; padding: 12px 12px;
+     transition: width .2s ease; }
+  main { padding-left: 230px; transition: padding-left .2s ease; }
+  body.rail-collapsed main { padding-left: 62px; }
+  body.rail-collapsed #rail { width: 62px; padding: 12px 10px; }
+  .side-lbl { transition: opacity .12s ease; white-space: nowrap; }
+  body.rail-collapsed .side-lbl { opacity: 0; pointer-events: none; }
+  /* Chat / Agent segmented tabs */
+  .side-tabs { display: flex; gap: 3px; background: var(--muted); padding: 3px; border-radius: 10px; }
+  body.rail-collapsed .side-tabs { flex-direction: column; background: transparent; padding: 0; gap: 4px; }
+  .side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 32px;
+     border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; border-radius: 8px;
+     font: inherit; font-size: 13px; font-weight: 550; overflow: hidden; }
+  .side-tab svg { width: 17px; height: 17px; flex: 0 0 17px; }
+  .side-tab.active { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  body.rail-collapsed .side-tab { justify-content: flex-start; padding: 0 11px; height: 42px; }
+  .side-panes { flex: 1; min-height: 0; display: flex; }
+  .side-pane { display: none; flex: 1; min-height: 0; flex-direction: column; gap: 4px; overflow: auto; scrollbar-width: none; }
+  .side-pane::-webkit-scrollbar { width: 0; }
+  .side-pane.active { display: flex; }
+  .new-chat { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 11px; border-radius: 10px;
+     border: 1px solid var(--border); background: var(--background); color: var(--foreground); cursor: pointer;
+     font: inherit; font-size: 13.5px; font-weight: 550; overflow: hidden; transition: border-color .12s; }
+  .new-chat:hover { border-color: var(--ring); }
+  .new-chat svg { width: 18px; height: 18px; flex: 0 0 18px; }
+  .side-h { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+     color: var(--muted-foreground); padding: 10px 6px 4px; }
+  body.rail-collapsed .side-h { display: none; }
+  .rail-item, #rail-add { height: 42px; border-radius: 12px; cursor: pointer; white-space: nowrap;
+     display: flex; align-items: center; gap: 12px; padding: 0 11px; overflow: hidden; transition: background .15s, border-color .15s; }
   .rail-item { border: 1px solid transparent; background: var(--muted); color: var(--muted-foreground); }
   #rail-add { border: 1px dashed var(--border); background: transparent; color: var(--muted-foreground); margin-top: 2px; }
   #rail-add.connected { border-style: solid; border-color: hsl(142 60% 45%); color: hsl(142 55% 40%); background: hsl(142 60% 45% / .08); }
   .rail-item svg, #rail-add svg { width: 20px; height: 20px; flex: 0 0 20px; }
   .rail-item:hover, #rail-add:hover { border-color: var(--ring); color: var(--foreground); }
   .rail-item.active { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 2px 6px rgba(0,0,0,.16); }
-  .rail-label { font-size: 13.5px; font-weight: 500; opacity: 0; transition: opacity .12s ease; }
-  #rail:hover .rail-item, #rail:hover #rail-add { width: 196px; }
-  #rail:hover .rail-label { opacity: 1; }
+  /* history list */
+  .history-list { display: flex; flex-direction: column; gap: 2px; }
+  body.rail-collapsed .history-list { display: none; }
+  .hist-item { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 9px; border-radius: 8px;
+     cursor: pointer; color: var(--muted-foreground); font-size: 12.5px; overflow: hidden; }
+  .hist-item:hover { background: var(--muted); color: var(--foreground); }
+  .hist-item.active { background: var(--muted); color: var(--foreground); }
+  .hist-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hist-del { flex: 0 0 auto; width: 22px; height: 22px; border: 0; background: transparent; color: var(--muted-foreground);
+     border-radius: 6px; cursor: pointer; opacity: 0; display: flex; align-items: center; justify-content: center; }
+  .hist-item:hover .hist-del { opacity: 1; }
+  .hist-del:hover { background: var(--border); color: hsl(0 72% 51%); }
+  .hist-del svg { width: 13px; height: 13px; }
+  .hist-empty { font-size: 12px; color: var(--muted-foreground); padding: 4px 9px; }
 
   /* chat now fills the center */
-  #chat { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background); }
+  #chat { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background); position: relative; }
   #messages { flex: 1; overflow: auto; padding: 24px 20px 8px; display: flex; flex-direction: column; gap: 12px;
      width: 100%; max-width: 640px; margin: 0 auto; scrollbar-width: none; }
+  /* chat-tools: design-system + components box, top-right, chat mode only */
+  .chat-tools { position: absolute; top: 12px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 7px;
+     background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
+  #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools { display: none; }
+  .ct-ds { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
+     color: var(--foreground); border-radius: 8px; padding: 6px 26px 6px 10px; font: inherit; font-size: 12.5px; cursor: pointer;
+     background-image: linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%), linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+     background-position: calc(100% - 15px) center, calc(100% - 11px) center; background-size: 4px 4px, 4px 4px; background-repeat: no-repeat; }
+  .ct-btn { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card);
+     color: var(--foreground); border-radius: 8px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer; transition: border-color .12s; }
+  .ct-btn:hover { border-color: var(--ring); }
+  .ct-btn svg { width: 14px; height: 14px; }
+  /* empty-state: hero + centered composer for a fresh conversation */
+  #hero { flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 10px 20px 2px; }
+  #chat.is-empty #hero { display: flex; }
+  #chat:not(.is-empty) #hero { display: none; }
+  .hero-mark { width: 118px; height: auto; margin-bottom: 4px; }
+  .hero-title { font-size: 22px; font-weight: 650; letter-spacing: -.01em; }
+  .hero-sub { font-size: 14px; color: var(--muted-foreground); max-width: 420px; line-height: 1.55; }
+  #chat.is-empty { justify-content: center; }
+  #chat.is-empty #messages, #chat.is-empty .presets, #chat.is-empty .stat { display: none; }
+  #chat.is-empty #composer { padding-top: 8px; }
   #messages::-webkit-scrollbar { width: 0; height: 0; }
   /* hide the general presets while an agent is running */
   #chat[data-mode="food"] .presets, #chat[data-mode="booking"] .presets { display: none; }
@@ -730,31 +801,46 @@
     <span class="beta-badge">BETA</span>
     <span class="tag">Generative UI</span>
     <span class="spacer"></span>
-    <div class="stat" id="stat" style="visibility:hidden">
-      <span>latency <b id="s-lat">–</b></span>
-      <span>in <b id="s-in">–</b></span>
-      <span>out <b id="s-out">–</b></span>
-      <span>total <b id="s-tot">–</b></span>
-      <span>· <b id="s-model">–</b></span>
-    </div>
     <span class="spacer"></span>
     <div class="hdr-right">
-      <button id="theme-btn" class="hdr-icon" title="Toggle light / dark"></button>
-      <select id="ds-select" class="ds-select" title="Design system">
-        <option value="shadcn">shadcn</option>
-        <option value="polaris">Polaris</option>
-      </select>
-      <div class="hdr-tools">
+      <button id="rail-collapse" class="hdr-icon" title="Collapse sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+      </button>
+      <div class="profile-wrap">
+        <button id="profile-btn" class="hdr-icon" title="Account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 4-6 8-6s7.5 2 8 6"/></svg>
+        </button>
+        <div id="profile-menu" hidden>
+          <div class="pm-email" id="pm-email">Not signed in</div>
+          <div class="pm-sep"></div>
+          <button class="pm-item" id="pm-usage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7z"/></svg>
+            Usage &amp; credits</button>
+          <button class="pm-item" id="pm-theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+            Toggle theme</button>
+          <button class="pm-item" id="pm-signout" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+            Sign out</button>
+        </div>
+      </div>
+      <!-- kept in the DOM (hidden) so existing handlers / references still resolve; surfaced elsewhere now -->
+      <div id="legacy-hdr" hidden>
+        <button id="theme-btn" class="hdr-icon" title="Toggle light / dark"></button>
+        <select id="ds-select" class="ds-select" title="Design system">
+          <option value="shadcn">shadcn</option>
+          <option value="polaris">Polaris</option>
+        </select>
         <button id="ds-import-btn" title="Import a design system">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></button>
         <button id="gallery-btn" title="Component gallery">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></button>
         <button id="agent-prompt-btn" title="Edit the agent's system prompt">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg></button>
+        <span id="account-email" class="tag" hidden></span>
+        <button id="signout-btn" class="hdr-icon" hidden title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
       </div>
-      <span id="account-email" class="tag" hidden></span>
-      <button id="signout-btn" class="hdr-icon" hidden title="Sign out">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
     </div>
     <div class="ds-toggle" id="ds-toggle" style="display:none">
       <button data-ds="shadcn" class="active">shadcn</button>
@@ -764,29 +850,65 @@
 
   <main>
     <nav id="rail">
-      <button class="rail-item active" data-mode="chat" title="Chat — build any screen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span class="rail-label">Chat</span>
-      </button>
-      <button class="rail-item" data-mode="food" data-seed="I want to order some food" title="Food ordering agent">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span class="rail-label">Food ordering</span>
-      </button>
-      <button class="rail-item" data-mode="booking" data-seed="Book a hair appointment" title="Booking agent">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span class="rail-label">Booking</span>
-      </button>
-      <button id="rail-add" title="New agent (soon)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        <span class="rail-label">Connect agent</span>
-      </button>
-    </nav>
-    <section id="chat">
-      <div id="mode-hint" hidden></div>
-      <div id="messages">
-        <div class="msg bot">Describe a screen — it renders right here in the chat. Or pick an agent on the left for a guided flow.</div>
+      <div class="side-tabs">
+        <button class="side-tab active" data-side="chat" title="Chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="side-lbl">Chat</span>
+        </button>
+        <button class="side-tab" data-side="agent" title="Agents">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
+          <span class="side-lbl">Agent</span>
+        </button>
       </div>
+      <div class="side-panes">
+        <div class="side-pane active" data-side="chat">
+          <button class="new-chat" id="new-chat" title="New chat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="side-lbl">New chat</span>
+          </button>
+          <div class="side-h side-lbl">Recents</div>
+          <div class="history-list" id="history-list"><div class="hist-empty side-lbl">No conversations yet</div></div>
+        </div>
+        <div class="side-pane" data-side="agent">
+          <button class="rail-item" data-mode="food" data-seed="I want to order some food" title="Food ordering agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="side-lbl">Food ordering</span>
+          </button>
+          <button class="rail-item" data-mode="booking" data-seed="Book a hair appointment" title="Booking agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span class="side-lbl">Booking</span>
+          </button>
+          <button id="rail-add" title="Connect your own agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="side-lbl">Connect agent</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+    <section id="chat" class="is-empty">
+      <div id="mode-hint" hidden></div>
+      <div id="chat-tools" class="chat-tools">
+        <select id="ct-ds" class="ct-ds" title="Design system"></select>
+        <button id="ct-components" class="ct-btn" title="Component catalog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Components</span>
+        </button>
+      </div>
+      <div id="hero" hidden>
+        <img id="hero-mark" class="hero-mark" alt="" hidden />
+        <div class="hero-title" id="hero-title"></div>
+        <div class="hero-sub" id="hero-sub"></div>
+      </div>
+      <div id="messages"></div>
       <div class="presets" id="presets"></div>
+      <div class="stat" id="stat" style="visibility:hidden">
+        <span>latency <b id="s-lat">–</b></span>
+        <span>in <b id="s-in">–</b></span>
+        <span>out <b id="s-out">–</b></span>
+        <span>total <b id="s-tot">–</b></span>
+        <span>· <b id="s-model">–</b></span>
+        <span id="s-phase-wrap" hidden>· <b id="s-phase">–</b></span>
+      </div>
       <div id="composer">
         <div id="composer-box">
           <textarea id="input" placeholder="Message…"></textarea>
@@ -976,8 +1098,10 @@
     <div class="ag-modal-card prompt-card">
       <button id="credits-close" title="Close">✕</button>
       <div class="prompt-body">
-        <h3>Credits</h3>
+        <h3>Usage &amp; credits</h3>
         <p class="prompt-sub">Each new generation costs <b>1 credit</b>. Cached renders are free. You have <b id="credits-bal">20</b> left.</p>
+        <div class="cm-usage-head"><span id="cm-usage-used">0</span> of <span id="cm-usage-total">20</span> credits used</div>
+        <div class="ap-usage-bar" style="margin-bottom:16px"><div class="ap-usage-fill" id="cm-usage-fill"></div></div>
         <div class="credit-packs" id="credit-packs">
           <button class="credit-pack" data-add="50" data-price="5"><b>50</b><span>credits</span><em>$5</em></button>
           <button class="credit-pack popular" data-add="200" data-price="15"><span class="pack-tag">Popular</span><b>200</b><span>credits</span><em>$15</em></button>
@@ -1096,6 +1220,7 @@
     const text = (preset != null ? preset : $("#input").value).trim();
     if (!text) return;
     if (credits <= 0) { openCredits(); return; }   // out of credits — prompt to buy, keep the text
+    setEmpty(false);   // first message — drop the centered hero, input goes to the bottom
     if (preset == null) $("#input").value = "";
     addMsg("user", text); history.push({ role: "user", content: text });
     const btn = $("#send"); btn.disabled = true;
@@ -1178,6 +1303,14 @@
       $("#s-out").textContent = out.usage.output;
       $("#s-tot").textContent = out.usage.total;
       $("#s-model").textContent = out.model;
+      // phase breakdown — pinpoints where the latency actually goes
+      if (out.build_ms != null) {
+        const rs = Math.round((out.research_ms || 0) / 100) / 10, bs = Math.round((out.build_ms || 0) / 100) / 10;
+        $("#s-phase").textContent = (out.research_ms ? "research " + rs + "s · " : "") + "build " + bs + "s" +
+          (out.searched ? " · " + out.searched + " searches" : "") + (out.repaired ? " · repaired" : "");
+        $("#s-phase-wrap").hidden = false;
+      }
+      saveCurrentConvo();   // persist this conversation to Recents
     } catch (e) { clearInterval(timer); pending.remove(); apFail(apTurn); addMsg("bot", "⚠ request failed: " + e.message); }
     finally { btn.disabled = false; $("#input").focus(); }
   }
@@ -1411,6 +1544,7 @@
     const sel = $("#ds-select"); if (sel && sel.value !== id) sel.value = id;
     renderCurrent();
     if (typeof apSyncDS === "function") apSyncDS();   // keep the panel's UI-tab picker in step
+    if (typeof syncChatTools === "function") syncChatTools();   // and the chat-mode tools box
   };
   $("#ds-select").addEventListener("change", (e) => window.__cat.applyDS(e.target.value));
 
@@ -1421,11 +1555,19 @@
     food: "Hey — I'm your food-ordering agent. What are you in the mood for?",
     booking: "Hi — I'm your booking agent. What would you like to book?",
   };
-  function startMode(b) {
-    if (b.classList.contains("active")) { $("#input").focus(); return; }  // re-click = keep going
-    document.querySelectorAll(".rail-item").forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    mode = b.dataset.mode;
+  // sidebar Chat/Agent tabs just switch which list is visible; they don't reset the conversation
+  function sideTab(name) {
+    document.querySelectorAll(".side-tab").forEach((t) => t.classList.toggle("active", t.dataset.side === name));
+    document.querySelectorAll(".side-pane").forEach((p) => p.classList.toggle("active", p.dataset.side === name));
+  }
+  document.querySelectorAll(".side-tab").forEach((t) => (t.onclick = () => sideTab(t.dataset.side)));
+
+  function switchMode(modeName, force) {
+    if (mode === modeName && !force) { $("#input").focus(); return; }  // already here — keep going
+    mode = modeName;
+    currentConvoId = null;   // a fresh, unsaved conversation
+    document.querySelectorAll(".rail-item").forEach((x) => x.classList.toggle("active", x.dataset.mode === modeName));
+    document.querySelectorAll(".hist-item").forEach((x) => x.classList.remove("active"));
     $("#chat").dataset.mode = mode;   // hides the general presets while an agent runs
     apOpen(mode !== "chat", mode);    // agent modes get the persistent right-hand workspace
     // switching starts a FRESH chat scoped to this mode; no auto-generation
@@ -1433,10 +1575,107 @@
     agentState = { cart: [], lastMenu: null, coords: null };
     $("#stat").style.visibility = "hidden";
     $("#mode-hint").hidden = true;
-    $("#messages").innerHTML = '<div class="msg bot">' + (GREET[mode] || GREET.chat) + '</div>';
+    $("#messages").innerHTML = "";
+    setEmpty(true); renderHero(mode);   // centered hero + input until the first message
     $("#input").value = ""; $("#input").focus();
+    sideTab(mode === "chat" ? "chat" : "agent");
   }
-  document.querySelectorAll(".rail-item").forEach((b) => { b.onclick = () => startMode(b); });
+  // empty-state hero (large mark + greeting for agents; a heading for chat)
+  const HERO = {
+    chat: { mark: false, title: "What can I build for you?", sub: "Describe a screen — it renders right here in the chat." },
+    food: { mark: true, title: "Food ordering", sub: GREET.food },
+    booking: { mark: true, title: "Appointment booking", sub: GREET.booking },
+  };
+  function renderHero(m) {
+    const h = HERO[m] || HERO.chat, mark = $("#hero-mark");
+    if (h.mark && !mark.getAttribute("src")) mark.src = "agent-mark.svg";   // load the big mark only when an agent needs it
+    mark.hidden = !h.mark;
+    $("#hero-title").textContent = h.title;
+    $("#hero-sub").textContent = h.sub;
+  }
+  function setEmpty(on) { $("#chat").classList.toggle("is-empty", !!on); }
+  $("#new-chat").onclick = () => switchMode("chat", true);
+  document.querySelectorAll(".rail-item").forEach((b) => { b.onclick = () => switchMode(b.dataset.mode); });
+
+  // collapse the sidebar to a thin icon strip (toggle lives in the header, top-right)
+  $("#rail-collapse").onclick = () => {
+    const c = document.body.classList.toggle("rail-collapsed");
+    localStorage.setItem("catalyst.railCollapsed", c ? "1" : "0");
+    $("#rail-collapse").title = c ? "Expand sidebar" : "Collapse sidebar";
+  };
+  if (localStorage.getItem("catalyst.railCollapsed") === "1") { document.body.classList.add("rail-collapsed"); $("#rail-collapse").title = "Expand sidebar"; }
+
+  // ---- conversation history (Recents): persisted in this browser, delete on hover ----
+  let convos = [];
+  try { convos = JSON.parse(localStorage.getItem("catalyst.convos") || "[]"); } catch (e) { convos = []; }
+  let currentConvoId = null;
+  const trashSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+  function convoTitle() {
+    const u = history.find((h) => h.role === "user");
+    const t = ((u && u.content) || "New chat").replace(/\s+/g, " ").trim();
+    return t.length > 34 ? t.slice(0, 34) + "…" : t;
+  }
+  function saveCurrentConvo() {
+    if (!history.some((h) => h.role === "user")) return;   // nothing worth saving yet
+    const rec = { id: currentConvoId || ("c" + Date.now()), mode, title: convoTitle(),
+                  history: history.slice(), components: components || null, ts: Date.now() };
+    currentConvoId = rec.id;
+    const i = convos.findIndex((c) => c.id === rec.id);
+    if (i >= 0) convos[i] = rec; else convos.unshift(rec);
+    convos = convos.slice(0, 40);
+    localStorage.setItem("catalyst.convos", JSON.stringify(convos));
+    renderHistory();
+  }
+  function renderHistory() {
+    const list = $("#history-list");
+    if (!convos.length) { list.innerHTML = '<div class="hist-empty side-lbl">No conversations yet</div>'; return; }
+    list.innerHTML = "";
+    convos.slice().sort((a, b) => b.ts - a.ts).forEach((c) => {
+      const it = document.createElement("div");
+      it.className = "hist-item" + (c.id === currentConvoId ? " active" : "");
+      it.innerHTML = '<span class="hist-title side-lbl"></span><button class="hist-del" title="Delete">' + trashSvg + "</button>";
+      it.querySelector(".hist-title").textContent = c.title;
+      it.onclick = (e) => { if (!e.target.closest(".hist-del")) loadConvo(c.id); };
+      it.querySelector(".hist-del").onclick = (e) => { e.stopPropagation(); deleteConvo(c.id); };
+      list.appendChild(it);
+    });
+  }
+  function deleteConvo(id) {
+    convos = convos.filter((c) => c.id !== id);
+    localStorage.setItem("catalyst.convos", JSON.stringify(convos));
+    if (currentConvoId === id) switchMode("chat", true); else renderHistory();
+  }
+  function loadConvo(id) {
+    const c = convos.find((x) => x.id === id); if (!c) return;
+    mode = c.mode || "chat"; currentConvoId = id;
+    document.querySelectorAll(".rail-item").forEach((x) => x.classList.toggle("active", x.dataset.mode === mode));
+    $("#chat").dataset.mode = mode;
+    apOpen(mode !== "chat", mode);
+    history = (c.history || []).slice(); components = c.components || null; currentSurface = null;
+    agentState = { cart: [], lastMenu: null, coords: null };
+    $("#mode-hint").hidden = true; $("#stat").style.visibility = "hidden";
+    $("#messages").innerHTML = "";
+    history.forEach((h) => addMsg(h.role === "user" ? "user" : "bot", h.content));
+    setEmpty(history.length === 0); if (!history.length) renderHero(mode);
+    if (Array.isArray(components) && components.length) {   // re-render the last screen of the conversation
+      const surf = document.createElement("div");
+      surf.className = "gen-surface"; surf.dataset.width = pickWidth(components);
+      if (mode !== "chat") { surf.dataset.agent = ""; attachAgentClicks(surf); }
+      $("#messages").appendChild(surf); currentSurface = surf; renderCurrent();
+    }
+    sideTab(mode === "chat" ? "chat" : "agent"); renderHistory(); $("#input").focus();
+  }
+
+  // ---- chat-tools box (top-right, chat mode): design-system switch + component catalog ----
+  function syncChatTools() {
+    const src = $("#ds-select"), dst = $("#ct-ds"); if (!dst) return;
+    dst.innerHTML = src.innerHTML; dst.value = src.value;
+  }
+  $("#ct-ds").addEventListener("change", (e) => { window.__cat.applyDS(e.target.value); syncChatTools(); });
+  $("#ct-components").onclick = () => $("#gallery-btn").click();
+
+  // ---- initial paint ----
+  renderHistory(); renderHero("chat"); syncChatTools();
 
   // ---- agent system-prompt editor (⚙ Prompt) ----
   let agentPromptDefaults = {};
@@ -1683,8 +1922,14 @@
     if (usedEl) usedEl.textContent = used;
     if (totEl) totEl.textContent = creditsTotal;
     if (leftEl) leftEl.textContent = credits + " left";
-    if (fill) fill.style.width = (creditsTotal ? Math.round((used / creditsTotal) * 100) : 0) + "%";
-    const bar = document.querySelector(".ap-usage-bar"); if (bar) bar.classList.toggle("low", credits <= 3);
+    const pct = creditsTotal ? Math.round((used / creditsTotal) * 100) : 0;
+    if (fill) fill.style.width = pct + "%";
+    document.querySelectorAll(".ap-usage-bar").forEach((b) => b.classList.toggle("low", credits <= 3));
+    // modal usage screen (opened from the profile menu)
+    const mu = $("#cm-usage-used"), mt = $("#cm-usage-total"), mf = $("#cm-usage-fill");
+    if (mu) mu.textContent = used;
+    if (mt) mt.textContent = creditsTotal;
+    if (mf) mf.style.width = pct + "%";
     const bal = $("#credits-bal"); if (bal) bal.textContent = credits;
   }
   function saveCredits() {
@@ -1705,6 +1950,24 @@
   });
   renderCredits();
 
+  // ---- profile menu (header): email + usage/credits + theme + sign out ----
+  function pmSync() {
+    const emailEl = $("#account-email"), signedIn = !!(emailEl && emailEl.textContent.trim() && !emailEl.hidden);
+    $("#pm-email").textContent = signedIn ? emailEl.textContent.trim() : "Not signed in";
+    $("#pm-signout").hidden = !signedIn;
+  }
+  $("#profile-btn").onclick = (e) => {
+    e.stopPropagation();
+    const m = $("#profile-menu"); const show = m.hidden; pmSync(); m.hidden = !show;
+  };
+  document.addEventListener("click", (e) => {
+    const m = $("#profile-menu");
+    if (!m.hidden && !m.contains(e.target) && !$("#profile-btn").contains(e.target)) m.hidden = true;
+  });
+  $("#pm-usage").onclick = () => { $("#profile-menu").hidden = true; openCredits(); };
+  $("#pm-theme").onclick = () => { $("#theme-btn").click(); };
+  $("#pm-signout").onclick = () => { $("#profile-menu").hidden = true; $("#signout-btn").click(); };
+
   // ---- Import modal: the Figma / design-system agent lives here (not in the chat) ----
   $("#ds-import-btn").onclick = () => { $("#ag-modal").hidden = false; };
   $("#ag-modal-close").onclick = () => { $("#ag-modal").hidden = true; };
@@ -1716,7 +1979,7 @@
     const on = !!agentEndpoint;
     const add = $("#rail-add");
     add.classList.toggle("connected", on);
-    add.querySelector(".rail-label").textContent = on ? "Your agent" : "Connect agent";
+    add.querySelector(".side-lbl").textContent = on ? "Your agent" : "Connect agent";
     add.title = on ? "Your agent is connected — click to manage" : "Connect your own agent";
     apSyncAgent();
   }

@@ -505,11 +505,13 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
     # build because OpenAI forbids web search + JSON mode together — so search here, build next.
     searches, brief = 0, ""
     u1 = {"input": 0, "output": 0, "total": 0}
+    tr0 = time.perf_counter()
     if use_search:
         try:
             brief, u1, searches = _call(provider, fast, RESEARCH_SYS, hist, web_search=True)
         except Exception:
             brief, u1 = "", {"input": 0, "output": 0, "total": 0}
+    research_ms = int((time.perf_counter() - tr0) * 1000) if use_search else 0
     brief_ctx = ("\n\nResearch brief — real data to put in this screen:\n" + brief) \
         if brief.strip() and "no research needed" not in brief.lower() else ""
     # Static system stays IDENTICAL across turns → cacheable prefix (OpenAI auto-caches it,
@@ -519,19 +521,24 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
     msgs = ([{"role": "user", "content": "[Current context]\n" + dyn}] + hist) if dyn else hist
 
     # PHASE 2: build the screen in JSON mode (no web search) → reliable components.
+    tb0 = time.perf_counter()
+    repaired = False
     text, u2, _ = _call(provider, model, static_system, msgs, web_search=False)
     try:
         data = parse_json_object(text)
     except Exception:
+        repaired = True
         fix, u3, _ = _call(provider, fast,
                            "Return ONLY the corrected, valid JSON object with keys reply, thinking, components. No prose.",
                            [{"role": "user", "content": text}])
         data = parse_json_object(fix)
         u2 = {k: u2[k] + u3[k] for k in u2}
+    build_ms = int((time.perf_counter() - tb0) * 1000)
     usage = {k: u1[k] + u2[k] for k in u2}
     result = {"reply": data.get("reply", ""), "thinking": data.get("thinking", ""),
               "components": data.get("components", []), "usage": usage, "searched": searches,
               "latency_ms": int((time.perf_counter() - t0) * 1000), "model": model,
+              "research_ms": research_ms, "build_ms": build_ms, "repaired": repaired,
               "provider": provider, "tier": tier, "cached": False}
     _cache_set(ckey, result)
     return result
