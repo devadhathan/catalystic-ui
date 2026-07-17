@@ -497,13 +497,13 @@
   body.rail-collapsed .side-lbl { opacity: 0; pointer-events: none; }
   /* Chat / Agent segmented tabs */
   .side-tabs { display: flex; gap: 3px; background: var(--muted); padding: 3px; border-radius: 10px; }
-  body.rail-collapsed .side-tabs { flex-direction: column; background: var(--muted); padding: 4px; gap: 4px; border-radius: 13px; width: 46px; margin: 0 auto; }
+  body.rail-collapsed .side-tabs { flex-direction: column; background: var(--muted); padding: 4px; gap: 4px; border-radius: 13px; width: 100%; box-sizing: border-box; }
   .side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 32px;
      border: 1px solid transparent; background: transparent; color: var(--muted-foreground); cursor: pointer; border-radius: 8px;
      font: inherit; font-size: 13px; font-weight: 550; overflow: hidden; }
   .side-tab svg { width: 14px; height: 14px; flex: 0 0 14px; }
   /* logo + collapse toggle at the top of the sidebar */
-  .rail-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .rail-top { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
   .rail-logo { height: 24px; width: 24px; flex: 0 0 24px; object-fit: contain; }
   .rail-brand { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em;
      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--foreground); }
@@ -517,8 +517,8 @@
   body.rail-collapsed .rail-collapse { align-self: center; }
   .side-tab.active { background: var(--background); color: var(--foreground); }
   /* collapsed: Chat / Agent become a contained vertical toggle with a highlighted thumb */
-  body.rail-collapsed .side-tab { justify-content: center; padding: 0; height: 38px; width: 38px; margin: 0;
-     border: 0; border-radius: 9px; color: var(--muted-foreground); }
+  body.rail-collapsed .side-tab { justify-content: center; padding: 0; height: 36px; width: 100%; margin: 0;
+     box-sizing: border-box; border: 0; border-radius: 9px; color: var(--muted-foreground); }
   body.rail-collapsed .side-tab .side-lbl { display: none; }
   body.rail-collapsed .side-tab svg { width: 18px; height: 18px; flex: 0 0 18px; }
   body.rail-collapsed .side-tab:hover { color: var(--foreground); }
@@ -1983,17 +1983,17 @@
     thinkText.textContent = mode === "chat" ? "Thinking…" : AGENT_PHASES[0] + "…";
     $("#messages").appendChild(pending); scrollDown();
     const apTurn = mode !== "chat" ? apStartTurn(text) : null;   // right-panel live trace for this turn
+    let streamSurf = null, buildText = "";
     const timer = setInterval(() => {
       const n = Math.floor((performance.now() - t0) / 1000);
-      if (mode === "chat") thinkText.textContent = "Thinking " + n + "s…";
-      else {
-        thinkText.textContent = AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
-        if (n >= 6) apAdvance(apTurn, "compose");
-        else if (n >= 3) apAdvance(apTurn, "search");
-      }
+      const label = mode === "chat"
+        ? "Thinking " + n + "s…"
+        : AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
+      // one loader at a time: once the skeleton is up, the phase lives ON it; otherwise in the bubble
+      if (streamSurf) { const tag = streamSurf.querySelector(".sk-tag"); if (tag) tag.textContent = "✦ " + label; }
+      else thinkText.textContent = label;
+      if (mode !== "chat") { if (n >= 6) apAdvance(apTurn, "compose"); else if (n >= 3) apAdvance(apTurn, "search"); }
     }, 250);
-
-    let streamSurf = null, buildText = "";
     // once we can tell a screen is coming, show a SKELETON placeholder and hold it until the
     // full response is ready — then paint the finished UI in one clean pass (no janky reflow).
     const onDelta = (t) => {
@@ -2001,11 +2001,11 @@
       if (streamSurf) return;                   // skeleton already up; wait for the final render
       const comps = tolerantComponents(buildText);
       if (!comps || !comps.length) return;      // still just the reply/thinking text — no screen yet
-      // keep the "thinking" bubble visible ABOVE the skeleton (don't remove it) so feedback never disappears
       streamSurf = document.createElement("div"); streamSurf.className = "gen-surface";
       if (mode !== "chat") streamSurf.dataset.agent = "";
       streamSurf.innerHTML = SKELETON;          // loading state until the screen is fully generated
       $("#messages").appendChild(streamSurf); currentSurface = streamSurf;
+      pending.style.display = "none";           // single loader: hand off from the bubble to the skeleton (phase text moves onto it)
       apMark(apTurn, "understand", "done"); apMark(apTurn, "compose", "run");
       scrollDown();
     };
