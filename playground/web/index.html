@@ -392,6 +392,14 @@
      font: inherit; font-size: 13px; cursor: pointer; color: var(--foreground); }
   .ui-toggle.on { background: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
 
+  /* consequential components (verified) */
+  .ui-confirm { border: 1px solid var(--border); }
+  .ui-confirm-amt { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 12px; }
+  .ui-confirm-actions { justify-content: flex-end; margin-top: 6px; }
+  .ui-amount { display: flex; align-items: center; gap: 8px; border: 1px solid var(--input); border-radius: 10px; padding: 0 12px; background: var(--background); }
+  .ui-amount:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .ui-amount-cur { font-size: 16px; font-weight: 600; color: var(--muted-foreground); }
+  .ui-amount .ui-input { border: 0; padding: 10px 0; background: transparent; box-shadow: none; }
   .ui-btn { height: 38px; padding: 0 16px; border-radius: var(--radius); border: 1px solid transparent;
      font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
   .ui-btn.v-default { background: var(--primary); color: var(--primary-foreground); }
@@ -1667,6 +1675,8 @@
      (salvage behaviors on). Consumers that render verified catalog output leave this unset (strict). -->
 <script>window.__CATALYST_LENIENT = true;</script>
 <script src="verify.js"></script>
+<script>/* load the consequential-contract catalog so the runtime verifier actually enforces it */
+  fetch("catalog.json").then((r) => r.json()).then((c) => { window.__catalog = c; }).catch(() => {});</script>
 <script src="renderer.js"></script>
 <script src="polaris-bundle.js"></script>
 <script src="tokens-panel.js"></script>

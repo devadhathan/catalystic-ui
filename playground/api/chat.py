@@ -230,6 +230,8 @@ Inputs:
 - Toggle     { label, pressed?: bool }
 - Button     { label, variant?: "default|secondary|outline|ghost|destructive", size?: "sm|md|lg" }
 - IconButton { icon: "download|filter|plus|search|more|settings|calendar|bell", label? }
+- AmountInput  { label?, currency: "GBP|USD|EUR", value?, placeholder? }   CONSEQUENTIAL — a currency amount field in a pay/transfer flow (never build it from a plain Input)
+- ConfirmSheet { kind?: "payment|transfer|generic", title?, description?, amount?, currency?: "GBP|USD|EUR", confirmLabel, cancelLabel? }   CONSEQUENTIAL — the dedicated confirm/pay surface
 Display:
 - Badge      { label, tone?: "default|secondary|success|warning|destructive" }
 - Avatar     { url?, fallback? }
@@ -275,6 +277,11 @@ INTERACTIVITY (make a filter actually change the data):
 - Only add bindings when the screen has a filter meant to drive the data. Keep maps small and realistic.
 
 Rules:
+- CONSEQUENTIAL ACTIONS — for ANY payment, transfer, confirm, or irreversible step you MUST use the
+  dedicated ConfirmSheet component (with a clear confirmLabel) — never build a confirmation from a
+  plain Button, and never reword or restructure it. For a currency amount in such a flow use
+  AmountInput with a currency. These are VERIFIED at render time and rejected if malformed, so keep
+  them exactly to their listed fields.
 - MEMORY — use the WHOLE conversation as context. Track everything the user has already told you
   or filled in on earlier screens (name, contact, dates, preferences, prior choices, form values)
   and NEVER ask again for anything already provided. When you render a new screen, PREFILL every

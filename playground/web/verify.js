@@ -118,6 +118,10 @@
   function verifySurface(surface, catalog, opts) {
     opts = opts || {};
     const lenient = !!opts.lenient;
+    // passUnknown: components the catalog doesn't define are kept as-is (rendered by a superset
+    // renderer) instead of dropped. Lets a small "consequential contract" catalog run against a
+    // rich renderer — only the consequential components it DOES define are enforced.
+    const passUnknown = !!opts.passUnknown;
     const validate = makeValidator(catalog);
     const conseq = consequentialSet(catalog, opts.consequential);
     const results = [], rejected = [];
@@ -133,6 +137,15 @@
         const name = node.component;
         const isConseq = conseq.has(name);
         const known = componentInfo(catalog, name) !== null;
+        // A component the catalog doesn't define: keep it (rich renderer handles it) when passUnknown.
+        if (!known && passUnknown) {
+          results.push({ component: name, consequential: false, valid: true, action: "keep", errors: [] });
+          for (const k of Object.keys(node)) {
+            const v = node[k];
+            if (Array.isArray(v) || (v && typeof v === "object")) node[k] = process(v);
+          }
+          return node;
+        }
         let errors = validate(node);
         let action;
         if (errors.length === 0) action = "keep";

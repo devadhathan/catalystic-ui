@@ -1,0 +1,48 @@
+{
+  "$id": "urn:catalyst:playground",
+  "title": "Catalystic UI — playground consequential contract",
+  "description": "A minimal catalog that ENFORCES only the trust-critical (consequential) components. Every other component the renderer supports is passed through untouched (passUnknown). Consequential components must match this contract exactly — malformed or reworded ones are rejected, never repaired.",
+  "components": {
+    "ConfirmSheet": {
+      "type": "object",
+      "x-consequential": true,
+      "allOf": [
+        {
+          "type": "object",
+          "description": "REQUIRED for any pay / transfer / confirm / irreversible action. Use this dedicated component — never build a confirmation from a plain Button, and never reword or restructure it.",
+          "properties": {
+            "component": { "const": "ConfirmSheet" },
+            "id": { "type": "string" },
+            "kind": { "enum": ["payment", "transfer", "generic"] },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "amount": { "type": "string" },
+            "currency": { "enum": ["GBP", "USD", "EUR"] },
+            "confirmLabel": { "type": "string" },
+            "cancelLabel": { "type": "string" }
+          },
+          "required": ["confirmLabel"]
+        }
+      ]
+    },
+    "AmountInput": {
+      "type": "object",
+      "x-consequential": true,
+      "allOf": [
+        {
+          "type": "object",
+          "description": "REQUIRED for currency amount entry in payment / transfer flows. Never compose from a plain Input.",
+          "properties": {
+            "component": { "const": "AmountInput" },
+            "id": { "type": "string" },
+            "label": { "type": "string" },
+            "currency": { "enum": ["GBP", "USD", "EUR"] },
+            "value": { "type": "string" },
+            "placeholder": { "type": "string" }
+          },
+          "required": ["currency"]
+        }
+      ]
+    }
+  }
+}

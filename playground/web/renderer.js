@@ -19,7 +19,7 @@ function verifyGate(list, mount) {
   const w = (typeof window !== "undefined") ? window : {};
   const catalog = w.__catalog;
   if (!catalog || typeof w.verifySurface !== "function") return { list };  // no catalog -> no-op (back-compat)
-  const res = w.verifySurface(list, catalog, { lenient: LENIENT });
+  const res = w.verifySurface(list, catalog, { lenient: LENIENT, passUnknown: true });
   res.results.forEach((r) => {
     if (r.action !== "keep") console.warn("[catalyst.verify] " + r.component + " -> " + r.action + ": " + (r.errors || []).join("; "));
   });
@@ -246,6 +246,25 @@ function node(c, byId) {
       const b = el("button", "ui-btn v-" + (c.variant || "default") + " s-" + (c.size || "md"), label);
       if (!label && (c.child || Array.isArray(c.children))) { b.textContent = ""; K(b); }
       b.onclick = () => toast((label || "action") + " →"); return b;
+    }
+    case "ConfirmSheet": {   // consequential — dedicated, fixed-structure pay/confirm surface
+      const sym = { GBP: "£", USD: "$", EUR: "€" };
+      const card = el("div", "ui-card ui-confirm"); card.dataset.kind = c.kind || "generic";
+      if (c.title) card.appendChild(el("div", "ui-text v-title", c.title));
+      if (c.description) card.appendChild(el("div", "ui-text v-muted", c.description));
+      if (c.amount != null) card.appendChild(el("div", "ui-confirm-amt", (sym[c.currency] || "") + c.amount));
+      const row = el("div", "ui-row gap-sm ui-confirm-actions");
+      if (c.cancelLabel) { const cb = el("button", "ui-btn v-outline s-md", c.cancelLabel); cb.onclick = () => toast(c.cancelLabel + " →"); row.appendChild(cb); }
+      const b = el("button", "ui-btn v-default s-md", c.confirmLabel || "Confirm"); b.onclick = () => toast((c.confirmLabel || "Confirm") + " →"); row.appendChild(b);
+      card.appendChild(row); return card;
+    }
+    case "AmountInput": {   // consequential — dedicated currency amount field
+      const sym = { GBP: "£", USD: "$", EUR: "€" };
+      const w = field(c.label); const wrap = el("div", "ui-amount");
+      wrap.appendChild(el("span", "ui-amount-cur", sym[c.currency] || c.currency || ""));
+      const i = el("input", "ui-input"); i.type = "text"; i.inputMode = "decimal";
+      i.placeholder = c.placeholder || "0.00"; if (c.value != null) i.value = c.value;
+      wrap.appendChild(i); w.appendChild(wrap); return w;
     }
     case "IconButton": {
       const b = el("button", "ui-iconbtn"); b.appendChild(iconSvg(c.icon));
