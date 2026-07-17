@@ -337,14 +337,35 @@ function node(c, byId) {
     }
     case "Table": {
       const t = el("table", "ui-table");
-      if (c.columns) {
-        const tr = el("tr"); c.columns.forEach((h) => tr.appendChild(el("th", null, h)));
+      const cols = c.columns || null;
+      if (cols) {
+        const tr = el("tr"); cols.forEach((h) => tr.appendChild(el("th", null, String(h))));
         const thead = el("thead"); thead.appendChild(tr); t.appendChild(thead);
       }
+      // render a cell that may be a scalar OR an object ({text|label|value|name}, or a sub-record)
+      const cellStr = (v) => {
+        if (v == null) return "";
+        if (typeof v === "object")
+          return v.text ?? v.label ?? v.value ?? v.name ?? Object.values(v).map(cellStr).join(" · ");
+        return String(v);
+      };
+      // a row may be an array, or an object keyed by column name (order it by columns when we have them)
+      const rowCells = (row) => {
+        if (Array.isArray(row)) return row;
+        if (row && typeof row === "object") {
+          if (cols) {
+            const lk = {}; for (const k in row) lk[String(k).toLowerCase()] = row[k];
+            const mapped = cols.map((col) => row[col] !== undefined ? row[col] : lk[String(col).toLowerCase()]);
+            if (mapped.some((v) => v !== undefined)) return mapped.map((v) => v === undefined ? "" : v);
+          }
+          return Object.values(row);
+        }
+        return [row];
+      };
       const tb = el("tbody");
-      (c.rows || []).forEach((row) => {
+      (c.rows || c.data || []).forEach((row) => {
         const tr = el("tr");
-        (Array.isArray(row) ? row : Object.values(row)).forEach((cell) => tr.appendChild(el("td", null, String(cell))));
+        rowCells(row).forEach((cell) => tr.appendChild(el("td", null, cellStr(cell))));
         tb.appendChild(tr);
       });
       t.appendChild(tb);

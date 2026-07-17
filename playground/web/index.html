@@ -577,9 +577,14 @@
   #chat { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background); position: relative; }
   /* top-anchored, but with clearance so the first bubble sits high WITHOUT colliding with the
      design-system selector row (which floats top-right over this area). */
+  /* The column is wide so generated UI (dashboards, wide tables) can fill it, but text/meta
+     stay inside a centered ~780px reading band — best of both, minimal white space. */
   #messages { flex: 1; overflow: auto; padding: 54px 20px 8px; display: flex; flex-direction: column; gap: 12px;
-     width: 100%; max-width: 780px; margin: 0 auto; scrollbar-width: none; }
-  .msg { max-width: 76%; }   /* keep chat text at a comfortable reading width */
+     width: 100%; max-width: 1040px; margin: 0 auto; scrollbar-width: none; }
+  .msg { max-width: 660px; }   /* comfortable reading width for chat text */
+  .msg.user { margin-right: max(0px, calc((100% - 780px) / 2)); }
+  .msg.bot, .turn-tools, .search-note { margin-left: max(0px, calc((100% - 780px) / 2)); }
+  .gen-surface { max-width: 1040px; }   /* generated UI gets the full column width */
   /* chat-tools: design-system + components box, top-right, chat mode only */
   .chat-tools { position: absolute; top: 12px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 7px; }
   #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools, #chat[data-mode="agent"] .chat-tools { display: none; }
