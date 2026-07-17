@@ -268,9 +268,20 @@ def handle(body):
             '<div style="white-space:pre-wrap;font-size:14px;line-height:1.5;background:#f6f7f9;border:1px solid #e6e8ec;'
             'border-radius:10px;padding:14px">' + _esc(msg) + '</div></div>'
         )
-        if not _send_email(to, "Catalystic UI feedback — " + who, html):
-            return {"error": "Couldn't send your feedback — try again in a moment."}
-        return {"ok": True}
+        # Persist to KV first so feedback is NEVER lost, even if email delivery is misconfigured
+        # (e.g. a restricted RESEND_API_KEY). Email is best-effort on top of the durable store.
+        stored = False
+        try:
+            entry = json.dumps({"from": who, "message": msg, "at": int(__import__("time").time())})
+            _cmd("LPUSH", "feedback:log", entry)
+            _cmd("LTRIM", "feedback:log", 0, 499)   # keep the latest 500
+            stored = True
+        except Exception:
+            pass
+        emailed = _send_email(to, "Catalystic UI feedback — " + who, html)
+        if stored or emailed:
+            return {"ok": True}
+        return {"error": "Couldn't send your feedback — try again in a moment."}
 
     return {"error": "unknown action"}
 

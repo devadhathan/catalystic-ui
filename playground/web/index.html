@@ -286,7 +286,7 @@
      background-position: calc(100% - 8px) center; background-size: 13px; background-repeat: no-repeat; }
   .composer-model:hover { border-color: var(--ring); color: var(--foreground); }
   /* AI edit toolbar under a generated screen (chat): edit with a prompt · undo · reset */
-  .ui-tools { display: flex; align-items: center; gap: 6px; width: 100%; max-width: 640px; margin: 2px auto 12px; flex-wrap: wrap; }
+  .ui-tools { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 100%; max-width: 640px; margin: 2px auto 12px; flex-wrap: wrap; }
   .ui-tool { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: var(--card);
      color: var(--muted-foreground); border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer;
      transition: border-color .12s, color .12s; }
@@ -517,7 +517,7 @@
   body.rail-collapsed .rail-collapse { align-self: center; }
   .side-tab.active { background: var(--background); color: var(--foreground); }
   /* collapsed: Chat / Agent become a contained vertical toggle with a highlighted thumb */
-  body.rail-collapsed .side-tab { justify-content: center; padding: 0; height: 36px; width: 100%; margin: 0;
+  body.rail-collapsed .side-tab { flex: 0 0 36px; justify-content: center; padding: 0; height: 36px; width: 100%; margin: 0;
      box-sizing: border-box; border: 0; border-radius: 9px; color: var(--muted-foreground); }
   body.rail-collapsed .side-tab .side-lbl { display: none; }
   body.rail-collapsed .side-tab svg { width: 18px; height: 18px; flex: 0 0 18px; }
@@ -925,6 +925,15 @@
      transition: background .12s, color .12s; }
   #ag-modal-close:hover, #prompt-close:hover, #credits-close:hover, #usage-close:hover, #newagent-close:hover {
      background: var(--secondary); color: var(--foreground); box-shadow: inset 0 0 0 1px var(--border); }
+  /* feedback close shares the rounded-icon-button style */
+  #feedback-close { position: absolute; top: 12px; right: 14px; width: 30px; height: 30px; border: 0; border-radius: 8px;
+     background: var(--muted); color: var(--foreground); cursor: pointer; z-index: 4; display: inline-flex;
+     align-items: center; justify-content: center; transition: background .12s, color .12s; }
+  #feedback-close:hover { background: var(--secondary); box-shadow: inset 0 0 0 1px var(--border); }
+  /* all modal close buttons now use an SVG X — keep it crisp and centered */
+  #ag-modal-close svg, #prompt-close svg, #credits-close svg, #usage-close svg, #newagent-close svg,
+  #connect-close svg, #gallery-close svg, #keys-close svg, #feedback-close svg, #pin-close svg { width: 15px; height: 15px; display: block; }
+  #keys-close, #pin-close, #gallery-close { display: inline-flex; align-items: center; justify-content: center; }
   #tab-agent { padding: 24px; }
 
   /* agent system-prompt editor */
@@ -1244,11 +1253,11 @@
         </div>
         <div class="side-pane" data-side="agent">
           <button class="rail-item" data-mode="food" data-seed="I want to order some food" title="Food ordering agent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span class="side-lbl">Food ordering</span>
           </button>
           <button class="rail-item" data-mode="booking" data-seed="Book a hair appointment" title="Booking agent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
             <span class="side-lbl">Booking</span>
           </button>
           <button id="rail-add" title="Start a new agent">
@@ -1463,7 +1472,7 @@
   <!-- Bring-your-own-agent — point Catalyst at your own endpoint -->
   <div id="connect-modal" hidden>
     <div class="ag-modal-card prompt-card">
-      <button id="connect-close" title="Close">✕</button>
+      <button id="connect-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="prompt-body">
         <h3>Connect your agent</h3>
         <p class="prompt-sub">Point Catalystic UI at your own agent endpoint. It receives the conversation and returns UI, rendered in your selected design system. Your agent framework doesn't matter — it just speaks this JSON.</p>
@@ -1501,7 +1510,7 @@
   <!-- Create a new agent — name + what it's for -->
   <div id="newagent-modal" hidden>
     <div class="ag-modal-card prompt-card credits-card">
-      <button id="newagent-close" title="Close">✕</button>
+      <button id="newagent-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="prompt-body">
         <h3>New agent</h3>
         <p class="prompt-sub">Give your agent a name and describe what it's for — Catalystic UI uses this to shape how it responds and what it builds.</p>
@@ -1523,7 +1532,7 @@
         <b>Components</b><span class="gallery-sub">in your selected design system</span>
         <select id="gallery-ds" class="ds-select"></select>
         <span style="flex:1"></span>
-        <button id="gallery-close" title="Close">✕</button>
+        <button id="gallery-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
       <div class="gallery-bd"><div id="gallery-surface" class="gen-surface"></div></div>
     </div>
@@ -1532,7 +1541,7 @@
   <!-- Agent system-prompt editor — opened by ⚙ Prompt -->
   <div id="prompt-modal" hidden>
     <div class="ag-modal-card prompt-card">
-      <button id="prompt-close" title="Close">✕</button>
+      <button id="prompt-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="prompt-body">
         <h3 id="prompt-title">Agent system prompt</h3>
         <p class="prompt-sub">Tweak how this agent behaves. Saved in this browser; applies from your next message.</p>
@@ -1550,14 +1559,14 @@
   <div id="ag-modal" hidden>
     <div class="ag-modal-card">
       <div id="tab-agent"></div>
-      <button id="ag-modal-close" title="Close">✕</button>
+      <button id="ag-modal-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
   </div>
 
   <!-- Usage — see your balance and what credits get you -->
   <div id="usage-modal" hidden>
     <div class="ag-modal-card prompt-card credits-card">
-      <button id="usage-close" title="Close">✕</button>
+      <button id="usage-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="cm-art"><img src="usage-art.svg" alt="Your Catalystic UI usage" /></div>
       <div class="prompt-body">
         <h3>Your usage</h3>
@@ -1575,7 +1584,7 @@
   <!-- Buy more credits — Stripe Checkout (no card entered here) -->
   <div id="credits-modal" hidden>
     <div class="ag-modal-card prompt-card credits-card">
-      <button id="credits-close" title="Close">✕</button>
+      <button id="credits-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="cm-art"><img src="buy-art.svg" alt="Buy more Catalystic UI credits" /></div>
       <div class="prompt-body">
         <h3>Choose a plan</h3>
@@ -1605,7 +1614,7 @@
   <!-- API keys & developers -->
   <div id="keys-modal" hidden>
     <div class="ag-modal-card prompt-card credits-card">
-      <button id="keys-close" title="Close">✕</button>
+      <button id="keys-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="prompt-body">
         <h3>API keys &amp; developers</h3>
         <p class="prompt-sub">Call Catalystic UI's generative-UI API from your own backend, or render your agent's trees with <code>embed.js</code>. Usage is metered against your credit balance.</p>
@@ -1631,7 +1640,7 @@
   <!-- Feedback -->
   <div id="feedback-modal" hidden>
     <div class="ag-modal-card prompt-card">
-      <button id="feedback-close" title="Close">✕</button>
+      <button id="feedback-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       <div class="prompt-body">
         <div id="feedback-form">
           <h3>Send feedback</h3>
@@ -1736,7 +1745,7 @@
       pinModal = document.createElement("div"); pinModal.id = "pin-modal"; pinModal.hidden = true;
       pinModal.innerHTML =
         '<div class="pin-card"><div class="pin-hd"><b>Pinned step</b><span class="pin-sub" id="pin-stage"></span>' +
-          '<span style="flex:1"></span><button id="pin-close" title="Close">✕</button></div>' +
+          '<span style="flex:1"></span><button id="pin-close" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>' +
         '<div class="pin-body">' +
           '<div class="pin-note">This screen is deterministic: the app renders it every time (0 tokens). The agent only fills the zones you allow.</div>' +
           '<label class="pin-l">Allowed agent zones — comma-separated <code>zone</code> ids the agent may fill</label>' +
@@ -1932,6 +1941,64 @@
   }
 
   // Landing-demo generation: a canned, on-brand salon booking screen — no API call, nothing persisted.
+  // Canned generations for the landing demo — one per preset. Routed by keywords in the prompt.
+  const DEMO_SCENARIOS = [
+    { keys: ["budget", "income", "money", "spend", "saving"],
+      reply: "Here's a monthly budget. Set your income, drag the sliders to allocate spending, and watch what's left update. Save when it looks right.",
+      thinking: "Turned the ask into a budgeting screen — an income metric, sliders for each category, a running 'left to spend', and a save action.",
+      model: "gpt-4.1-mini", latency: 9, usage: { input: 1980, output: 640, total: 2620 },
+      tree: [{ component: "Card", children: [
+        { component: "Text", text: "Monthly Budget", variant: "title" },
+        { component: "Text", text: "Plan where your money goes this month.", variant: "muted" },
+        { component: "Metric", label: "Monthly income", value: "£2,400" },
+        { component: "Slider", label: "Food & groceries", value: 420, min: 0, max: 1000 },
+        { component: "Slider", label: "Going out", value: 260, min: 0, max: 1000 },
+        { component: "Slider", label: "Subscriptions", value: 55, min: 0, max: 300 },
+        { component: "Slider", label: "Savings", value: 500, min: 0, max: 1500 },
+        { component: "Divider" },
+        { component: "Metric", label: "Left to spend", value: "£1,165", description: "after allocations" },
+        { component: "Button", label: "Save budget", variant: "default" } ] }] },
+    { keys: ["sign in", "sign-in", "signin", "login", "log in", "forgot password"],
+      reply: "Here's a clean sign-in card — email, password, a primary sign-in button, and a small 'forgot password' link.",
+      thinking: "Composed a minimal auth card: two inputs, a primary action, and a secondary recovery link.",
+      model: "gpt-4.1-mini", latency: 6, usage: { input: 1540, output: 430, total: 1970 },
+      tree: [{ component: "Card", children: [
+        { component: "Text", text: "Welcome back", variant: "title" },
+        { component: "Text", text: "Sign in to continue to your account.", variant: "muted" },
+        { component: "Input", label: "Email", placeholder: "you@example.com", type: "email" },
+        { component: "Input", label: "Password", placeholder: "••••••••", type: "password" },
+        { component: "Button", label: "Sign in", variant: "default" },
+        { component: "Link", text: "Forgot password?", href: "#" } ] }] },
+    { keys: ["feedback", "rating", "review", "comment"],
+      reply: "Here's a feedback form — a quick rating, a comment box, and a submit button.",
+      thinking: "Built a feedback surface: a rating select, a free-text area, and a submit action.",
+      model: "gpt-4.1-mini", latency: 7, usage: { input: 1420, output: 390, total: 1810 },
+      tree: [{ component: "Card", children: [
+        { component: "Text", text: "Share your feedback", variant: "title" },
+        { component: "Text", text: "Tell us what's working and what could be better.", variant: "muted" },
+        { component: "Select", label: "How was your experience?", options: ["Loved it", "It was fine", "Needs work"] },
+        { component: "Textarea", label: "Your comments", placeholder: "Write your thoughts…" },
+        { component: "Button", label: "Submit feedback", variant: "default" } ] }] },
+    { keys: ["salon", "appointment", "book", "haircut"],   // default (salon) — keep last as the catch-all
+      reply: "Here's a booking form for your salon appointment. You can pick a service, choose date and time, enter your name and phone, then confirm.",
+      thinking: "Parsed the request into a booking flow — Select for service & time, a date field, text inputs for contact, and a confirm button.",
+      model: "gpt-4.1-mini", latency: 11, usage: { input: 2226, output: 714, total: 2940 },
+      tree: [{ component: "Card", children: [
+        { component: "Text", text: "Book a Salon Appointment", variant: "title" },
+        { component: "Text", text: "Choose your service, date, and time, then enter your details.", variant: "muted" },
+        { component: "Alert", title: "Note", description: "Appointments can be booked up to 30 days in advance." },
+        { component: "Select", label: "Select Service", options: ["Haircut", "Colour", "Styling", "Shave"] },
+        { component: "DatePicker", label: "Choose Date" },
+        { component: "Select", label: "Choose Time", options: ["09:00 AM", "10:30 AM", "01:00 PM", "03:30 PM"] },
+        { component: "Text", text: "Your Contact Information", variant: "subtitle" },
+        { component: "Input", label: "Full Name", placeholder: "Enter your full name" },
+        { component: "Input", label: "Phone Number", placeholder: "Enter your phone number", type: "tel" },
+        { component: "Button", label: "Confirm Appointment", variant: "default" } ] }] },
+  ];
+  function pickDemoScenario(text) {
+    const t = (text || "").toLowerCase();
+    return DEMO_SCENARIOS.find((s) => s.keys.some((k) => t.includes(k))) || DEMO_SCENARIOS[DEMO_SCENARIOS.length - 1];
+  }
   async function demoGenerate(text) {
     setEmpty(false);
     addMsg("user", text);
@@ -1941,25 +2008,14 @@
     $("#messages").appendChild(pending); scrollDown();
     await new Promise((r) => setTimeout(r, 1300));
     pending.remove();
-    addMsg("bot", "Here's a booking form for your salon appointment. You can pick a service, choose date and time, enter your name and phone, then confirm.");
-    const TREE = [{ component: "Card", children: [
-      { component: "Text", text: "Book a Salon Appointment", variant: "title" },
-      { component: "Text", text: "Choose your service, date, and time, then enter your details.", variant: "muted" },
-      { component: "Alert", title: "Note", description: "Appointments can be booked up to 30 days in advance." },
-      { component: "Select", label: "Select Service", options: ["Haircut", "Colour", "Styling", "Shave"] },
-      { component: "DatePicker", label: "Choose Date" },
-      { component: "Select", label: "Choose Time", options: ["09:00 AM", "10:30 AM", "01:00 PM", "03:30 PM"] },
-      { component: "Text", text: "Your Contact Information", variant: "subtitle" },
-      { component: "Input", label: "Full Name", placeholder: "Enter your full name" },
-      { component: "Input", label: "Phone Number", placeholder: "Enter your phone number", type: "tel" },
-      { component: "Button", label: "Confirm Appointment", variant: "default" } ] }];
-    addTurnTools({ thinking: "Parsed the request into a booking flow — Select for service & time, a date field, text inputs for contact, and a confirm button.",
-      model: "gpt-4.1-mini", tier: "simple", components: TREE, usage: { input: 2226, output: 714, total: 2940 } }, 11);
-    components = TREE;
+    const sc = pickDemoScenario(text);
+    addMsg("bot", sc.reply);
+    addTurnTools({ thinking: sc.thinking, model: sc.model, tier: "simple", components: sc.tree, usage: sc.usage }, sc.latency);
+    components = sc.tree;
     const surf = document.createElement("div"); surf.className = "gen-surface"; surf.dataset.width = "sm";
     $("#messages").appendChild(surf); currentSurface = surf; renderCurrent();
-    $("#s-lat").textContent = "11s"; $("#s-in").textContent = "2226"; $("#s-out").textContent = "714";
-    $("#s-tot").textContent = "2940"; $("#s-model").textContent = "gpt-4.1-mini";
+    $("#s-lat").textContent = sc.latency + "s"; $("#s-in").textContent = sc.usage.input; $("#s-out").textContent = sc.usage.output;
+    $("#s-tot").textContent = sc.usage.total; $("#s-model").textContent = sc.model;
     scrollDown();
   }
 
