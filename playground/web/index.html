@@ -623,6 +623,8 @@
   #mode-hint[hidden] { display: none; }
   #composer { padding: 14px 24px 18px; }
   #composer-box, .presets { max-width: 780px; margin-left: auto; margin-right: auto; }
+  /* new-chat start screen: a tighter, centered input (the wide width is only for an active convo) */
+  #chat.is-empty #composer-box, #chat.is-empty .presets { max-width: 620px; }
 
   /* ---- agent workspace: persistent right panel (agent modes only) ---- */
   #agent-panel { display: none; flex-direction: column; width: var(--ap-w, 400px); flex: 0 0 var(--ap-w, 400px);
