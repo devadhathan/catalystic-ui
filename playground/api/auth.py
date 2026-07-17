@@ -70,24 +70,32 @@ def _send_email(to, subject, html):
         import sys
         print("[auth] email skipped: RESEND_API_KEY not set", file=sys.stderr)
         return False
-    frm = os.environ.get("RESEND_FROM") or "Catalystic UI <onboarding@resend.dev>"
-    payload = json.dumps({"from": frm, "to": [to], "subject": subject, "html": html}).encode()
-    req = urllib.request.Request(
-        "https://api.resend.com/emails", data=payload,
-        headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
-        method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return 200 <= r.status < 300
-    except Exception as e:
-        import sys
-        detail = ""
+    import sys
+    default_from = "Catalystic UI <onboarding@resend.dev>"
+    configured = os.environ.get("RESEND_FROM") or default_from
+    # Try the configured sender first; if it fails (e.g. RESEND_FROM points at an unverified domain),
+    # fall back once to Resend's shared onboarding sender so owner-bound mail (feedback, owner signup)
+    # still goes out. To email arbitrary recipients, verify a domain and set RESEND_FROM to it.
+    froms = [configured] if configured == default_from else [configured, default_from]
+    last = ""
+    for frm in froms:
+        payload = json.dumps({"from": frm, "to": [to], "subject": subject, "html": html}).encode()
+        req = urllib.request.Request(
+            "https://api.resend.com/emails", data=payload,
+            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+            method="POST")
         try:
-            detail = e.read().decode()[:500]   # urllib.error.HTTPError carries the response body
-        except Exception:
-            detail = str(e)
-        print("[auth] Resend send failed from=%r to=%r: %s" % (frm, to, detail), file=sys.stderr)
-        return False
+            with urllib.request.urlopen(req, timeout=10) as r:
+                if 200 <= r.status < 300:
+                    return True
+                last = "status %d" % r.status
+        except Exception as e:
+            try:
+                last = e.read().decode()[:500]   # urllib.error.HTTPError carries the response body
+            except Exception:
+                last = str(e)
+            print("[auth] Resend send failed from=%r to=%r: %s" % (frm, to, last), file=sys.stderr)
+    return False
 
 
 def _esc(s):
