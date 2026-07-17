@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catalyst embed — demo</title>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 20px; } p { color: #555; }
+  #log { margin-top: 16px; font-size: 13px; color: #16a34a; min-height: 18px; }
+</style>
+</head>
+<body>
+  <h1>This is a plain HTML page — no Catalyst app around it.</h1>
+  <p>The screen below is rendered by <code>embed.js</code> from an A2UI tree, exactly as a developer would drop it into their own product. Tap a button — it flows back via <code>onAction</code>.</p>
+
+  <div id="surface"></div>
+  <div id="log"></div>
+
+  <!-- in production: https://playground-eta-eight.vercel.app/embed.js -->
+  <script src="embed.js"></script>
+  <script>
+    // an A2UI tree exactly like a developer's own agent would return
+    var tree = [{ component: "Screen", children: [
+      { component: "Text", variant: "title", text: "Contact us" },
+      { component: "Card", children: [
+        { component: "Input", label: "Name", placeholder: "Your name" },
+        { component: "Input", label: "Email", type: "email", placeholder: "you@email.com" },
+        { component: "Textarea", label: "Message", placeholder: "How can we help?" },
+        { component: "Row", children: [
+          { component: "Button", label: "Send", variant: "default" },
+          { component: "Button", label: "Cancel", variant: "secondary" }
+        ]}
+      ]}
+    ]}];
+    Catalyst.render("#surface", tree, {
+      onAction: function (label) { document.getElementById("log").textContent = "→ your agent receives: “" + label + "”"; }
+    });
+  </script>
+</body>
+</html>

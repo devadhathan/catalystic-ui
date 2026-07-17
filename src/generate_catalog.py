@@ -202,7 +202,7 @@ def validate(enriched, skeletons):
 # 5. ASSEMBLE: convert the flat enriched schemas into the A2UI v0.9.1 shape —
 #    allOf(ComponentCommon, CatalogComponentCommon, {props}) + unevaluatedProperties.
 # ---------------------------------------------------------------------------
-def to_a2ui_component(name, flat):
+def to_a2ui_component(name, flat, consequential=False):
     inner_props = {"component": {"const": name}}
     for prop, spec in flat["properties"].items():
         if prop == "component":
@@ -222,7 +222,7 @@ def to_a2ui_component(name, flat):
     inner["properties"] = inner_props
     inner["required"] = flat["required"]
 
-    return {
+    comp = {
         "type": "object",
         "allOf": [
             {"$ref": COMMON + "ComponentCommon"},
@@ -231,6 +231,16 @@ def to_a2ui_component(name, flat):
         ],
         "unevaluatedProperties": False,
     }
+    # Carry the consequential flag into the catalog as a JSON-Schema-safe annotation
+    # (unknown keyword; ignored by validators). The runtime verifier reads this to
+    # decide reject-vs-repair. Also mirrored in the output/consequential.json sidecar.
+    if consequential:
+        comp["x-consequential"] = True
+    return comp
+
+
+def _is_consequential(flat):
+    return bool(flat.get("_meta", {}).get("consequential"))
 
 
 def assemble_catalog(design, enriched):
@@ -242,7 +252,7 @@ def assemble_catalog(design, enriched):
         "title": f"{design['designSystem']} Catalog",
         "description": design.get("description", ""),
         "catalogId": catalog_id,
-        "components": {n: to_a2ui_component(n, enriched[n]) for n in names},
+        "components": {n: to_a2ui_component(n, enriched[n], _is_consequential(enriched[n])) for n in names},
         "$defs": {
             "CatalogComponentCommon": {
                 "type": "object",
@@ -289,16 +299,21 @@ def main():
         print("  ok: all required props exist in source.")
 
     print("[5/5] Assembling A2UI v0.9.1 catalog...")
-    # drop the LLM-steering _meta before it reaches the catalog
-    for schema in enriched.values():
-        schema.pop("_meta", None)
+    # NOTE: _meta is intentionally NOT stripped before assembly — assemble_catalog reads
+    # each component's consequential flag from it. _meta never leaks into the catalog
+    # because to_a2ui_component builds the output component from scratch (only x-consequential
+    # is carried over). The runtime verifier needs to know which components are consequential.
     catalog = assemble_catalog(design, enriched)
+    consequential = [n for n in enriched if _is_consequential(enriched[n])]
 
     out = Path(args.out_dir)
     out.mkdir(exist_ok=True)
     (out / "catalog.json").write_text(json.dumps(catalog, indent=2))
     (out / "rules.txt").write_text(rules + "\n")
-    print(f"\nDone. Wrote {out}/catalog.json and {out}/rules.txt")
+    # sidecar list of consequential components (mirrors the x-consequential annotations)
+    (out / "consequential.json").write_text(json.dumps(
+        {"catalogId": catalog["catalogId"], "consequential": consequential}, indent=2) + "\n")
+    print(f"\nDone. Wrote {out}/catalog.json, {out}/consequential.json and {out}/rules.txt")
 
 
 if __name__ == "__main__":

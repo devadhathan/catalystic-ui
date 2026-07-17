@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Catalyst UI — Beta</title>
+<title>Catalystic UI — Beta</title>
 <link rel="stylesheet" href="polaris-bundle.css" />
 <style>
+  #boot-cover { position: fixed; inset: 0; z-index: 9999; background: #fff; }
+  html.dark #boot-cover { background: #0a0c0f; }
+  #boot-cover.gone { display: none; }
   :root {
     --background: #ffffff;
     --card: #ffffff;
@@ -19,6 +22,7 @@
     --secondary: hsl(240 4.8% 95.9%);
     --destructive: hsl(0 72% 51%);
     --ring: hsl(240 5% 65%);
+    --accent: hsl(221 83% 53%);
     --radius: 8px;
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
   }
@@ -32,7 +36,7 @@
   html.dark {
     --background: #0b0e12; --card: #151a20; --foreground: #e7ecf1; --muted: #1a2027;
     --muted-foreground: #97a3af; --border: #262d36; --input: #2b333d; --primary: #e7ecf1;
-    --primary-foreground: #0b0e12; --secondary: #1a2027; --ring: #3b4855;
+    --primary-foreground: #0b0e12; --secondary: #1a2027; --ring: #3b4855; --accent: hsl(217 91% 60%);
   }
   html.dark .logo-img { filter: brightness(0) invert(1); opacity: .92; }
   html.dark .ds-toggle button.active { background: var(--card); }
@@ -41,10 +45,11 @@
   body { margin: 0; background: var(--background); color: var(--foreground);
          display: flex; flex-direction: column; height: 100vh; font-size: 14px; }
 
-  header { height: 56px; border-bottom: 1px solid var(--border); display: flex;
+  header { display: none; }   /* navbar removed — logo now lives in the sidebar; legacy controls stay hidden in the DOM */
+  header.legacy-show { height: 56px; border-bottom: 1px solid var(--border); display: flex;
            align-items: center; gap: 12px; padding: 0 20px; flex-shrink: 0; background: var(--background); }
   header .logo { font-weight: 600; letter-spacing: -.01em; }
-  header .logo-img { height: 30px; width: auto; display: block; }
+  header .logo-img { height: 20px; width: auto; display: block; }
   header .brand-name { font-weight: 650; letter-spacing: -.01em; font-size: 15px; }
   header .beta-badge { font-size: 9px; font-weight: 700; letter-spacing: .08em; padding: 3px 6px; border-radius: 6px;
      background: var(--primary); color: var(--primary-foreground); }
@@ -68,23 +73,77 @@
   .ds-import-btn:hover { border-color: var(--ring); }
   /* clean grouped header toolbar */
   .hdr-right { display: flex; align-items: center; gap: 8px; }
-  #credits-modal { position: fixed; inset: 0; z-index: 70; background: rgba(15,20,26,.5);
+  #credits-modal, #usage-modal, #newagent-modal { position: fixed; inset: 0; z-index: 70; background: rgba(15,20,26,.5);
      display: flex; align-items: center; justify-content: center; padding: 24px; }
-  #credits-modal[hidden] { display: none; }
-  .credit-packs { display: flex; gap: 10px; margin: 6px 0 4px; }
+  #credits-modal[hidden], #usage-modal[hidden], #newagent-modal[hidden] { display: none; }
+  .na-field { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  .na-field label { font-size: 12.5px; font-weight: 550; color: var(--muted-foreground); }
+  .na-field input, .na-field textarea { border: 1px solid var(--input); border-radius: 10px; background: var(--card);
+     color: var(--foreground); font: inherit; font-size: 14px; padding: 10px 12px; }
+  .na-field input:focus, .na-field textarea:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .na-field textarea { min-height: 92px; resize: vertical; }
+  .credit-packs { display: flex; gap: 10px; margin: 16px 0 4px; }
   .credit-pack { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px;
      border: 1px solid var(--border); border-radius: 14px; background: var(--background); color: var(--foreground);
      padding: 16px 10px 13px; cursor: pointer; transition: border-color .12s, transform .12s; }
   .credit-pack:hover { border-color: var(--ring); transform: translateY(-2px); }
-  .credit-pack.popular { border-color: var(--ring); }
-  .credit-pack b { font-size: 21px; font-weight: 700; }
+  .credit-pack.popular, .credit-pack.selected { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+  .credit-pack b { font-size: 15px; font-weight: 700; }
   .credit-pack span { font-size: 11px; color: var(--muted-foreground); }
-  .credit-pack em { font-style: normal; font-size: 13px; font-weight: 600; margin-top: 5px; }
-  .pack-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: var(--primary);
-     color: var(--primary-foreground); font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
-     padding: 2px 8px; border-radius: 999px; }
-  .credit-demo-note { margin-top: 14px; font-size: 11.5px; color: var(--muted-foreground); text-align: center; line-height: 1.5; }
-  .cm-usage-head { font-size: 12.5px; color: var(--muted-foreground); margin: 2px 0 8px; }
+  .credit-pack em { font-style: normal; font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .pack-tag { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); z-index: 3; background: var(--accent);
+     color: #fff !important; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+     padding: 3px 9px; border-radius: 999px; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  /* redesigned usage & credits modal */
+  .credits-card { width: min(420px, 94vw); overflow: hidden; }
+  #keys-modal .credits-card { width: min(520px, 94vw); }   /* keys modal stays a touch wider */
+  #usage-modal .credits-card { width: min(480px, 94vw); }
+  #usage-modal .cm-art { padding: 26px 20px 18px; }
+  #usage-modal .cm-art img { max-height: 132px; max-width: 72%; }
+  #usage-modal .prompt-body { padding: 28px; gap: 16px; }
+  .um-pct { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 10px; }
+  .um-pct b { font-size: 56px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+  .um-pct span { font-size: 15px; color: var(--muted-foreground); }
+  #usage-modal .ap-usage-bar { height: 10px; }
+  /* illustration banner at the top of each modal */
+  .cm-art { border-bottom: 1px solid var(--border); display: grid; place-items: center; padding: 18px 20px 14px;
+     background: radial-gradient(90% 120% at 50% 0%, hsl(221 90% 97%), var(--background)); }
+  html.dark .cm-art { background: radial-gradient(90% 120% at 50% 0%, hsl(221 40% 15%), var(--background)); }
+  .cm-art img { max-height: 96px; width: auto; max-width: 60%; height: auto; display: block; }
+  /* what a credit buys — fact list in the usage modal */
+  .cm-facts { display: flex; flex-direction: column; gap: 8px; background: var(--muted); border: 1px solid var(--border);
+     border-radius: 12px; padding: 14px 16px; margin: 6px 0 4px; }
+  .cm-fact { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--foreground); }
+  .cm-fact svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--accent); }
+  .cm-fact b { font-weight: 650; }
+  .cm-fact span { color: var(--muted-foreground); }
+  .cm-estimate { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 2px; }
+  .cm-estimate b { font-size: 26px; font-weight: 700; letter-spacing: -.02em; }
+  .cm-estimate span { font-size: 13px; color: var(--muted-foreground); }
+  /* per-pack "what you get" line */
+  .pack-get { font-size: 11px; font-weight: 600; color: var(--accent); margin-top: 7px; text-align: center; line-height: 1.3; }
+  .pack-get small { display: block; color: var(--muted-foreground); font-weight: 500; font-size: 10px; margin-top: 1px; }
+  /* free monthly credits gift */
+  .cm-gift { display: flex; align-items: center; gap: 11px; border: 1px solid var(--accent); border-radius: 12px;
+     padding: 11px 13px; margin: 12px 0 2px; background: linear-gradient(180deg, hsl(221 90% 97%), var(--card)); }
+  html.dark .cm-gift { background: linear-gradient(180deg, hsl(221 40% 15%), var(--card)); }
+  .cm-gift .gift-ic { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 10px; display: grid; place-items: center;
+     background: var(--accent); color: #fff; }
+  .cm-gift .gift-ic svg { width: 18px; height: 18px; }
+  .cm-gift .gift-tx { font-size: 12.5px; color: var(--muted-foreground); line-height: 1.45; }
+  .cm-gift .gift-tx b { color: var(--foreground); font-weight: 650; }
+  .cm-overview { margin: 4px 0 2px; }
+  .cm-ov-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .cm-ov-bal b { font-size: 20px; font-weight: 700; } .cm-ov-bal { font-size: 14px; }
+  .cm-ov-rate { font-size: 11px; color: var(--muted-foreground); }
+  .cm-ov-sub { font-size: 11.5px; color: var(--muted-foreground); margin-top: 7px; }
+  .cm-sub { font-size: 12.5px; color: var(--muted-foreground); margin: 4px 0 14px; }
+  .cm-summary { background: var(--muted); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 16px 0 10px; }
+  .cm-line { display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 4px 0; }
+  .cm-line.cm-muted, .cm-line.cm-muted span { color: var(--muted-foreground); font-size: 12px; }
+  .cm-line.cm-total { font-weight: 700; font-size: 15px; border-top: 1px solid var(--border); margin-top: 6px; padding-top: 9px; }
+  .cm-pay-note { font-size: 11.5px; color: var(--muted-foreground); text-align: center; margin: 6px 0 12px; line-height: 1.5; }
+  .cm-pay-btn { width: 100%; justify-content: center; padding: 11px; font-size: 14px; }
   .hdr-tools { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 9px;
      overflow: hidden; background: var(--card); }
   .hdr-tools button { border: 0; background: transparent; padding: 7px 10px; cursor: pointer;
@@ -98,7 +157,21 @@
   .hdr-icon:hover { color: var(--foreground); border-color: var(--ring); }
   /* profile menu */
   .profile-wrap { position: relative; }
-  #profile-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 80; width: 232px;
+  /* profile row pinned to the sidebar bottom */
+  .rail-profile { margin-top: auto; padding-top: 8px; border-top: 1px solid var(--border); }
+  .rail-profile-btn { width: 100%; display: flex; align-items: center; gap: 9px; border: 0; background: transparent;
+     cursor: pointer; padding: 8px; border-radius: 10px; color: var(--foreground); }
+  .rail-profile-btn:hover { background: var(--muted); }
+  .rp-avatar { width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%; background: var(--muted);
+     display: grid; place-items: center; color: var(--muted-foreground); font-size: 13px; font-weight: 700;
+     text-transform: uppercase; overflow: hidden; }
+  .rp-avatar svg { width: 16px; height: 16px; }
+  .rp-avatar.has-initial { background: var(--primary); color: var(--primary-foreground); }
+  .rp-name { font-size: 13px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; text-align: left; }
+  .rp-caret { width: 15px; height: 15px; flex: 0 0 15px; color: var(--muted-foreground); }
+  body.rail-collapsed .rail-profile-btn { justify-content: center; gap: 0; padding: 8px 0; }
+  body.rail-collapsed .rp-name, body.rail-collapsed .rp-caret { display: none; }  /* avatar sits truly centered */
+  #profile-menu { position: fixed; left: 12px; bottom: 60px; z-index: 120; width: 210px;
      background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 6px;
      box-shadow: 0 12px 32px rgba(0,0,0,.14); }
   #profile-menu[hidden] { display: none; }
@@ -108,7 +181,11 @@
      color: var(--foreground); cursor: pointer; font: inherit; font-size: 13px; padding: 8px 9px; border-radius: 8px; text-align: left; }
   .pm-item svg { width: 15px; height: 15px; flex: 0 0 15px; color: var(--muted-foreground); }
   .pm-item:hover { background: var(--muted); }
-  #chat .stat { max-width: 600px; margin: 0 auto 8px; justify-content: center; font-size: 11px; }
+  .pm-item.pm-disabled { opacity: .6; cursor: default; }
+  .pm-item.pm-disabled:hover { background: transparent; }
+  .pm-soon { margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+     color: var(--accent); background: hsl(221 90% 96%); border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; }
+  html.dark .pm-soon { background: hsl(221 40% 18%); }
 
   /* front landing page */
   #landing { position: fixed; inset: 0; z-index: 300; background: var(--background);
@@ -142,15 +219,7 @@
 
   main { flex: 1; display: flex; min-height: 0; position: relative; padding-left: 62px; }
 
-  #chat { width: 360px; border-right: 1px solid var(--border); display: flex;
-          flex-direction: column; min-height: 0; background: var(--background); }
-  .side-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .side-tabs button { flex: 1; background: none; border: 0; padding: 11px 8px; cursor: pointer; font-size: 13px;
-     color: var(--muted-foreground); border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .side-tabs button.active { color: var(--foreground); border-bottom-color: var(--primary); }
-  .side-badge { font-size: 9px; background: var(--muted); color: var(--muted-foreground); padding: 2px 6px; border-radius: 999px; }
-  .side-body { display: none; flex-direction: column; flex: 1; min-height: 0; }
-  .side-body.active { display: flex; }
+  /* (removed stale pre-redesign #chat / .side-tabs rules that conflicted with the current sidebar) */
   #tab-agent { overflow: auto; }
   #messages { flex: 1; overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
   .msg { max-width: 80%; width: fit-content; padding: 9px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45; }
@@ -161,13 +230,32 @@
   .msg.bot li { margin: 2px 0; }
   .msg.bot .md-line { margin: 0; }
   .msg.bot .md-line + .md-line { margin-top: 4px; }
-  /* agent is thinking — a blue highlight sweeps across the muted text (a real shimmer, not a blink) */
-  .msg.thinking { align-self: flex-start; background: transparent; padding: 6px 4px; font-size: 14px; font-weight: 500;
+  /* agent is thinking — a tiny 2×2 pixel matrix spins beside a shimmering label */
+  .msg.thinking { align-self: flex-start; background: transparent; padding: 6px 4px; display: inline-flex; align-items: center; gap: 8px; }
+  .msg.thinking .think-text { font-size: 14px; font-weight: 500;
      background-image: linear-gradient(100deg, var(--muted-foreground) 0%, var(--muted-foreground) 38%,
         #2f6bff 50%, var(--muted-foreground) 62%, var(--muted-foreground) 100%);
      background-size: 220% 100%; -webkit-background-clip: text; background-clip: text;
      -webkit-text-fill-color: transparent; color: transparent; animation: shine 1.7s ease-in-out infinite; }
   @keyframes shine { 0% { background-position: 120% 0; } 100% { background-position: -20% 0; } }
+  /* 3×3 pixel spinner (9 pixels) — the lit pixel travels clockwise around the perimeter */
+  .px-spin { display: inline-grid; grid-template-columns: repeat(3, 4px); grid-template-rows: repeat(3, 4px); gap: 2px; flex: 0 0 auto; }
+  .px-spin i { width: 4px; height: 4px; border-radius: 1px; background: #2f6bff; opacity: .18; }
+  .px-spin i:nth-child(5) { opacity: .34; }              /* centre stays dim */
+  .px-spin i:nth-child(1) { animation: pxr 1.12s linear infinite; animation-delay: 0s; }
+  .px-spin i:nth-child(2) { animation: pxr 1.12s linear infinite; animation-delay: .14s; }
+  .px-spin i:nth-child(3) { animation: pxr 1.12s linear infinite; animation-delay: .28s; }
+  .px-spin i:nth-child(6) { animation: pxr 1.12s linear infinite; animation-delay: .42s; }
+  .px-spin i:nth-child(9) { animation: pxr 1.12s linear infinite; animation-delay: .56s; }
+  .px-spin i:nth-child(8) { animation: pxr 1.12s linear infinite; animation-delay: .70s; }
+  .px-spin i:nth-child(7) { animation: pxr 1.12s linear infinite; animation-delay: .84s; }
+  .px-spin i:nth-child(4) { animation: pxr 1.12s linear infinite; animation-delay: .98s; }
+  @keyframes pxr { 0%, 100% { opacity: .18; } 12% { opacity: 1; } 28% { opacity: .18; } }
+  /* ?demo mode (landing iframe): ONLY the chat (composer + generated screen) is interactive */
+  body.demo #rail, body.demo .chat-tools, body.demo #agent-panel, body.demo #chat-foot,
+  body.demo #ct-model, body.demo #rail-toggle, body.demo #rail-scrim { pointer-events: none; }
+  body.demo #ct-model { opacity: .55; }
+  body.demo .hist-item .hist-del { display: none; }   /* no delete on the single demo recent */
   @keyframes blink { 50% { opacity: .3; } }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   .msg-meta { align-self: flex-start; font-size: 11px; color: var(--muted-foreground);
@@ -190,11 +278,32 @@
      display: flex; align-items: center; justify-content: center; transition: opacity .15s; }
   #send:hover { opacity: .88; }
   #send:disabled { opacity: .4; cursor: default; }
+  /* model picker lives inside the input, bottom-left */
+  .composer-model { position: absolute; left: 12px; bottom: 9px; -webkit-appearance: none; appearance: none;
+     border: 1px solid var(--border); background: var(--card); color: var(--muted-foreground); border-radius: 8px;
+     padding: 5px 26px 5px 9px; font: inherit; font-size: 11.5px; cursor: pointer; max-width: 46%;
+     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+     background-position: calc(100% - 8px) center; background-size: 13px; background-repeat: no-repeat; }
+  .composer-model:hover { border-color: var(--ring); color: var(--foreground); }
+  /* AI edit toolbar under a generated screen (chat): edit with a prompt · undo · reset */
+  .ui-tools { display: flex; align-items: center; gap: 6px; width: 100%; max-width: 640px; margin: 2px auto 12px; flex-wrap: wrap; }
+  .ui-tool { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: var(--card);
+     color: var(--muted-foreground); border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 12px; cursor: pointer;
+     transition: border-color .12s, color .12s; }
+  .ui-tool:hover { border-color: var(--ring); color: var(--foreground); }
+  .ui-tool:disabled { opacity: .4; cursor: default; }
+  .ui-tool svg { width: 14px; height: 14px; }
+  .ui-tool.star { color: #7c3aed; border-color: hsl(268 60% 60% / .4); }
+  .ui-tool.star:hover { border-color: #7c3aed; background: hsl(268 60% 60% / .08); }
+  .ui-edit { display: flex; flex: 1 1 240px; gap: 6px; }
+  .ui-edit input { flex: 1; border: 1px solid var(--input); border-radius: 8px; padding: 6px 10px; font: inherit;
+     font-size: 12.5px; background: var(--background); color: var(--foreground); }
+  .ui-edit input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
   /* ease-in rise for freshly rendered UI */
   @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   #surface.rise { animation: rise .3s cubic-bezier(.22,.61,.36,1); }
   #composer button:disabled { opacity: .5; cursor: default; }
-  .presets { padding: 0 12px 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets { padding: 10px 12px 12px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
   .chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 4px 11px;
      font-size: 12px; cursor: pointer; color: var(--muted-foreground); }
   .chip:hover { color: var(--foreground); border-color: var(--ring); }
@@ -390,24 +499,43 @@
   .side-tabs { display: flex; gap: 3px; background: var(--muted); padding: 3px; border-radius: 10px; }
   body.rail-collapsed .side-tabs { flex-direction: column; background: transparent; padding: 0; gap: 4px; }
   .side-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; height: 32px;
-     border: 0; background: transparent; color: var(--muted-foreground); cursor: pointer; border-radius: 8px;
+     border: 1px solid transparent; background: transparent; color: var(--muted-foreground); cursor: pointer; border-radius: 8px;
      font: inherit; font-size: 13px; font-weight: 550; overflow: hidden; }
-  .side-tab svg { width: 17px; height: 17px; flex: 0 0 17px; }
-  .side-tab.active { background: var(--background); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-  body.rail-collapsed .side-tab { justify-content: flex-start; padding: 0 11px; height: 42px; }
+  .side-tab svg { width: 14px; height: 14px; flex: 0 0 14px; }
+  /* logo + collapse toggle at the top of the sidebar */
+  .rail-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .rail-logo { height: 24px; width: 24px; flex: 0 0 24px; object-fit: contain; }
+  .rail-brand { flex: 1; min-width: 0; font-size: 17px; font-weight: 700; letter-spacing: -.02em;
+     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--foreground); }
+  body.rail-collapsed .rail-logo, body.rail-collapsed .rail-brand { display: none; }
+  body.rail-collapsed .rail-top { justify-content: center; }
+  .rail-collapse { align-self: flex-end; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 8px;
+     background: var(--card); color: var(--muted-foreground); cursor: pointer; display: flex; align-items: center;
+     justify-content: center; flex: 0 0 auto; transition: border-color .12s, color .12s; }
+  .rail-collapse:hover { border-color: var(--ring); color: var(--foreground); }
+  .rail-collapse svg { width: 16px; height: 16px; }
+  body.rail-collapsed .rail-collapse { align-self: center; }
+  .side-tab.active { background: var(--background); color: var(--foreground); }
+  /* collapsed: Chat / Agent become a clean centered vertical icon toggle */
+  body.rail-collapsed .side-tab { justify-content: center; padding: 0; height: 42px; width: 42px; margin: 0 auto;
+     border: 1px solid transparent; border-radius: 10px; }
+  body.rail-collapsed .side-tab .side-lbl { display: none; }
+  body.rail-collapsed .side-tab svg { width: 18px; height: 18px; flex: 0 0 18px; }
+  body.rail-collapsed .side-tab.active { background: var(--primary); color: var(--primary-foreground); }
   .side-panes { flex: 1; min-height: 0; display: flex; }
   .side-pane { display: none; flex: 1; min-height: 0; flex-direction: column; gap: 4px; overflow: auto; scrollbar-width: none; }
   .side-pane::-webkit-scrollbar { width: 0; }
   .side-pane.active { display: flex; }
-  .new-chat { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 11px; border-radius: 10px;
-     border: 1px solid var(--border); background: var(--background); color: var(--foreground); cursor: pointer;
-     font: inherit; font-size: 13.5px; font-weight: 550; overflow: hidden; transition: border-color .12s; }
-  .new-chat:hover { border-color: var(--ring); }
-  .new-chat svg { width: 18px; height: 18px; flex: 0 0 18px; }
-  .side-h { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  /* New chat button styled to match the New agent (#rail-add) button */
+  .new-chat { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; height: 42px; padding: 0 11px; border-radius: 12px;
+     border: 1px dashed var(--border); background: transparent; color: var(--muted-foreground); cursor: pointer;
+     font: inherit; font-size: 13.5px; font-weight: 550; overflow: hidden; white-space: nowrap; transition: background .15s, border-color .15s; }
+  .new-chat:hover { border-color: var(--ring); color: var(--foreground); }
+  .new-chat svg { width: 20px; height: 20px; flex: 0 0 20px; }
+  .side-h { flex: 0 0 auto; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
      color: var(--muted-foreground); padding: 10px 6px 4px; }
   body.rail-collapsed .side-h { display: none; }
-  .rail-item, #rail-add { height: 42px; border-radius: 12px; cursor: pointer; white-space: nowrap;
+  .rail-item, #rail-add { flex: 0 0 auto; height: 42px; border-radius: 12px; cursor: pointer; white-space: nowrap;
      display: flex; align-items: center; gap: 12px; padding: 0 11px; overflow: hidden; transition: background .15s, border-color .15s; }
   .rail-item { border: 1px solid transparent; background: var(--muted); color: var(--muted-foreground); }
   #rail-add { border: 1px dashed var(--border); background: transparent; color: var(--muted-foreground); margin-top: 2px; }
@@ -415,8 +543,20 @@
   .rail-item svg, #rail-add svg { width: 20px; height: 20px; flex: 0 0 20px; }
   .rail-item:hover, #rail-add:hover { border-color: var(--ring); color: var(--foreground); }
   .rail-item.active { background: var(--primary); color: var(--primary-foreground); box-shadow: 0 2px 6px rgba(0,0,0,.16); }
+  /* custom agents: name + objective tag (rename/delete live in the agent panel header) */
+  .rail-item.custom { height: auto; min-height: 46px; padding: 6px 8px 6px 11px; gap: 6px; }
+  .ri-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: transparent;
+     border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
+  .ri-text { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+  .ri-name { font-size: 13.5px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ri-tag { font-size: 10.5px; font-weight: 600; color: var(--muted-foreground); background: var(--card);
+     border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; align-self: flex-start;
+     max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rail-item.custom.active .ri-tag { color: var(--foreground); }
+  body.rail-collapsed .rail-item.custom .ri-tag { display: none; }
   /* history list */
-  .history-list { display: flex; flex-direction: column; gap: 2px; }
+  .history-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 2px; }
+  .history-list::-webkit-scrollbar { width: 0; }
   body.rail-collapsed .history-list { display: none; }
   .hist-item { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 9px; border-radius: 8px;
      cursor: pointer; color: var(--muted-foreground); font-size: 12.5px; overflow: hidden; }
@@ -432,16 +572,18 @@
 
   /* chat now fills the center */
   #chat { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--background); position: relative; }
-  #messages { flex: 1; overflow: auto; padding: 24px 20px 8px; display: flex; flex-direction: column; gap: 12px;
+  /* top-anchored, but with clearance so the first bubble sits high WITHOUT colliding with the
+     design-system selector row (which floats top-right over this area). */
+  #messages { flex: 1; overflow: auto; padding: 54px 20px 8px; display: flex; flex-direction: column; gap: 12px;
      width: 100%; max-width: 640px; margin: 0 auto; scrollbar-width: none; }
   /* chat-tools: design-system + components box, top-right, chat mode only */
-  .chat-tools { position: absolute; top: 12px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 7px;
-     background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
-  #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools { display: none; }
+  .chat-tools { position: absolute; top: 12px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 7px; }
+  #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools, #chat[data-mode="agent"] .chat-tools { display: none; }
   .ct-ds { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
-     color: var(--foreground); border-radius: 8px; padding: 6px 26px 6px 10px; font: inherit; font-size: 12.5px; cursor: pointer;
+     color: var(--foreground); border-radius: 9px; padding: 6px 26px 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer;
      background-image: linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%), linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
      background-position: calc(100% - 15px) center, calc(100% - 11px) center; background-size: 4px 4px, 4px 4px; background-repeat: no-repeat; }
+  .ct-ds:hover { border-color: var(--ring); }
   .ct-btn { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: var(--card);
      color: var(--foreground); border-radius: 8px; padding: 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer; transition: border-color .12s; }
   .ct-btn:hover { border-color: var(--ring); }
@@ -450,15 +592,27 @@
   #hero { flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 10px 20px 2px; }
   #chat.is-empty #hero { display: flex; }
   #chat:not(.is-empty) #hero { display: none; }
-  .hero-mark { width: 118px; height: auto; margin-bottom: 4px; }
+  .hero-mark { width: 60px; height: auto; margin-bottom: 6px; }
   .hero-title { font-size: 22px; font-weight: 650; letter-spacing: -.01em; }
   .hero-sub { font-size: 14px; color: var(--muted-foreground); max-width: 420px; line-height: 1.55; }
-  #chat.is-empty { justify-content: center; }
-  #chat.is-empty #messages, #chat.is-empty .presets, #chat.is-empty .stat { display: none; }
-  #chat.is-empty #composer { padding-top: 8px; }
+  #chat.is-empty #messages { display: none; }
+  #chat:not(.is-empty) .presets { display: none; }    /* suggestions only on the start screen */
+  /* Empty state: the hero + composer + suggestions sit CENTERED as a group (the start screen). */
+  #chat.is-empty #hero { margin-top: auto; }
+  #chat.is-empty #presets { margin-bottom: auto; }
+  #chat.is-empty[data-mode="food"] #composer,
+  #chat.is-empty[data-mode="booking"] #composer,
+  #chat.is-empty[data-mode="agent"] #composer { margin-bottom: auto; }
+  /* stat bar at the top of the chat column */
+  /* subtle latency/token readout pinned at the bottom of chat & agent */
+  #chat-foot { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; padding: 4px 10px 10px; }
+  #chat-foot .stat { font-size: 11px; gap: 12px; opacity: .5; transition: opacity .15s; flex-wrap: wrap; justify-content: center; }
+  #chat-foot .stat:hover { opacity: .85; }
+  #chat-foot .stat span { display: inline-flex; align-items: center; gap: 4px; }
+  #chat-foot .stat svg { width: 12px; height: 12px; }
   #messages::-webkit-scrollbar { width: 0; height: 0; }
   /* hide the general presets while an agent is running */
-  #chat[data-mode="food"] .presets, #chat[data-mode="booking"] .presets { display: none; }
+  #chat[data-mode="food"] .presets, #chat[data-mode="booking"] .presets, #chat[data-mode="agent"] .presets { display: none; }
   #mode-hint { width: calc(100% - 48px); max-width: 600px; margin: 12px auto 0; font-size: 12px;
      color: var(--muted-foreground); background: var(--muted); border: 1px solid var(--border);
      border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
@@ -475,12 +629,35 @@
   .ap-resize:hover::after, body.ap-resizing .ap-resize::after { background: var(--ring); }
   body.ap-resizing { cursor: col-resize; user-select: none; }
   .ap-head { display: flex; align-items: center; gap: 9px; padding: 16px 18px 12px; }
-  .ap-head .ap-title { font-size: 14px; font-weight: 650; }
-  .ap-head .ap-mode { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
+  /* titles truncate on the left; the action cluster is fixed-width on the right so it never reflows/jitters */
+  .ap-head-titles { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 8px; }
+  .ap-head-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; }
+  .ap-collapse { width: 28px; height: 28px; flex: 0 0 28px; border: 1px solid var(--border); border-radius: 8px;
+     background: var(--card); color: var(--muted-foreground); cursor: pointer; display: grid; place-items: center; }
+  .ap-collapse:hover { color: var(--foreground); border-color: var(--ring); }
+  .ap-collapse svg { width: 16px; height: 16px; transition: transform .2s; }
+  /* collapsed agent panel → a thin strip with just the expand chevron */
+  #agent-panel.collapsed { width: 46px !important; flex: 0 0 46px !important; }
+  #agent-panel.collapsed .ap-tabs, #agent-panel.collapsed .ap-panes,
+  #agent-panel.collapsed .ap-title, #agent-panel.collapsed .ap-mode, #agent-panel.collapsed .ap-resize { display: none; }
+  #agent-panel.collapsed .ap-head { padding: 14px 8px; }
+  #agent-panel.collapsed .ap-collapse svg { transform: rotate(180deg); }
+  .ap-head-act { width: 28px; height: 28px; flex: 0 0 28px; border: 1px solid var(--border); border-radius: 8px;
+     background: var(--card); color: var(--muted-foreground); cursor: pointer; display: grid; place-items: center; transition: border-color .12s, color .12s; }
+  .ap-head-act:hover { color: var(--foreground); border-color: var(--ring); }
+  .ap-head-act.danger:hover { color: hsl(0 72% 55%); border-color: hsl(0 72% 55% / .5); }
+  .ap-head-act svg { width: 15px; height: 15px; }
+  #agent-panel.collapsed .ap-head-act { display: none; }
+  .ap-mode-input { font: inherit; font-size: 13px; font-weight: 650; padding: 3px 8px; border-radius: 7px; border: 1px solid var(--ring);
+     background: var(--background); color: var(--foreground); outline: none; min-width: 0; width: 100%; max-width: 200px; }
+  .ap-head .ap-title { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .ap-head .ap-mode { flex: 0 0 auto; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em;
      color: var(--muted-foreground); background: var(--background); border: 1px solid var(--border);
-     border-radius: 999px; padding: 2px 9px; }
-  .ap-sec { padding: 0 18px 14px; }
-  .ap-sec-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+     border-radius: 999px; padding: 2px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .ap-sec { padding: 0 18px 22px; }                    /* more breathing room between agent-panel sections */
+  .ap-scroll { padding-top: 8px; }
+  .ap-scroll > .ap-sec:first-child { padding-top: 4px; }
+  .ap-sec-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .ap-sec-h label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
      color: var(--muted-foreground); }
   .ap-sec-h .ap-actions { display: flex; gap: 6px; }
@@ -492,6 +669,24 @@
      border-radius: 12px; background: var(--background); color: var(--foreground);
      padding: 10px 12px; font: inherit; font-size: 12.5px; line-height: 1.5; outline: none; }
   #ap-prompt:focus { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  /* actions row under the system-prompt input: Write with AI · Reset · Save */
+  .ap-prompt-actions { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .ap-btn { font: inherit; font-size: 12px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+     background: var(--card); color: var(--foreground); cursor: pointer; transition: border-color .12s; }
+  .ap-btn:hover { border-color: var(--ring); }
+  .ap-btn.primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+  .ap-ai { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600;
+     border: 1px solid var(--border); background: var(--card); color: var(--accent); border-radius: 8px;
+     padding: 6px 11px; cursor: pointer; }
+  .ap-ai:hover { border-color: var(--accent); }
+  .ap-ai:disabled { opacity: .6; cursor: default; }
+  .ap-ai svg { width: 14px; height: 14px; }
+  /* one-bar skeleton shown while "Improve with AI" is generating */
+  .ap-skeleton { border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--card); }
+  .ap-skel-bar { display: block; height: 12px; width: 100%; border-radius: 999px;
+     background: linear-gradient(90deg, hsl(240 5% 90% / .55) 25%, hsl(240 5% 78% / .9) 37%, hsl(240 5% 90% / .55) 63%);
+     background-size: 400% 100%; animation: apShimmer 1.15s ease-in-out infinite; }
+  @keyframes apShimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
   .ap-scroll { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
   .ap-select-wrap { position: relative; }
   .ap-select { width: 100%; appearance: none; border: 1px solid var(--input); border-radius: 12px;
@@ -500,9 +695,9 @@
   .ap-select:focus { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
   .ap-select-wrap::after { content: ""; position: absolute; right: 13px; top: 50%; width: 7px; height: 7px;
      border: solid var(--muted-foreground); border-width: 0 1.6px 1.6px 0; transform: translateY(-70%) rotate(45deg); pointer-events: none; }
-  .ap-conn { display: flex; flex-direction: column; gap: 8px; }
+  .ap-conn { display: flex; flex-direction: column; gap: 12px; }
   .ap-conn-row { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border);
-     border-radius: 12px; background: var(--background); padding: 9px 11px; }
+     border-radius: 12px; background: var(--background); padding: 12px 12px; }
   .ap-conn-ic { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px; background: var(--muted);
      display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); }
   .ap-conn-ic svg { width: 15px; height: 15px; }
@@ -520,6 +715,12 @@
   .ap-link-btn:hover { border-color: var(--ring); }
   .ap-link-btn.connected { border-color: hsl(142 60% 45%); color: hsl(142 55% 40%); background: hsl(142 60% 45% / .08); }
   .ap-trace-wrap { padding: 0 18px 18px; }
+  /* agent conversation history (relocated from the left rail into this panel) */
+  .ap-hist-note { font-size: 12px; color: var(--muted-foreground); padding: 14px 16px 6px; line-height: 1.5; }
+  .ap-hist-list { padding: 2px 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .ap-hist-list .hist-empty { padding: 6px 6px; }
+  /* the shared .hist-item markup carries .side-lbl (a rail-collapse hook) — keep it visible in the panel */
+  #agent-panel .side-lbl { opacity: 1 !important; pointer-events: auto !important; }
   /* tabs */
   /* in agent mode the panel owns UI + Components, so drop them from the global header */
   body.agent-mode #ds-select, body.agent-mode #gallery-btn { display: none; }
@@ -531,10 +732,28 @@
   .ap-tab.active::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 2px;
      background: var(--foreground); border-radius: 2px; }
   .ap-panes { flex: 1; min-height: 0; display: flex; }
-  .ap-pane { display: none; flex: 1; min-height: 0; flex-direction: column; }
+  .ap-pane { display: none; flex: 1; min-width: 0; min-height: 0; flex-direction: column; }
   .ap-pane.active { display: flex; }
   /* UI tab */
   .ap-ds-note, .ap-comp-note { font-size: 11.5px; color: var(--muted-foreground); line-height: 1.5; margin-top: 9px; }
+  /* UI tab: design-system dropdown + Import side by side */
+  .ap-ds-row { display: flex; align-items: stretch; gap: 8px; }
+  .ap-ds-row .ap-select-wrap { flex: 1; min-width: 0; }
+  .ap-import-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; border: 1px solid var(--border);
+     background: var(--card); color: var(--foreground); border-radius: 10px; padding: 0 13px; font: inherit; font-size: 13px;
+     cursor: pointer; transition: border-color .12s; }
+  .ap-import-btn:hover { border-color: var(--ring); }
+  .ap-import-btn svg { width: 15px; height: 15px; }
+  /* UI tab: add-a-component AI prompt */
+  .ap-add-form { display: flex; gap: 8px; margin-top: 10px; }
+  .ap-add-form input { flex: 1; min-width: 0; border: 1px solid var(--input); border-radius: 10px; padding: 9px 11px;
+     font: inherit; font-size: 13px; background: var(--background); color: var(--foreground); }
+  .ap-add-form input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .ap-add-btn { display: inline-flex; align-items: center; white-space: nowrap; border: 0; border-radius: 10px; padding: 0 15px;
+     font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; background: var(--primary); color: var(--primary-foreground);
+     transition: opacity .12s; }
+  .ap-add-btn:hover { opacity: .9; } .ap-add-btn:disabled { opacity: .5; cursor: default; }
+  .ap-add-status { font-size: 11.5px; color: var(--muted-foreground); min-height: 15px; margin-top: 7px; }
   .ap-wide-btn { margin-top: 12px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
      border: 1px solid var(--border); border-radius: 12px; background: var(--background); color: var(--foreground);
      font: inherit; font-size: 12.5px; padding: 10px; cursor: pointer; transition: border-color .12s; }
@@ -548,7 +767,7 @@
   .ap-usage-head { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; color: var(--foreground); }
   .ap-usage-head .ap-usage-left { margin-left: auto; font-size: 11.5px; color: var(--muted-foreground); }
   .ap-usage-bar { margin-top: 8px; height: 8px; border-radius: 999px; background: var(--muted); overflow: hidden; border: 1px solid var(--border); }
-  .ap-usage-fill { height: 100%; width: 0%; border-radius: 999px; background: hsl(142 60% 42%); transition: width .3s ease; }
+  .ap-usage-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--accent); transition: width .3s ease; }
   .ap-usage-bar.low .ap-usage-fill { background: hsl(0 72% 51%); }
   .ap-usage-note { margin-top: 9px; font-size: 11.5px; color: var(--muted-foreground); line-height: 1.5; }
   /* eval checks */
@@ -619,12 +838,19 @@
   .gen-surface[data-agent] .ui-card .ui-text.v-title {
      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
 
-  /* "building UI…" skeleton shown briefly before the agent's UI renders in */
-  .sk-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .sk-tag { font-size: 11px; color: var(--muted-foreground); }
-  .sk-row { display: flex; gap: 12px; overflow: hidden; }
-  .shimmer-tile { flex: 0 0 auto; width: 200px; height: 132px; border-radius: 12px;
-     background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
+  /* skeleton shown while the agent's UI is generating — a converging wave of dots + shimmer lines */
+  .sk-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 34px 0 30px; }
+  .sk-wave { display: flex; align-items: center; gap: 7px; height: 26px; }
+  .sk-wave span { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: sk-wave 1.1s ease-in-out infinite; }
+  .sk-wave span:nth-child(1) { animation-delay: 0s; }
+  .sk-wave span:nth-child(2) { animation-delay: .11s; }
+  .sk-wave span:nth-child(3) { animation-delay: .22s; }
+  .sk-wave span:nth-child(4) { animation-delay: .33s; }
+  .sk-wave span:nth-child(5) { animation-delay: .44s; }
+  @keyframes sk-wave { 0%, 100% { transform: translateY(0) scale(.82); opacity: .35; } 50% { transform: translateY(-11px) scale(1); opacity: 1; } }
+  .sk-tag { font-size: 12px; color: var(--muted-foreground); letter-spacing: .01em; }
+  .sk-lines { width: min(320px, 78%); display: flex; flex-direction: column; gap: 9px; }
+  .sk-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
      background-size: 200% 100%; animation: shimmer 1.3s linear infinite; }
 
   /* inline generated UI — Polaris skin (mirror of #surface rules) */
@@ -643,14 +869,23 @@
 
   /* collapsible reasoning + JSON under an assistant reply */
   .search-note { align-self: flex-start; font-size: 11px; color: var(--muted-foreground);
-     margin: -4px 0 2px 4px; display: inline-flex; align-items: center; gap: 4px; }
+     margin: -4px 0 2px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; max-width: 640px; }
+  .search-tag { font-size: 10.5px; color: var(--muted-foreground); background: var(--muted); border: 1px solid var(--border);
+     border-radius: 999px; padding: 1px 9px; text-decoration: none; transition: color .12s, border-color .12s; }
+  .search-tag:hover { color: var(--foreground); border-color: var(--ring); }
+  .search-more { font-size: 10.5px; color: var(--muted-foreground); background: transparent; border: 1px solid var(--border);
+     border-radius: 999px; padding: 1px 9px; cursor: pointer; font: inherit; font-size: 10.5px; transition: color .12s, border-color .12s; }
+  .search-more:hover { color: var(--foreground); border-color: var(--ring); }
+  .search-tag.extra { display: none; }
+  .search-note.open .search-tag.extra { display: inline; }
+  .search-note.open .search-more { display: none; }
   .turn-tools { align-self: flex-start; display: flex; flex-direction: column; gap: 2px; margin-top: -4px; }
   details.reason { font-size: 12px; }
   details.reason > summary { cursor: pointer; color: var(--muted-foreground); list-style: none;
-     display: inline-flex; align-items: center; gap: 6px; padding: 4px 2px; user-select: none; }
+     display: flex; align-items: center; gap: 6px; padding: 4px 2px; user-select: none; }
   details.reason > summary::-webkit-details-marker { display: none; }
-  details.reason > summary::before { content: "▸"; font-size: 10px; transition: transform .15s; }
-  details.reason[open] > summary::before { transform: rotate(90deg); }
+  details.reason > summary::after { content: "▸"; font-size: 10px; margin-left: auto; transition: transform .15s; }
+  details.reason[open] > summary::after { transform: rotate(90deg); }
   details.reason .reason-body { margin: 2px 0 8px 16px; padding: 10px 12px; border-left: 2px solid var(--border);
      color: #444; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; }
   details.reason pre.json-pre { margin: 2px 0 8px 16px; padding: 12px; background: var(--muted); border-radius: 8px;
@@ -660,6 +895,20 @@
   .reason-tools button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border);
      background: var(--card); color: var(--foreground); border-radius: 7px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
   .reason-tools button:hover { background: var(--muted); }
+  /* branched sub-items inside the single Details dropdown (tree-style) */
+  .turn-collapse .branch { margin: 4px 0 2px 7px; padding-left: 12px; border-left: 1.5px solid var(--border); }
+  .branch-item > summary { cursor: pointer; list-style: none; color: var(--muted-foreground); font-size: 12px;
+     display: inline-flex; align-items: center; gap: 6px; padding: 3px 2px; user-select: none; position: relative; }
+  .branch-item > summary::-webkit-details-marker { display: none; }
+  .branch-item > summary::before { content: "▸"; font-size: 9px; transition: transform .15s; }
+  .branch-item[open] > summary::before { transform: rotate(90deg); }
+  .branch-item > summary::after { content: ""; position: absolute; left: -12px; top: 50%; width: 9px; height: 1.5px;
+     background: var(--border); }
+  /* JSON syntax colors */
+  .json-pre .j-key { color: #9333ea; } .json-pre .j-str { color: #16a34a; }
+  .json-pre .j-num { color: #2563eb; } .json-pre .j-bool { color: #c2410c; } .json-pre .j-null { color: #9ca3af; }
+  html.dark .json-pre .j-key { color: #c084fc; } html.dark .json-pre .j-str { color: #4ade80; }
+  html.dark .json-pre .j-num { color: #60a5fa; } html.dark .json-pre .j-bool { color: #fb923c; }
   .reason-tools button svg { width: 12px; height: 12px; }
 
   /* Import modal — the Figma / design-system agent lives here */
@@ -669,8 +918,12 @@
   .ag-modal-card { position: relative; width: 100%; max-width: 620px; max-height: 86vh; overflow: auto;
      background: var(--background); border: 1px solid var(--border); border-radius: 18px;
      box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-  #ag-modal-close, #prompt-close { position: absolute; top: 12px; right: 14px; width: 30px; height: 30px; border: 0;
-     border-radius: 8px; background: var(--muted); color: var(--foreground); font-size: 14px; cursor: pointer; z-index: 2; }
+  #ag-modal-close, #prompt-close, #credits-close, #usage-close, #newagent-close { position: absolute; top: 12px; right: 14px;
+     width: 30px; height: 30px; border: 0; border-radius: 8px; background: var(--muted); color: var(--foreground);
+     font-size: 14px; cursor: pointer; z-index: 4; display: inline-flex; align-items: center; justify-content: center;
+     transition: background .12s, color .12s; }
+  #ag-modal-close:hover, #prompt-close:hover, #credits-close:hover, #usage-close:hover, #newagent-close:hover {
+     background: var(--secondary); color: var(--foreground); box-shadow: inset 0 0 0 1px var(--border); }
   #tab-agent { padding: 24px; }
 
   /* agent system-prompt editor */
@@ -759,6 +1012,138 @@
   .gen-map { width: 100%; height: 260px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
   .gen-map .leaflet-container { height: 100%; width: 100%; font: inherit; }
   .loc-btn svg { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; }
+  /* pin-this-step button under an agent screen */
+  .pin-step-btn { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12.5px;
+    cursor: pointer; border: 1px dashed var(--border); background: var(--card); color: var(--muted-foreground);
+    border-radius: 8px; padding: 6px 11px; transition: border-color .12s, color .12s; }
+  .pin-step-btn:hover { border-color: hsl(142 60% 45%); color: hsl(142 55% 40%); }
+  /* pin editor modal */
+  #pin-modal { position: fixed; inset: 0; z-index: 80; background: rgba(15,20,26,.5); display: flex;
+    align-items: center; justify-content: center; padding: 24px; }
+  #pin-modal[hidden] { display: none; }
+  .pin-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; width: min(640px, 96vw);
+    max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+  .pin-hd { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .pin-hd .pin-sub { font-size: 12px; color: var(--muted-foreground); }
+  #pin-close { background: none; border: 0; font-size: 16px; cursor: pointer; color: var(--muted-foreground); }
+  .pin-body { padding: 14px 16px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+  .pin-l { font-size: 12px; color: var(--muted-foreground); margin-top: 4px; }
+  .pin-l code { font-size: 11px; background: var(--muted); padding: 1px 4px; border-radius: 4px; }
+  .pin-in, .pin-ta { width: 100%; border: 1px solid var(--input); border-radius: 8px; padding: 8px 10px; font: inherit;
+    font-size: 13px; background: var(--background); color: var(--foreground); }
+  .pin-ta { min-height: 150px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .pin-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .pin-note { font-size: 12px; color: var(--muted-foreground); min-height: 16px; }
+  #pin-preview { margin-top: 4px; }
+  /* stages panel (right side): system prompt split into steps, each with a live UI preview */
+  .ap-stages-note { font-size: 12px; color: var(--muted-foreground); padding: 12px 14px 4px; line-height: 1.5; }
+  #ap-stages { padding: 6px 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .stage-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--card); }
+  .stage-hd { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-bottom: 1px solid var(--border); }
+  .stage-hd .stage-n { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 6px; background: var(--primary);
+    color: var(--primary-foreground); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .stage-hd .stage-title { font-size: 13px; font-weight: 600; letter-spacing: -.01em; }
+  .stage-hd .stage-retry { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font: inherit;
+    font-size: 11.5px; cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--foreground);
+    border-radius: 7px; padding: 4px 9px; transition: border-color .12s; }
+  .stage-hd .stage-retry:hover { border-color: var(--ring); }
+  .stage-hd .stage-retry svg { width: 12px; height: 12px; }
+  .stage-hd .stage-retry.busy { opacity: .6; pointer-events: none; }
+  .stage-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
+  .stage-prompt { width: 100%; min-height: 62px; resize: vertical; border: 1px solid var(--input); border-radius: 8px;
+    padding: 8px 10px; font: inherit; font-size: 12.5px; line-height: 1.5; background: var(--background); color: var(--foreground); }
+  .stage-prompt:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .stage-saved { font-size: 11px; color: hsl(142 55% 40%); height: 13px; }
+  .stage-preview { border: 1px dashed var(--border); border-radius: 8px; padding: 8px; min-height: 40px; background: var(--muted);
+    max-width: 100%; overflow: auto; }                       /* never let a wide screen break the panel */
+  .stage-preview .gen-surface { width: 100% !important; max-width: 100%; min-width: 0; }
+  .stage-preview .gen-surface * { max-width: 100%; }
+  .stage-preview .ui-grid { grid-template-columns: 1fr !important; }   /* single column in the narrow panel */
+  .stage-preview .stage-empty { font-size: 11.5px; color: var(--muted-foreground); text-align: center; padding: 8px; }
+  /* stage preview progress */
+  .stage-progress { padding: 10px 6px; }
+  .stage-bar { height: 4px; border-radius: 3px; background: var(--border); overflow: hidden; }
+  .stage-bar > span { display: block; height: 100%; width: 40%; border-radius: 3px; background: var(--primary);
+    animation: stageslide 1.1s ease-in-out infinite; }
+  @keyframes stageslide { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }
+  .stage-phase { margin-top: 7px; font-size: 11.5px; color: var(--muted-foreground); text-align: center; }
+  /* API keys modal */
+  #keys-modal { position: fixed; inset: 0; z-index: 80; background: rgba(15,20,26,.5); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #feedback-modal { position: fixed; inset: 0; z-index: 80; background: rgba(15,20,26,.5); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #feedback-modal[hidden] { display: none; }
+  #feedback-text { width: 100%; min-height: 130px; resize: vertical; border: 1px solid var(--input); border-radius: 10px;
+     padding: 11px 12px; font: inherit; font-size: 13.5px; line-height: 1.5; background: var(--background); color: var(--foreground); outline: none; margin-top: 10px; }
+  #feedback-text:focus { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  #keys-modal[hidden] { display: none; }
+  .keys-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .keys-empty { font-size: 12px; color: var(--muted-foreground); padding: 8px 2px; }
+  .key-row { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 9px; padding: 8px 11px; font-size: 12.5px; }
+  .key-row .kr-mask { font-family: ui-monospace, Menlo, monospace; color: var(--foreground); }
+  .key-row .kr-label { color: var(--muted-foreground); }
+  .key-row .kr-revoke { margin-left: auto; border: 1px solid var(--border); background: var(--card); color: var(--destructive); border-radius: 7px; padding: 3px 9px; font-size: 11px; cursor: pointer; }
+  .keys-new { margin: 6px 0 4px; }
+  .keys-new-note { font-size: 11.5px; color: hsl(142 55% 40%); margin-bottom: 6px; }
+  #keys-close { position: absolute; top: 12px; right: 14px; background: none; border: 0; font-size: 16px; cursor: pointer; color: var(--muted-foreground); }
+
+  /* ================= responsive / mobile ================= */
+  /* mobile drawer chrome (hidden on desktop) */
+  #rail-toggle { display: none; }
+  #rail-scrim { display: none; }
+  @media (max-width: 820px) {
+    /* header wraps instead of overflowing its single row */
+    header { height: auto; min-height: 56px; flex-wrap: wrap; padding: 8px 12px; row-gap: 8px; }
+    header .tag { display: none; }
+    .ds-toggle, .ds-select { margin-left: 0; }
+
+    /* floating hamburger opens the sidebar drawer */
+    #rail-toggle { display: flex; align-items: center; justify-content: center; position: fixed; top: 10px; left: 10px;
+       z-index: 62; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 11px;
+       background: var(--background); color: var(--foreground); box-shadow: 0 2px 10px rgba(0,0,0,.12); cursor: pointer; }
+    #rail-toggle svg { width: 20px; height: 20px; }
+    main { padding-left: 0; }
+    body.rail-collapsed main { padding-left: 0; }
+
+    /* the rail slides in from the left as a full-width drawer (never the thin 62px strip) */
+    #rail, body.rail-collapsed #rail { position: fixed; width: 270px; padding: 14px 14px;
+       transform: translateX(-100%); transition: transform .24s ease; box-shadow: 8px 0 30px rgba(0,0,0,.22); z-index: 64; }
+    body.rail-open #rail { transform: translateX(0); }
+    /* keep drawer contents fully expanded even if the desktop "collapsed" class lingers */
+    body.rail-collapsed .side-lbl { opacity: 1; pointer-events: auto; }
+    body.rail-collapsed .rail-logo, body.rail-collapsed .rail-brand { display: block; }
+    body.rail-collapsed .rail-top { justify-content: flex-start; }
+    body.rail-collapsed .side-tabs { flex-direction: row; }
+    body.rail-collapsed .side-tab { justify-content: center; }
+    body.rail-collapsed .history-list { display: block; }
+    body.rail-collapsed .side-h { display: block; }
+    body.rail-collapsed .rail-profile-btn { justify-content: flex-start; padding: 8px; }
+    .rail-collapse { display: none; }   /* drawer is opened/closed with the hamburger + backdrop */
+
+    /* backdrop behind the open drawer */
+    #rail-scrim { display: block; position: fixed; inset: 0; background: rgba(15,20,26,.42);
+       z-index: 63; opacity: 0; pointer-events: none; transition: opacity .24s; }
+    body.rail-open #rail-scrim { opacity: 1; pointer-events: auto; }
+
+    /* agent panel opens as a full-width overlay instead of a fixed column */
+    #agent-panel.open { position: absolute; inset: 0; width: auto !important;
+       flex-basis: auto !important; z-index: 46; box-shadow: -10px 0 30px rgba(0,0,0,.16); }
+    /* chat composer + start screen use the full width */
+    #composer { padding: 12px 14px 16px; }
+    #composer-box, .presets { max-width: 100%; }
+    .ui-tools { max-width: 100%; }
+    #preview { padding: 20px 12px; }
+    #messages { padding: 52px 12px 14px; }   /* clear the floating hamburger */
+    .chat-tools { flex-wrap: wrap; }
+  }
+  @media (max-width: 480px) {
+    #credits-modal, #usage-modal, #ag-modal, #prompt-modal, #connect-modal, #keys-modal { padding: 12px; }
+    .prompt-body { padding: 18px; }
+    .cm-art { padding: 14px 16px 12px; }
+    .cm-art img { max-height: 74px; }
+    .credit-pack b { font-size: 18px; }
+    .credit-pack { padding: 14px 8px 12px; }
+    .landing-inner { padding: 0 8px; }
+    .landing-tag { font-size: 14px; }
+  }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -766,21 +1151,12 @@
 <script>try { if (localStorage.getItem("catalyst.theme") === "dark") document.documentElement.classList.add("dark"); } catch (e) {}</script>
 </head>
 <body>
-  <!-- front landing page -->
-  <div id="landing">
-    <div class="landing-inner">
-      <img class="landing-art" src="empty.svg" alt="" />
-      <div class="landing-brand">Catalyst UI <span class="beta-badge">BETA</span></div>
-      <div class="landing-tag">Generative UI, in your design system — an agent that turns intent into real, on-brand, interactive screens.</div>
-      <button id="landing-go">Get started</button>
-    </div>
-  </div>
-
+  <!-- boot cover: hides the app until auth resolves, so it never flashes before a redirect to login -->
+  <div id="boot-cover"></div>
   <!-- beta auth gate (shown only once a datastore is configured) -->
   <div id="auth-gate" hidden>
     <div class="auth-card">
-      <img class="logo-img" src="logo.svg" alt="Catalyst UI" style="height:32px;margin:0 auto 2px" />
-      <div class="auth-title">Catalyst UI <span class="beta-badge">BETA</span></div>
+      <img class="logo-img" src="logo.svg" alt="Catalystic UI" style="height:34px;width:auto;margin:0 auto 6px" />
       <div class="auth-sub" id="auth-sub">Create an account to try the beta.</div>
       <div id="google-wrap" hidden>
         <div id="google-btn"></div>
@@ -796,34 +1172,10 @@
   </div>
 
   <header>
-    <img class="logo-img" src="logo.svg" alt="Catalyst UI" />
-    <span class="brand-name">Catalyst UI</span>
-    <span class="beta-badge">BETA</span>
-    <span class="tag">Generative UI</span>
-    <span class="spacer"></span>
+    <img class="logo-img" src="logo.svg" alt="Catalystic UI" />
     <span class="spacer"></span>
     <div class="hdr-right">
-      <button id="rail-collapse" class="hdr-icon" title="Collapse sidebar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
-      </button>
-      <div class="profile-wrap">
-        <button id="profile-btn" class="hdr-icon" title="Account">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 4-6 8-6s7.5 2 8 6"/></svg>
-        </button>
-        <div id="profile-menu" hidden>
-          <div class="pm-email" id="pm-email">Not signed in</div>
-          <div class="pm-sep"></div>
-          <button class="pm-item" id="pm-usage">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7z"/></svg>
-            Usage &amp; credits</button>
-          <button class="pm-item" id="pm-theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
-            Toggle theme</button>
-          <button class="pm-item" id="pm-signout" hidden>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-            Sign out</button>
-        </div>
-      </div>
+      <!-- profile moved to the left sidebar bottom -->
       <!-- kept in the DOM (hidden) so existing handlers / references still resolve; surfaced elsewhere now -->
       <div id="legacy-hdr" hidden>
         <button id="theme-btn" class="hdr-icon" title="Toggle light / dark"></button>
@@ -849,7 +1201,18 @@
   </header>
 
   <main>
+    <button id="rail-toggle" aria-label="Open menu" title="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div id="rail-scrim"></div>
     <nav id="rail">
+      <div class="rail-top">
+        <img class="logo-img rail-logo" src="logo.svg" alt="Catalystic UI" />
+        <span class="rail-brand">Catalystic UI</span>
+        <button id="rail-collapse" class="rail-collapse" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+        </button>
+      </div>
       <div class="side-tabs">
         <button class="side-tab active" data-side="chat" title="Chat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -871,17 +1234,44 @@
         </div>
         <div class="side-pane" data-side="agent">
           <button class="rail-item" data-mode="food" data-seed="I want to order some food" title="Food ordering agent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
             <span class="side-lbl">Food ordering</span>
           </button>
           <button class="rail-item" data-mode="booking" data-seed="Book a hair appointment" title="Booking agent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>
             <span class="side-lbl">Booking</span>
           </button>
-          <button id="rail-add" title="Connect your own agent">
+          <button id="rail-add" title="Start a new agent">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-            <span class="side-lbl">Connect agent</span>
+            <span class="side-lbl">New agent</span>
           </button>
+          <!-- agent conversation history now lives in the agent panel's "History" tab, not here -->
+        </div>
+      </div>
+      <div class="rail-profile profile-wrap">
+        <button id="profile-btn" class="rail-profile-btn" title="Account">
+          <span class="rp-avatar" id="rp-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 4-6 8-6s7.5 2 8 6"/></svg></span>
+          <span class="rp-name side-lbl" id="rp-name">Not signed in</span>
+          <svg class="rp-caret side-lbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <div id="profile-menu" hidden>
+          <div class="pm-email" id="pm-email">Not signed in</div>
+          <div class="pm-sep"></div>
+          <button class="pm-item" id="pm-usage">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
+            Usage &amp; credits</button>
+          <button class="pm-item pm-disabled" id="pm-keys" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a4 4 0 1 0-3.9 5H14l2 2 2-2 2 2 2-2-3.1-3.1A4 4 0 0 0 15 7z"/><circle cx="10.5" cy="10.5" r="1"/></svg>
+            API keys <span class="pm-soon">Coming soon</span></button>
+          <button class="pm-item" id="pm-feedback">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Send feedback</button>
+          <button class="pm-item" id="pm-theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+            Toggle theme</button>
+          <button class="pm-item" id="pm-signout" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+            Sign out</button>
         </div>
       </div>
     </nav>
@@ -889,9 +1279,9 @@
       <div id="mode-hint" hidden></div>
       <div id="chat-tools" class="chat-tools">
         <select id="ct-ds" class="ct-ds" title="Design system"></select>
-        <button id="ct-components" class="ct-btn" title="Component catalog">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-          <span>Components</span>
+        <button id="ct-import" class="ct-btn" title="Import a design system">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          Import
         </button>
       </div>
       <div id="hero" hidden>
@@ -900,40 +1290,68 @@
         <div class="hero-sub" id="hero-sub"></div>
       </div>
       <div id="messages"></div>
-      <div class="presets" id="presets"></div>
-      <div class="stat" id="stat" style="visibility:hidden">
-        <span>latency <b id="s-lat">–</b></span>
-        <span>in <b id="s-in">–</b></span>
-        <span>out <b id="s-out">–</b></span>
-        <span>total <b id="s-tot">–</b></span>
-        <span>· <b id="s-model">–</b></span>
-        <span id="s-phase-wrap" hidden>· <b id="s-phase">–</b></span>
-      </div>
       <div id="composer">
         <div id="composer-box">
           <textarea id="input" placeholder="Message…"></textarea>
+          <select id="ct-model" class="composer-model" title="Model — Auto is fastest/cheapest; Quality uses the larger model"></select>
           <button id="send" aria-label="Send" title="Send">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
         </div>
       </div>
+      <div class="presets" id="presets"></div>
+      <div id="chat-foot">
+        <div class="stat" id="stat">
+          <span title="Latency"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b id="s-lat">0s</b></span>
+          <span title="Input tokens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg><b id="s-in">0</b></span>
+          <span title="Output tokens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg><b id="s-out">0</b></span>
+          <span title="Total tokens"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg><b id="s-tot">0</b></span>
+          <span title="Model"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg><b id="s-model">–</b></span>
+          <span id="s-phase-wrap" hidden>· <b id="s-phase">–</b></span>
+        </div>
+      </div>
     </section>
     <aside id="agent-panel">
       <div class="ap-resize" id="ap-resize" title="Drag to resize"></div>
       <div class="ap-head">
-        <span class="ap-title">Agent</span>
-        <span class="ap-mode" id="ap-mode">food</span>
+        <div class="ap-head-titles">
+          <span class="ap-title" id="ap-title">Agent</span>
+          <span class="ap-mode" id="ap-mode">food</span>
+        </div>
+        <div class="ap-head-actions">
+          <button id="ap-rename" class="ap-head-act" title="Rename this agent" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+          </button>
+          <button id="ap-delete" class="ap-head-act danger" title="Delete this agent" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+          <button id="ap-collapse" class="ap-collapse" title="Collapse panel">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+        </div>
       </div>
       <div class="ap-tabs" role="tablist">
         <button class="ap-tab active" data-tab="config" role="tab">Config</button>
+        <button class="ap-tab" data-tab="stages" role="tab">Stages</button>
         <button class="ap-tab" data-tab="ui" role="tab">UI</button>
+        <button class="ap-tab" data-tab="history" role="tab">History</button>
         <button class="ap-tab" data-tab="trace" role="tab">Trace</button>
-        <button class="ap-tab" data-tab="settings" role="tab">Settings</button>
       </div>
       <div class="ap-panes">
+      <div class="ap-pane" data-pane="stages">
+      <div class="ap-scroll">
+        <div class="ap-stages-note">Your system prompt, split into steps. Edit a step (auto-saves) and hit <b>Retry</b> to see just that screen — no full agent run.</div>
+        <div id="ap-stages"></div>
+      </div>
+      </div>
       <div class="ap-pane active" data-pane="config">
       <div class="ap-scroll">
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Design system</label></div>
+          <div class="ap-select-wrap"><select id="ap-ds-cfg" class="ap-select"></select></div>
+          <div class="ap-ds-note">The current screen re-renders in the selected system instantly.</div>
+        </div>
         <div class="ap-sec">
           <div class="ap-sec-h"><label>Model preference</label></div>
           <div class="ap-select-wrap">
@@ -941,14 +1359,18 @@
           </div>
         </div>
         <div class="ap-sec">
-          <div class="ap-sec-h">
-            <label>System prompt</label>
-            <div class="ap-actions">
-              <button id="ap-reset" title="Reset to default">Reset</button>
-              <button id="ap-save" class="primary">Save</button>
-            </div>
-          </div>
+          <div class="ap-sec-h"><label>System prompt</label></div>
           <textarea id="ap-prompt" placeholder="Describe how this agent should behave…"></textarea>
+          <div id="ap-skeleton" class="ap-skeleton" hidden><span class="ap-skel-bar"></span></div>
+          <div class="ap-prompt-actions">
+            <button id="ap-ai" class="ap-ai" title="Improve this system prompt with AI">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M19 14l.7 1.9L21.6 16.6l-1.9.7L19 19l-.7-1.9L16.4 16.6l1.9-.7z"/></svg>
+              Improve with AI
+            </button>
+            <span style="flex:1"></span>
+            <button id="ap-reset" class="ap-btn" title="Reset to default">Reset</button>
+            <button id="ap-save" class="ap-btn primary">Save</button>
+          </div>
         </div>
         <div class="ap-sec">
           <div class="ap-sec-h"><label>Connectors</label></div>
@@ -981,40 +1403,46 @@
       <div class="ap-scroll">
         <div class="ap-sec">
           <div class="ap-sec-h"><label>Design system</label></div>
-          <div class="ap-select-wrap">
-            <select id="ap-ds" class="ap-select"></select>
+          <div class="ap-ds-row">
+            <div class="ap-select-wrap"><select id="ap-ds" class="ap-select"></select></div>
+            <button class="ap-import-btn" id="ap-ds-import" title="Import a design system">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              Import
+            </button>
           </div>
           <div class="ap-ds-note">The screen the agent builds renders in this design system. Swap it anytime — the same A2UI tree re-renders.</div>
-          <button class="ap-wide-btn" id="ap-ds-import">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-            Import a design system
-          </button>
+        </div>
+        <div class="ap-sec">
+          <div class="ap-sec-h"><label>Add a component</label>
+            <div class="ap-actions">
+              <button id="ap-add-undo" title="Undo last change" disabled>Undo</button>
+              <button id="ap-add-reset" title="Reset the screen" disabled>Reset</button>
+            </div>
+          </div>
+          <div class="ap-comp-note">Describe a component to add to the current screen — the agent adds it in place. Undo removes it.</div>
+          <form id="ap-add-form" class="ap-add-form">
+            <input id="ap-add-input" type="text" placeholder="e.g. a phone number field, a promo banner…" />
+            <button id="ap-add-btn" class="ap-add-btn" type="submit">＋ Add</button>
+          </form>
+          <div id="ap-add-status" class="ap-add-status"></div>
         </div>
         <div class="ap-sec" style="padding-bottom:6px">
-          <div class="ap-sec-h"><label>Components</label><span class="ap-ds-tag" id="ap-comp-ds">shadcn</span></div>
+          <div class="ap-sec-h"><label>Component library</label><span class="ap-ds-tag" id="ap-comp-ds">shadcn</span></div>
           <div class="ap-comp-note">Every component the agent may compose with, in the selected design system.</div>
         </div>
         <div class="ap-comp-surface gen-surface" id="ap-components"></div>
+      </div>
+      </div>
+      <div class="ap-pane" data-pane="history">
+      <div class="ap-scroll">
+        <div class="ap-hist-note">Your past agent conversations. Click one to reopen it.</div>
+        <div id="ap-history" class="ap-hist-list"><div class="hist-empty">No conversations yet</div></div>
       </div>
       </div>
       <div class="ap-pane" data-pane="trace">
       <div class="ap-scroll">
         <div class="ap-trace-wrap" id="ap-trace">
           <div class="ap-empty">Send a message — each turn's steps and eval checks show up here.</div>
-        </div>
-      </div>
-      </div>
-      <div class="ap-pane" data-pane="settings">
-      <div class="ap-scroll">
-        <div class="ap-sec">
-          <div class="ap-sec-h"><label>Usage</label></div>
-          <div class="ap-usage-head"><span id="ap-usage-used">0</span> of <span id="ap-usage-total">20</span> credits used<span class="ap-usage-left" id="ap-usage-left">20 left</span></div>
-          <div class="ap-usage-bar"><div class="ap-usage-fill" id="ap-usage-fill"></div></div>
-          <div class="ap-usage-note">Each new generation uses 1 credit; cached renders are free.</div>
-          <button class="ap-wide-btn" id="ap-buy-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7z"/></svg>
-            Buy more credits
-          </button>
         </div>
       </div>
       </div>
@@ -1028,7 +1456,7 @@
       <button id="connect-close" title="Close">✕</button>
       <div class="prompt-body">
         <h3>Connect your agent</h3>
-        <p class="prompt-sub">Point Catalyst at your own agent endpoint. It receives the conversation and returns UI, rendered in your selected design system. Your agent framework doesn't matter — it just speaks this JSON.</p>
+        <p class="prompt-sub">Point Catalystic UI at your own agent endpoint. It receives the conversation and returns UI, rendered in your selected design system. Your agent framework doesn't matter — it just speaks this JSON.</p>
         <input id="connect-url" type="url" placeholder="https://your-api.com/agent" spellcheck="false" />
         <div class="connect-contract">
           <div><span class="ct-tag">receives</span><code>POST { history, components, mode }</code></div>
@@ -1051,6 +1479,29 @@
           </div>
           <div class="doc-code"><button class="doc-copy">Copy</button><pre id="doc-snippet"></pre></div>
         </div>
+        <div class="connect-docs">
+          <div class="doc-head">Embed in your app — your agent, our interface, in your product</div>
+          <p class="prompt-sub" style="margin:0 0 8px">Drop this into your own frontend. Your agent returns an A2UI tree; Catalystic UI renders it as real, interactive UI in your app — taps flow back to your agent.</p>
+          <div class="doc-code"><button class="doc-copy" data-embed>Copy</button><pre id="embed-snippet"></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create a new agent — name + what it's for -->
+  <div id="newagent-modal" hidden>
+    <div class="ag-modal-card prompt-card credits-card">
+      <button id="newagent-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3>New agent</h3>
+        <p class="prompt-sub">Give your agent a name and describe what it's for — Catalystic UI uses this to shape how it responds and what it builds.</p>
+        <div class="na-field"><label for="na-name">Name</label>
+          <input id="na-name" type="text" placeholder="e.g. Travel concierge" maxlength="40" /></div>
+        <div class="na-field"><label for="na-purpose">What is it for?</label>
+          <textarea id="na-purpose" placeholder="Describe what this agent helps people do, its tone, and the kind of screens it should produce…"></textarea></div>
+        <div id="na-err" class="auth-err" hidden></div>
+        <div class="prompt-actions"><span style="flex:1"></span>
+          <button id="na-create" class="p-btn primary">Create agent</button></div>
       </div>
     </div>
   </div>
@@ -1093,25 +1544,100 @@
     </div>
   </div>
 
-  <!-- Credits — buy more generations (demo: no real charge) -->
-  <div id="credits-modal" hidden>
-    <div class="ag-modal-card prompt-card">
-      <button id="credits-close" title="Close">✕</button>
+  <!-- Usage — see your balance and what credits get you -->
+  <div id="usage-modal" hidden>
+    <div class="ag-modal-card prompt-card credits-card">
+      <button id="usage-close" title="Close">✕</button>
+      <div class="cm-art"><img src="usage-art.svg" alt="Your Catalystic UI usage" /></div>
       <div class="prompt-body">
-        <h3>Usage &amp; credits</h3>
-        <p class="prompt-sub">Each new generation costs <b>1 credit</b>. Cached renders are free. You have <b id="credits-bal">20</b> left.</p>
-        <div class="cm-usage-head"><span id="cm-usage-used">0</span> of <span id="cm-usage-total">20</span> credits used</div>
-        <div class="ap-usage-bar" style="margin-bottom:16px"><div class="ap-usage-fill" id="cm-usage-fill"></div></div>
-        <div class="credit-packs" id="credit-packs">
-          <button class="credit-pack" data-add="50" data-price="5"><b>50</b><span>credits</span><em>$5</em></button>
-          <button class="credit-pack popular" data-add="200" data-price="15"><span class="pack-tag">Popular</span><b>200</b><span>credits</span><em>$15</em></button>
-          <button class="credit-pack" data-add="500" data-price="30"><b>500</b><span>credits</span><em>$30</em></button>
+        <h3>Your usage</h3>
+        <div class="um-pct"><b id="um-pct">0%</b><span>used</span></div>
+        <div class="ap-usage-bar"><div class="ap-usage-fill" id="um-usage-fill"></div></div>
+        <div class="cm-gift">
+          <span class="gift-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13"/><path d="M12 8S10.8 4 8 4.6 8 8 8 8h4zM12 8s1.2-4 4-3.4S16 8 16 8h-4z"/></svg></span>
+          <span class="gift-tx">A <b>free monthly allowance</b> — our gift, added automatically.</span>
         </div>
-        <div class="credit-demo-note">Demo mode — no real payment is taken and no card is charged. Buying adds credits instantly.</div>
+        <button id="um-buy" class="p-btn primary cm-pay-btn">Top up</button>
       </div>
     </div>
   </div>
 
+  <!-- Buy more credits — Stripe Checkout (no card entered here) -->
+  <div id="credits-modal" hidden>
+    <div class="ag-modal-card prompt-card credits-card">
+      <button id="credits-close" title="Close">✕</button>
+      <div class="cm-art"><img src="buy-art.svg" alt="Buy more Catalystic UI credits" /></div>
+      <div class="prompt-body">
+        <h3>Choose a plan</h3>
+        <div class="cm-sub">Pick a plan to keep composing screens.</div>
+        <div class="cm-gift">
+          <span class="gift-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9M12 8v13"/><path d="M12 8S10.8 4 8 4.6 8 8 8 8h4zM12 8s1.2-4 4-3.4S16 8 16 8h-4z"/></svg></span>
+          <span class="gift-tx">You already get a <b>free monthly allowance</b> as a gift — top up here only when you need more.</span>
+        </div>
+        <div class="credit-packs" id="credit-packs">
+          <button class="credit-pack" data-pack="starter" data-credits="500" data-price="5.00">
+            <b>Starter</b><em>£5</em>
+            <div class="pack-get">Top up for lighter use</div></button>
+          <button class="credit-pack" data-pack="plus" data-credits="1800" data-price="15.00">
+            <span class="pack-tag">Best value</span><b>Plus</b><em>£15</em>
+            <div class="pack-get">For heavier, everyday use</div></button>
+        </div>
+        <div class="cm-summary">
+          <div class="cm-line cm-muted"><span>Taxes</span><span>calculated at checkout</span></div>
+          <div class="cm-line cm-total"><span>Total due</span><span id="cm-sum-total">—</span></div>
+        </div>
+        <div class="cm-pay-note" id="cm-pay-note">🔒 Secure checkout by Stripe — you'll be redirected to enter payment. No card details are stored here.</div>
+        <button id="cm-pay" class="p-btn primary cm-pay-btn">Continue to checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API keys & developers -->
+  <div id="keys-modal" hidden>
+    <div class="ag-modal-card prompt-card credits-card">
+      <button id="keys-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3>API keys &amp; developers</h3>
+        <p class="prompt-sub">Call Catalystic UI's generative-UI API from your own backend, or render your agent's trees with <code>embed.js</code>. Usage is metered against your credit balance.</p>
+        <div class="cm-summary" style="margin:10px 0">
+          <div class="cm-line cm-total"><span>API credits</span><span id="keys-credits">—</span></div>
+        </div>
+        <div class="ap-sec-h" style="padding:0;margin:6px 0 8px"><label>Your keys</label>
+          <div class="ap-actions"><button id="keys-create" class="primary">Create key</button></div>
+        </div>
+        <div id="keys-list" class="keys-list"><div class="keys-empty">Sign in, then create a key to get started.</div></div>
+        <div id="keys-new" class="keys-new" hidden>
+          <div class="keys-new-note">Copy this now — it's shown only once.</div>
+          <div class="doc-code"><button class="doc-copy" data-key>Copy</button><pre id="keys-new-val"></pre></div>
+        </div>
+        <div class="connect-docs" style="margin-top:14px">
+          <div class="doc-head">Use it — Catalystic UI generates &amp; renders in your app</div>
+          <div class="doc-code"><button class="doc-copy" data-keysnip>Copy</button><pre id="keys-snippet"></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div id="feedback-modal" hidden>
+    <div class="ag-modal-card prompt-card">
+      <button id="feedback-close" title="Close">✕</button>
+      <div class="prompt-body">
+        <h3>Send feedback</h3>
+        <p class="prompt-sub">Found a bug, or have an idea? It goes straight to the team.</p>
+        <textarea id="feedback-text" placeholder="What's working, what's not, what you'd love to see…"></textarea>
+        <div class="err" id="feedback-err" hidden></div>
+        <div class="ap-actions" style="margin-top:12px;justify-content:flex-end">
+          <button id="feedback-send" class="primary">Send feedback</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Playground composes exploratory, unverified surfaces, so the renderer runs in LENIENT mode
+     (salvage behaviors on). Consumers that render verified catalog output leave this unset (strict). -->
+<script>window.__CATALYST_LENIENT = true;</script>
+<script src="verify.js"></script>
 <script src="renderer.js"></script>
 <script src="polaris-bundle.js"></script>
 <script src="tokens-panel.js"></script>
@@ -1123,8 +1649,100 @@
   let currentDS = "shadcn";    // renderer: "shadcn" (vanilla) or "polaris" (real React)
   let activeSkin = null;       // imported/token design-system id layered on the shadcn renderer
   let mode = "chat";
+  // DEMO mode (?demo) — used by the landing-page iframe: no auth, no API calls, a canned generation.
+  // Purely additive: the normal app never sets ?demo, so this changes nothing for real users.
+  const DEMO = new URLSearchParams(location.search).has("demo");
   // deterministic agent state — cart/checkout/pay are handled in code (no model call, 0 tokens)
   let agentState = { cart: [], lastMenu: null, coords: null };
+
+  // ---- pinned stages: user-designed baseline screens the agent no longer generates ----
+  // pins[mode][stageId] = { template: <A2UI tree>, zones: [<zoneId>…] }. Stored in this browser.
+  // A pinned screen renders from code (0 tokens); the agent may only fill declared `zone` holes.
+  let pins = {}; try { pins = JSON.parse(localStorage.getItem("catalyst.pins") || "{}"); } catch (e) { pins = {}; }
+  const savePins = () => localStorage.setItem("catalyst.pins", JSON.stringify(pins));
+  const pinsFor = (m) => pins[m] || {};
+  // compact list sent to the model so it knows which stages the app owns (+ their allowed zones)
+  function pinsPayload(m) {
+    return Object.keys(pinsFor(m)).map((id) => ({ id, zones: pinsFor(m)[id].zones || [] }));
+  }
+  // build the final tree for a pinned stage: baseline template + {{slot}} data + agent zone fills
+  function mergePinned(pin, regions) {
+    const tree = JSON.parse(JSON.stringify(pin.template || []));
+    const fills = regions || {};
+    (function walk(n) {
+      if (Array.isArray(n)) return n.forEach(walk);
+      if (n && typeof n === "object") {
+        if (n.zone && Array.isArray(fills[n.zone])) n.children = fills[n.zone];   // splice agent content into the hole
+        for (const k in n) walk(n[k]);
+      }
+    })(tree);
+    // simple {{token}} slots filled from agentState (total, coords, etc.)
+    const data = Object.assign({}, agentState, { cartCount: (agentState.cart || []).length });
+    const s = JSON.stringify(tree).replace(/\{\{(\w+)\}\}/g, (m, k) => (data[k] != null ? String(data[k]) : m));
+    return JSON.parse(s);
+  }
+  function renderPinnedInto(surf, pin, regions) {
+    const tree = mergePinned(pin, regions);
+    surf.innerHTML = ""; window.renderA2UI(tree, null, surf);
+    return tree;
+  }
+  // ---- pin editor: design the baseline, declare zones, preview live (no agent run) ----
+  let pinModal = null;
+  function pinParseTpl() {
+    try { return { tpl: JSON.parse($("#pin-tpl").value), err: null }; }
+    catch (e) { return { tpl: null, err: e.message }; }
+  }
+  function pinZones() { return $("#pin-zones").value.split(",").map((z) => z.trim()).filter(Boolean); }
+  function pinPreview() {
+    const { tpl, err } = pinParseTpl(), note = $("#pin-note");
+    if (err) { note.textContent = "JSON error: " + err; return; }
+    note.textContent = "";
+    try { renderPinnedInto($("#pin-preview"), { template: tpl, zones: pinZones() }, {}); }
+    catch (e) { note.textContent = "Render error: " + e.message; }
+  }
+  function pinSave() {
+    const { tpl, err } = pinParseTpl();
+    if (err) { $("#pin-note").textContent = "Can't save — JSON error: " + err; return; }
+    const m = pinModal.dataset.mode, s = pinModal.dataset.stage;
+    pins[m] = pins[m] || {}; pins[m][s] = { template: tpl, zones: pinZones() }; savePins();
+    $("#pin-note").textContent = "Saved — the agent now renders this baseline for “" + s + "” (0 tokens).";
+  }
+  function pinUnpin() {
+    const m = pinModal.dataset.mode, s = pinModal.dataset.stage;
+    if (pins[m]) { delete pins[m][s]; savePins(); }
+    pinModal.hidden = true;
+  }
+  function openPinEditor(m, stage) {
+    const rec = pinsFor(m)[stage]; if (!rec) return;
+    if (!pinModal) {
+      pinModal = document.createElement("div"); pinModal.id = "pin-modal"; pinModal.hidden = true;
+      pinModal.innerHTML =
+        '<div class="pin-card"><div class="pin-hd"><b>Pinned step</b><span class="pin-sub" id="pin-stage"></span>' +
+          '<span style="flex:1"></span><button id="pin-close" title="Close">✕</button></div>' +
+        '<div class="pin-body">' +
+          '<div class="pin-note">This screen is deterministic: the app renders it every time (0 tokens). The agent only fills the zones you allow.</div>' +
+          '<label class="pin-l">Allowed agent zones — comma-separated <code>zone</code> ids the agent may fill</label>' +
+          '<input id="pin-zones" class="pin-in" placeholder="promo, notes" />' +
+          '<label class="pin-l">Baseline template (A2UI JSON) — add holes with <code>{"component":"Stack","zone":"promo"}</code> and slots like <code>{{total}}</code></label>' +
+          '<textarea id="pin-tpl" class="pin-ta" spellcheck="false"></textarea>' +
+          '<div class="pin-actions"><button id="pin-unpin" class="p-btn">Unpin</button>' +
+            '<button id="pin-prev" class="p-btn">Preview</button><span style="flex:1"></span>' +
+            '<button id="pin-save" class="p-btn primary">Save</button></div>' +
+          '<div class="pin-note" id="pin-note"></div>' +
+          '<div class="gen-surface" id="pin-preview" data-agent></div>' +
+        '</div></div>';
+      document.body.appendChild(pinModal);
+      pinModal.addEventListener("click", (e) => { if (e.target === pinModal) pinModal.hidden = true; });
+      $("#pin-close").onclick = () => { pinModal.hidden = true; };
+      $("#pin-prev").onclick = pinPreview; $("#pin-save").onclick = pinSave; $("#pin-unpin").onclick = pinUnpin;
+    }
+    pinModal.dataset.mode = m; pinModal.dataset.stage = stage;
+    $("#pin-stage").textContent = m + " · " + stage;
+    $("#pin-zones").value = (rec.zones || []).join(", ");
+    $("#pin-tpl").value = JSON.stringify(rec.template || [], null, 2);
+    $("#pin-note").textContent = "";
+    pinModal.hidden = false; pinPreview();
+  }
 
   // exposed for tokens-panel.js (Import agent) + the DS dropdown so they can
   // re-skin / re-render the newest inline UI instead of a fixed #surface.
@@ -1140,10 +1758,13 @@
     return (/"(Chart|Table|Grid)"/.test(s) || /"width"\s*:\s*"lg"/.test(s)) ? "lg" : "sm";
   }
   const SKELETON =
-    '<div class="sk-head"><span class="shimmer-bar" style="width:44%;height:15px"></span>' +
-    '<span class="sk-tag">✦ building UI…</span></div>' +
-    '<div class="sk-row"><div class="shimmer-tile"></div><div class="shimmer-tile"></div><div class="shimmer-tile"></div></div>';
+    '<div class="sk-wrap">' +
+      '<div class="sk-wave"><span></span><span></span><span></span><span></span><span></span></div>' +
+      '<div class="sk-tag">✦ building your screen…</div>' +
+      '<div class="sk-lines"><span class="sk-line"></span><span class="sk-line" style="width:82%"></span><span class="sk-line" style="width:58%"></span></div>' +
+    '</div>';
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const domainOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
 
   async function boot() {
     const presets = await (await fetch("/presets.json")).json();
@@ -1177,7 +1798,19 @@
     $("#messages").appendChild(m); $("#messages").scrollTop = $("#messages").scrollHeight;
     return m;
   }
-  // collapsible "Reasoning" + Component JSON, rendered under each assistant reply
+  // syntax-highlight a JSON string → HTML (keys / strings / numbers / booleans / null)
+  function colorJSON(obj) {
+    const src = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    const e = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return e.replace(/("(?:\\.|[^"\\])*"(\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g, (m) => {
+      let cls = "j-num";
+      if (/^"/.test(m)) cls = /:\s*$/.test(m) ? "j-key" : "j-str";
+      else if (/true|false/.test(m)) cls = "j-bool";
+      else if (/null/.test(m)) cls = "j-null";
+      return '<span class="' + cls + '">' + m + "</span>";
+    });
+  }
+  // one branched dropdown under each assistant reply: Reasoning + (colored) Component JSON
   function addTurnTools(out, sec) {
     const wrap = document.createElement("div");
     wrap.className = "turn-tools";
@@ -1188,20 +1821,22 @@
     const copySvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
     const dlSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>';
     wrap.innerHTML =
-      '<details class="reason"><summary>✦ Reasoning · ' + latLabel + ' · ' + out.model + ' · ' + out.tier + '</summary>' +
-        '<div class="reason-body"></div></details>' +
-      (hasUI ?
-      '<details class="reason"><summary>&lt;/&gt; Component JSON · ' +
-        out.usage.input + ' in / ' + out.usage.output + ' out</summary>' +
-        '<div class="reason-tools">' +
-          '<button class="copy-json">' + copySvg + '<span>Copy</span></button>' +
-          '<button class="dl-json">' + dlSvg + '<span>Download</span></button>' +
-        '</div><pre class="json-pre"></pre></details>' : '');
+      '<details class="reason turn-collapse"><summary>✦ Details · ' + latLabel + ' · ' + out.model + ' · ' + out.tier + '</summary>' +
+        '<div class="branch">' +
+          '<details class="branch-item" open><summary>Reasoning</summary><div class="reason-body"></div></details>' +
+          (hasUI ?
+          '<details class="branch-item"><summary>&lt;/&gt; Component JSON · ' + out.usage.input + ' in / ' + out.usage.output + ' out</summary>' +
+            '<div class="reason-tools">' +
+              '<button class="copy-json">' + copySvg + '<span>Copy</span></button>' +
+              '<button class="dl-json">' + dlSvg + '<span>Download</span></button>' +
+            '</div><pre class="json-pre"></pre></details>' : '') +
+        '</div>' +
+      '</details>';
     wrap.querySelector(".reason-body").textContent =
       "Model: " + out.model + "   ·   tier: " + out.tier + "   ·   " + sec + "s\n" +
       "Tokens: " + out.usage.input + " in / " + out.usage.output + " out\n──────────\n\n" + think;
     if (hasUI) {
-      wrap.querySelector(".json-pre").textContent = json;
+      wrap.querySelector(".json-pre").innerHTML = colorJSON(json);
       wrap.querySelector(".copy-json").onclick = () => {
         navigator.clipboard.writeText(json);
         const s = wrap.querySelector(".copy-json span"), t = s.textContent;
@@ -1216,9 +1851,104 @@
     $("#messages").appendChild(wrap); scrollDown();
   }
 
+  // ---- streaming: render the generated screen ON THE GO as the model emits it ----
+  // Tolerantly "close" a partial JSON string so we can parse & render what's arrived so far.
+  function completeJSON(s) {
+    s = s.replace(/^\s*```(json)?/i, "").trim();
+    const stack = []; let inStr = false, esc = false;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (esc) { esc = false; continue; }
+      if (ch === "\\") { if (inStr) esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === "{" || ch === "[") stack.push(ch);
+      else if (ch === "}" || ch === "]") stack.pop();
+    }
+    let out = s;
+    if (inStr) out += '"';
+    out = out.replace(/,\s*$/, "");
+    for (let i = stack.length - 1; i >= 0; i--) out += stack[i] === "{" ? "}" : "]";
+    try { return JSON.parse(out); } catch (e) { return null; }
+  }
+  function tolerantComponents(text) {
+    const o = completeJSON(text);
+    return o && Array.isArray(o.components) ? o.components : null;
+  }
+  function parseSSE(chunk) {
+    let event = "message", data = "";
+    chunk.split("\n").forEach((l) => {
+      if (l.startsWith("event:")) event = l.slice(6).trim();
+      else if (l.startsWith("data:")) data += l.slice(5).trim();
+    });
+    if (!data) return null;
+    try { return { event, data: JSON.parse(data) }; } catch (e) { return null; }
+  }
+  // Call the streaming chat endpoint. Fires onDelta(textChunk) / onMeta(meta) as they arrive,
+  // resolves to the authoritative final result. Falls back to a plain JSON read if not streamed.
+  async function streamChat(payload, onDelta, onMeta) {
+    const r = await fetch("/api/chat", { method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json", "Accept": "text/event-stream" },
+        authToken ? { "Authorization": "Bearer " + authToken } : {}),
+      body: JSON.stringify(Object.assign({}, payload, { stream: true })) });
+    if (r.status === 401) return { __status: 401 };
+    const ct = r.headers.get("Content-Type") || "";
+    if (!r.body || ct.indexOf("text/event-stream") === -1) return r.json();   // platform buffered → one-shot
+    const reader = r.body.getReader(), dec = new TextDecoder();
+    let buf = "", result = null, err = null;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf("\n\n")) !== -1) {
+        const ev = parseSSE(buf.slice(0, idx)); buf = buf.slice(idx + 2);
+        if (!ev) continue;
+        if (ev.event === "delta") onDelta && onDelta(ev.data.t || "");
+        else if (ev.event === "meta") onMeta && onMeta(ev.data);
+        else if (ev.event === "done") result = ev.data;
+        else if (ev.event === "error") err = ev.data.error || "stream error";
+      }
+    }
+    return err ? { error: err } : (result || { error: "no response" });
+  }
+
+  // Landing-demo generation: a canned, on-brand salon booking screen — no API call, nothing persisted.
+  async function demoGenerate(text) {
+    setEmpty(false);
+    addMsg("user", text);
+    const pending = document.createElement("div");
+    pending.className = "msg thinking";
+    pending.innerHTML = '<span class="px-spin"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="think-text">Thinking…</span>';
+    $("#messages").appendChild(pending); scrollDown();
+    await new Promise((r) => setTimeout(r, 1300));
+    pending.remove();
+    addMsg("bot", "Here's a booking form for your salon appointment. You can pick a service, choose date and time, enter your name and phone, then confirm.");
+    const TREE = [{ component: "Card", children: [
+      { component: "Text", text: "Book a Salon Appointment", variant: "title" },
+      { component: "Text", text: "Choose your service, date, and time, then enter your details.", variant: "muted" },
+      { component: "Alert", title: "Note", description: "Appointments can be booked up to 30 days in advance." },
+      { component: "Select", label: "Select Service", options: ["Haircut", "Colour", "Styling", "Shave"] },
+      { component: "DatePicker", label: "Choose Date" },
+      { component: "Select", label: "Choose Time", options: ["09:00 AM", "10:30 AM", "01:00 PM", "03:30 PM"] },
+      { component: "Text", text: "Your Contact Information", variant: "subtitle" },
+      { component: "Input", label: "Full Name", placeholder: "Enter your full name" },
+      { component: "Input", label: "Phone Number", placeholder: "Enter your phone number", type: "tel" },
+      { component: "Button", label: "Confirm Appointment", variant: "default" } ] }];
+    addTurnTools({ thinking: "Parsed the request into a booking flow — Select for service & time, a date field, text inputs for contact, and a confirm button.",
+      model: "gpt-4.1-mini", tier: "simple", components: TREE, usage: { input: 2226, output: 714, total: 2940 } }, 11);
+    components = TREE;
+    const surf = document.createElement("div"); surf.className = "gen-surface"; surf.dataset.width = "sm";
+    $("#messages").appendChild(surf); currentSurface = surf; renderCurrent();
+    $("#s-lat").textContent = "11s"; $("#s-in").textContent = "2226"; $("#s-out").textContent = "714";
+    $("#s-tot").textContent = "2940"; $("#s-model").textContent = "gpt-4.1-mini";
+    scrollDown();
+  }
+
   async function send(preset) {
     const text = (preset != null ? preset : $("#input").value).trim();
     if (!text) return;
+    if (DEMO) { if (preset == null) $("#input").value = ""; return demoGenerate(text); }   // landing demo: canned, no API
     if (credits <= 0) { openCredits(); return; }   // out of credits — prompt to buy, keep the text
     setEmpty(false);   // first message — drop the centered hero, input goes to the bottom
     if (preset == null) $("#input").value = "";
@@ -1230,39 +1960,74 @@
     const t0 = performance.now();
     const pending = document.createElement("div");
     pending.className = "msg thinking";
-    pending.textContent = mode === "chat" ? "Thinking…" : AGENT_PHASES[0] + "…";
+    pending.innerHTML = '<span class="px-spin"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="think-text"></span>';
+    const thinkText = pending.querySelector(".think-text");
+    thinkText.textContent = mode === "chat" ? "Thinking…" : AGENT_PHASES[0] + "…";
     $("#messages").appendChild(pending); scrollDown();
     const apTurn = mode !== "chat" ? apStartTurn(text) : null;   // right-panel live trace for this turn
     const timer = setInterval(() => {
       const n = Math.floor((performance.now() - t0) / 1000);
-      if (mode === "chat") pending.textContent = "Thinking " + n + "s…";
+      if (mode === "chat") thinkText.textContent = "Thinking " + n + "s…";
       else {
-        pending.textContent = AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
+        thinkText.textContent = AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
         if (n >= 6) apAdvance(apTurn, "compose");
         else if (n >= 3) apAdvance(apTurn, "search");
       }
     }, 250);
 
+    let streamSurf = null, buildText = "";
+    // once we can tell a screen is coming, show a SKELETON placeholder and hold it until the
+    // full response is ready — then paint the finished UI in one clean pass (no janky reflow).
+    const onDelta = (t) => {
+      buildText += t;
+      if (streamSurf) return;                   // skeleton already up; wait for the final render
+      const comps = tolerantComponents(buildText);
+      if (!comps || !comps.length) return;      // still just the reply/thinking text — no screen yet
+      // keep the "thinking" bubble visible ABOVE the skeleton (don't remove it) so feedback never disappears
+      streamSurf = document.createElement("div"); streamSurf.className = "gen-surface";
+      if (mode !== "chat") streamSurf.dataset.agent = "";
+      streamSurf.innerHTML = SKELETON;          // loading state until the screen is fully generated
+      $("#messages").appendChild(streamSurf); currentSurface = streamSurf;
+      apMark(apTurn, "understand", "done"); apMark(apTurn, "compose", "run");
+      scrollDown();
+    };
+    const onMeta = (m) => {
+      if (!m) return;
+      if (m.searched != null)
+        apMark(apTurn, "search", "done", m.searched ? (m.searched > 1 ? m.searched + " web queries" : "1 web query") : "no web search");
+      if (m.credits_remaining != null) { credits = m.credits_remaining; if (credits > creditsTotal) creditsTotal = credits; saveCredits(); }  // server is authoritative
+    };
+
     try {
+      const selModel = (mode === "chat") ? chatModel : apModel;   // chat toolbar picker vs agent panel picker
+      const pinList = (mode !== "chat") ? pinsPayload(mode) : [];  // tell the agent which stages the app owns
       const payload = { history, components, mode, agentPrompt: promptOverrides[mode] || undefined,
-        model: (mode !== "chat" && apModel && apModel !== "auto") ? apModel : undefined,
-        webSearch: (mode !== "chat" && !apWeb) ? false : undefined };
-      const r = agentEndpoint
-        ? await fetch("/api/proxy", { method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: agentEndpoint, body: payload }) })
-        : await fetch("/api/chat", { method: "POST",
-            headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
-            body: JSON.stringify(payload) });
-      const out = await r.json();
-      clearInterval(timer); pending.remove();
-      if (r.status === 401) { apFail(apTurn); $("#auth-gate").hidden = false; return; }
-      if (out.error) { apFail(apTurn); addMsg("bot", "⚠ " + out.error); return; }
+        model: (selModel && selModel !== "auto") ? selModel : undefined,
+        webSearch: (mode !== "chat" && !apWeb) ? false : undefined,
+        pins: pinList.length ? pinList : undefined };
+      let out;
+      if (agentEndpoint) {                      // bring-your-own agent: proxy, no streaming
+        const r = await fetch("/api/proxy", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: agentEndpoint, body: payload }) });
+        out = r.status === 401 ? { __status: 401 } : await r.json();
+      } else {
+        out = await streamChat(payload, onDelta, onMeta);   // Catalyst agent: stream it in
+      }
+      clearInterval(timer); if (pending.parentNode) pending.remove();
+      if (out.__status === 401) { apFail(apTurn); $("#auth-gate").hidden = false; return; }
+      if (out.error) {
+        apFail(apTurn); if (streamSurf) streamSurf.remove();
+        if (out.credits_remaining === 0 || /out of credits/i.test(out.error)) { credits = 0; saveCredits(); openCredits(); }
+        else addMsg("bot", "⚠ " + out.error);
+        return;
+      }
       // reconcile the trace with what actually happened this turn
       apMark(apTurn, "understand", "done");
       apMark(apTurn, "search", "done", out.searched ? (out.searched > 1 ? out.searched + " web queries" : "1 web query") : "no web search");
       history.push({ role: "assistant", content: out.reply });
       components = out.components;
-      if (!out.cached) { credits = Math.max(0, credits - 1); saveCredits(); }   // charge 1 per real generation; cache is free
+      if (out.credits_remaining != null) { credits = out.credits_remaining; if (credits > creditsTotal) creditsTotal = credits; saveCredits(); }  // server authoritative (non-stream / proxy)
+      else if (!out.cached) { credits = Math.max(0, credits - 1); saveCredits(); }   // optimistic (stream corrects via onMeta)
       if (mode !== "chat") captureAgentState(components);   // for deterministic follow-ups
       const sec = Math.round(out.latency_ms / 1000);
       addMsg("bot", out.reply);
@@ -1270,34 +2035,69 @@
         const note = document.createElement("div");
         note.className = "search-note";
         note.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>' +
-          "searched the web" + (out.searched > 1 ? " · " + out.searched + " queries" : "");
+          '<span>searched the web</span>';
+        // de-dupe sources, then show ONLY the first tag + a "+N" button that expands the rest on click
+        const seen = new Set(), uniq = [];
+        (out.sources || []).forEach((s) => {
+          const label = (s.domain || "").trim() || domainOf(s.url);
+          if (!label || seen.has(label)) return; seen.add(label);
+          uniq.push({ label, url: s.url, title: s.title });
+        });
+        uniq.forEach((s, i) => {
+          const tag = document.createElement("a");
+          tag.className = "search-tag" + (i > 0 ? " extra" : "");
+          tag.textContent = s.label;
+          if (s.url) { tag.href = s.url; tag.target = "_blank"; tag.rel = "noopener"; tag.title = s.title || s.url; }
+          note.appendChild(tag);
+        });
+        if (uniq.length > 1) {
+          const more = document.createElement("button");
+          more.className = "search-more"; more.textContent = "+" + (uniq.length - 1);
+          more.title = "Show all sources";
+          more.onclick = () => { note.classList.add("open"); scrollDown(); };
+          note.appendChild(more);
+        }
         $("#messages").appendChild(note); scrollDown();
       }
       addTurnTools(out, sec);
-      // only build a screen when the agent actually produced one (otherwise it's just talking)
-      if (Array.isArray(components) && components.length) {
+      const pin = (mode !== "chat" && out.stage) ? pinsFor(mode)[out.stage] : null;
+      if (pin) {
+        // DETERMINISTIC pinned stage: render the user's baseline + agent zone fills (no generated screen)
+        apMark(apTurn, "compose", "done", "pinned · " + out.stage);
+        apMark(apTurn, "render", "run");
+        const surf = streamSurf || document.createElement("div");
+        surf.className = "gen-surface"; surf.dataset.agent = "";
+        if (!surf.parentNode) $("#messages").appendChild(surf); else $("#messages").appendChild(surf);
+        currentSurface = surf;
+        components = renderPinnedInto(surf, pin, out.regions);   // merged tree kept for save / replay
+        surf.dataset.width = pickWidth(components);
+        attachAgentClicks(surf);
+        apMark(apTurn, "render", "done", "pinned template");
+        scrollDown();
+      } else if (Array.isArray(components) && components.length) {
+        // only build a screen when the agent actually produced one (otherwise it's just talking)
         apMark(apTurn, "compose", "done", apComponentSummary(components));
         apMark(apTurn, "render", "run");
-        const surf = document.createElement("div");
+        const surf = streamSurf || document.createElement("div");
         surf.className = "gen-surface";
         surf.dataset.width = pickWidth(components);
         if (mode !== "chat") { surf.dataset.agent = ""; attachAgentClicks(surf); }
-        surf.innerHTML = SKELETON;
-        $("#messages").appendChild(surf);
+        if (!surf.parentNode) $("#messages").appendChild(surf);
+        else $("#messages").appendChild(surf);   // move below the reply bubble just added
         currentSurface = surf;
-        scrollDown();
-        await sleep(560);          // brief build beat, so it reads as the agent working
         surf.innerHTML = "";
-        renderCurrent();
+        renderCurrent();                          // authoritative final render (with Map / LocationRequest upgrades)
+        if (mode === "chat") attachUITools(surf);   // ✦ edit / undo / reset this screen with a prompt
+        else initUIHistory();                       // agent: edits/undo happen from the UI tab's Add component
         apMark(apTurn, "render", "done");
         scrollDown();
       } else {
+        if (streamSurf) streamSurf.remove();      // partial preview but the final reply is text-only
         apMark(apTurn, "compose", "done", "text reply — no screen");
         apMark(apTurn, "render", "done", "—");
       }
       apFinish(apTurn, out, sec);
       // header stat line
-      $("#stat").style.visibility = "visible";
       $("#s-lat").textContent = sec + "s";
       $("#s-in").textContent = out.usage.input;
       $("#s-out").textContent = out.usage.output;
@@ -1311,7 +2111,7 @@
         $("#s-phase-wrap").hidden = false;
       }
       saveCurrentConvo();   // persist this conversation to Recents
-    } catch (e) { clearInterval(timer); pending.remove(); apFail(apTurn); addMsg("bot", "⚠ request failed: " + e.message); }
+    } catch (e) { clearInterval(timer); if (pending.parentNode) pending.remove(); if (streamSurf) streamSurf.remove(); apFail(apTurn); addMsg("bot", "⚠ request failed: " + e.message); }
     finally { btn.disabled = false; $("#input").focus(); }
   }
   // ---- special components handled client-side (renderers stay untouched) ----
@@ -1377,6 +2177,93 @@
     }, { enableHighAccuracy: false, timeout: 10000 });
   }
 
+  // ---- AI edit: change / add to / remove from the CURRENT screen with a prompt (shared by chat bar + agent UI tab) ----
+  let uiHistory = [], uiIdx = 0;
+  const cloneC = (c) => JSON.parse(JSON.stringify(c || []));
+  const AI_STAR = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.7 5.6L19 9l-5.3 1.4L12 16l-1.7-5.6L5 9l5.3-1.4z"/></svg>';
+  const AI_UNDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>';
+  const AI_RESET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg>';
+  // start a fresh edit history for a freshly rendered screen (any mode)
+  function initUIHistory() { uiHistory = [cloneC(components)]; uiIdx = 0; refreshUIToolsAll(); }
+  function refreshUIToolsAll() {
+    const canUndo = uiIdx > 0;
+    document.querySelectorAll(".ui-undo, #ap-add-undo").forEach((b) => (b.disabled = !canUndo));
+    document.querySelectorAll(".ui-reset, #ap-add-reset").forEach((b) => (b.disabled = !canUndo));
+  }
+  function screenUndo() { if (uiIdx > 0) { uiIdx--; components = cloneC(uiHistory[uiIdx]); renderCurrent(); refreshUIToolsAll(); } }
+  function screenReset() { if (uiIdx > 0) { uiIdx = 0; components = cloneC(uiHistory[0]); renderCurrent(); refreshUIToolsAll(); } }
+  // run one AI edit against the current screen; returns {ok} / {error}
+  // give every node a stable id so the model can PATCH by reference (edits = a tiny diff, not a regen)
+  function ensureIds(tree) {
+    let n = 0;
+    (function w(x) {
+      if (Array.isArray(x)) return x.forEach(w);
+      if (x && typeof x === "object") { if (x.component && !x.id) x.id = "n" + (++n); (x.children || []).forEach(w); }
+    })(tree);
+    return tree;
+  }
+  // apply the model's JSON patch ops (set / remove / add) to the current tree
+  function applyOps(tree, ops) {
+    const rootWrap = { children: tree };
+    const find = (id) => { let f = null; (function w(nd) { if (f) return; if (nd.id === id) { f = nd; return; } (nd.children || []).forEach(w); })(rootWrap); return f; };
+    const remove = (id) => (function w(nd) { if (!nd.children) return false; const i = nd.children.findIndex((c) => c && c.id === id); if (i >= 0) { nd.children.splice(i, 1); return true; } return nd.children.some(w); })(rootWrap);
+    (ops || []).forEach((op) => {
+      if (!op || !op.op) return;
+      if (op.op === "remove" && op.id) remove(op.id);
+      else if (op.op === "set" && op.id) { const t = find(op.id); if (t && op.props && typeof op.props === "object") Object.assign(t, op.props); }
+      else if (op.op === "add" && op.node && op.node.component) {
+        const p = op.parent ? find(op.parent) : rootWrap; if (!p) return;
+        p.children = p.children || [];
+        if (Number.isInteger(op.index)) p.children.splice(op.index, 0, op.node); else p.children.push(op.node);
+      }
+    });
+    return tree;
+  }
+  async function runScreenEdit(instruction) {
+    if (!uiHistory.length) initUIHistory();
+    const cur = ensureIds(cloneC(uiHistory[uiIdx]));               // annotate ids for reference
+    const r = await fetch("/api/chat", { method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
+      body: JSON.stringify({ history: [{ role: "user", content: instruction }], components: cur, mode, edit: true,
+        model: (chatModel && chatModel !== "auto") ? chatModel : (apModel && apModel !== "auto" ? apModel : undefined) }) });
+    const out = await r.json();
+    if (out.error) return { error: out.error };
+    let next = null;
+    if (Array.isArray(out.ops) && out.ops.length) { next = applyOps(cloneC(cur), out.ops); }   // patch path (cheap)
+    else if (Array.isArray(out.components) && out.components.length) { next = out.components; }  // fallback: full tree
+    if (!next) return { error: "no change" };
+    uiHistory = uiHistory.slice(0, uiIdx + 1); uiHistory.push(cloneC(next)); uiIdx++;
+    components = next; renderCurrent(); refreshUIToolsAll(); scrollDown();
+    if (mode !== "chat") captureAgentState(components);
+    if (!out.cached) { credits = Math.max(0, credits - 1); saveCredits(); }   // edits are cheap → 1 credit
+    return { ok: true, ops: (out.ops || []).length };
+  }
+  // chat: the ✦ bar under a generated screen
+  function attachUITools(surf) {
+    document.querySelectorAll(".ui-tools").forEach((b) => b.remove());   // only the latest screen is editable
+    initUIHistory();
+    const bar = document.createElement("div"); bar.className = "ui-tools";
+    bar.innerHTML =
+      '<button class="ui-tool star" title="Change or add to this screen with AI">' + AI_STAR + '<span>Edit UI</span></button>' +
+      '<button class="ui-tool ui-undo" title="Undo last change" disabled>' + AI_UNDO + '</button>' +
+      '<button class="ui-tool ui-reset" title="Reset to the original" disabled>' + AI_RESET + '</button>' +
+      '<form class="ui-edit" hidden><input type="text" placeholder="Describe a change — e.g. add a phone number field" /></form>';
+    surf.after(bar);
+    const form = bar.querySelector(".ui-edit"), input = form.querySelector("input");
+    bar.querySelector(".star").onclick = () => { form.hidden = !form.hidden; if (!form.hidden) input.focus(); };
+    bar.querySelector(".ui-undo").onclick = screenUndo;
+    bar.querySelector(".ui-reset").onclick = screenReset;
+    form.onsubmit = async (e) => {
+      e.preventDefault(); const t = input.value.trim(); if (!t) return;
+      input.value = ""; form.hidden = true;
+      const star = bar.querySelector(".star"), lbl = star.querySelector("span"), o = lbl.textContent;
+      star.disabled = true; lbl.textContent = "Updating…";
+      const res = await runScreenEdit(t);
+      lbl.textContent = res.error ? "⚠ " + (res.error === "no change" ? "no change" : "error") : o;
+      star.disabled = false; setTimeout(() => (lbl.textContent = o), 1300);
+    };
+  }
+
   // render `components` into the newest inline surface, using the current design system
   function renderCurrent() {
     const surface = currentSurface;
@@ -1414,36 +2301,74 @@
   // In agent mode the generated UI is interactive. Deterministic actions (Add / Remove /
   // Checkout / Pay) are handled IN CODE — zero model calls, instant. Only open-ended taps
   // (pick a restaurant, free choices) go to the model.
+  // Read the current form values on a screen (text, date, select, radio, checkbox, slider) so a CTA can
+  // carry them to the agent. Inputs live in the DOM "behind the UI" — only a CTA press sends them.
+  // Fields whose VALUE must never be echoed into the chat / sent to the model — card numbers,
+  // security codes, passwords, PINs, bank details, etc. We still note that they were filled in,
+  // but the value stays "behind the UI". Safe selections (dates, dropdowns, "From: NYC") pass through.
+  const SENSITIVE_RE = /\b(card\s*(number|no|num|#)?|credit\s*card|debit|cvv|cvc|cvn|security\s*code|expir|exp(\s*date|iry)?|pin\b|password|passcode|passphrase|ssn|social\s*security|account\s*(number|no)|acct|iban|sort\s*code|routing|swift)\b/i;
+  function fieldSensitive(label, inputEl) {
+    if (inputEl && inputEl.type === "password") return true;
+    if (label && SENSITIVE_RE.test(label)) return true;
+    const v = inputEl ? String(inputEl.value || "").trim() : "";
+    if (v && /^[\d ]{12,23}$/.test(v.replace(/-/g, "")) && (v.replace(/\D/g, "").length >= 12)) return true;  // card-number-like
+    return false;
+  }
+  function collectFormData(surf) {
+    const parts = [];
+    surf.querySelectorAll(".ui-field").forEach((f) => {
+      const lblEl = f.querySelector(":scope > .ui-label");
+      const lbl = lblEl ? lblEl.textContent.trim() : "";
+      const free = f.querySelector("input:not([type=radio]):not([type=checkbox]):not([type=range]), textarea, select");
+      if (free && String(free.value || "").trim()) {
+        if (fieldSensitive(lbl, free)) { parts.push((lbl || "field") + ": •••• (entered)"); return; }  // redacted — value never leaves the browser
+        parts.push((lbl || "field") + ": " + free.value); return;
+      }
+      const radio = f.querySelector(".ui-radio input:checked, input[type=radio]:checked");
+      if (radio) { parts.push((lbl || "choice") + ": " + (radio.parentElement.textContent || radio.value || "").trim()); return; }
+      const checks = [...f.querySelectorAll("input[type=checkbox]:checked")].map((c) => (c.parentElement.textContent || "").trim()).filter(Boolean);
+      if (checks.length) { parts.push((lbl || "selected") + ": " + checks.join(", ")); return; }
+      const range = f.querySelector("input[type=range]");
+      if (range) parts.push((lbl || "value") + ": " + range.value);
+    });
+    return parts;
+  }
+
   function attachAgentClicks(surf) {
     surf.addEventListener("click", (e) => {
       if (mode === "chat" || surf !== currentSurface) return;
       if ($("#send").disabled) return;                 // a turn is already in flight
-      const btn = e.target.closest(".ui-btn, .ui-radio, .ui-check");
-      const card = e.target.closest(".ui-card");
-      const clickable = btn || card;
-      if (!clickable || !surf.contains(clickable)) return;
 
-      if (btn) {  // ---- deterministic, no model ----
+      // ---- CTA buttons are the ONLY things that start a turn ----
+      const btn = e.target.closest(".ui-btn");
+      if (btn && surf.contains(btn)) {
         const t = (btn.textContent || "").trim(), low = t.toLowerCase();
+        // deterministic built-in flows (no model)
         if (/add more|back to menu/.test(low)) return showLastMenu();
         if (/^remove\b/.test(low)) return cartRemove(t);
         if (/^add\b/.test(low)) return cartAdd(btn.closest(".ui-card"));
         if (/checkout|proceed/.test(low)) return showPayment();
         if (/^pay\b|confirm & pay|confirm and pay/.test(low)) return showConfirmation();
+        // otherwise: send the action + whatever the user filled in on this screen
+        const title = titleOf(btn.closest(".ui-card"));
+        const action = t;
+        let label = title ? (action ? action + " — " + title : title) : action;
+        const form = collectFormData(surf);
+        if (form.length) label += " · " + form.join(" · ");
+        label = label.trim().replace(/\s+/g, " ").slice(0, 300);
+        if (label) send(label);
+        return;
       }
 
-      // ---- everything else: send to the model ----
-      let label;
-      if (btn) {
-        const title = titleOf(btn.closest(".ui-card"));
-        const action = (btn.textContent || "").trim();
-        label = title ? (action ? action + " — " + title : title) : action;
-      } else {
-        label = titleOf(card) || (card.textContent || "").trim();
-      }
-      label = (label || "").trim().replace(/\s+/g, " ").slice(0, 100);
-      if (!label) return;
-      send(label);
+      // ---- inputs, dates, radios, checkboxes: inert — they just hold their value behind the UI ----
+      if (e.target.closest("input, textarea, select, label, .ui-radio, .ui-check, .ui-input, .ui-range, .ui-field")) return;
+
+      // ---- a PURE choice card (no button, no inputs) counts as a selection ----
+      const card = e.target.closest(".ui-card");
+      if (!card || !surf.contains(card)) return;
+      if (card.querySelector(".ui-btn, input, textarea, select, .ui-radio, .ui-check")) return;  // form/action card → background is inert
+      const label = (titleOf(card) || (card.textContent || "").trim()).replace(/\s+/g, " ").slice(0, 120);
+      if (label) send(label);
     });
   }
 
@@ -1536,35 +2461,129 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   });
 
-  // the design-system dropdown is the single source of truth. It applies to the current
-  // screen AND every future one (persists across chat turns and agent steps) via renderCurrent.
-  window.__cat.applyDS = function (id) {
+  // The design-system choice is scoped PER CONTEXT (per custom agent, and per built-in mode / chat)
+  // so changing the UI inside one agent does NOT restyle the whole interface. `setDS` applies +
+  // re-renders the current screen; `applyDS` also remembers the choice for the active context.
+  let dsByMode = {};   // ds remembered for chat / built-in modes (custom agents keep it on the agent object)
+  function setDS(id) {
     if (id === "polaris") { currentDS = "polaris"; activeSkin = null; }
     else { currentDS = "shadcn"; activeSkin = (id === "shadcn") ? null : id; }  // imported skins ride shadcn
     const sel = $("#ds-select"); if (sel && sel.value !== id) sel.value = id;
     renderCurrent();
     if (typeof apSyncDS === "function") apSyncDS();   // keep the panel's UI-tab picker in step
     if (typeof syncChatTools === "function") syncChatTools();   // and the chat-mode tools box
+  }
+  window.__cat.applyDS = function (id) {
+    setDS(id);
+    if (currentCustomAgent) { currentCustomAgent.ds = id; try { saveCustomAgents(); } catch (e) {} }
+    else { dsByMode[mode] = id; }
   };
+  // restore the ds saved for whatever context we just switched into (agent-specific)
+  function restoreDS() {
+    const saved = currentCustomAgent ? currentCustomAgent.ds : dsByMode[mode];
+    if (saved && saved !== effectiveDSId()) setDS(saved);
+    else { if (typeof apSyncDS === "function") apSyncDS(); if (typeof syncChatTools === "function") syncChatTools(); }
+  }
+  function effectiveDSId() { return currentDS === "polaris" ? "polaris" : (activeSkin || "shadcn"); }
   $("#ds-select").addEventListener("change", (e) => window.__cat.applyDS(e.target.value));
 
   // ---- agent rail: toggle the chat's mode (Chat = any screen, task agents = one use-case) ----
   // Selecting an agent just opens a fresh, scoped chat with a greeting — the USER starts talking.
   const GREET = {
     chat: "New chat. Describe a screen and I'll build it right here.",
+    agent: "New agent — no system prompt yet. Give it instructions in the panel, then start chatting.",
     food: "Hey — I'm your food-ordering agent. What are you in the mood for?",
     booking: "Hi — I'm your booking agent. What would you like to book?",
   };
-  // sidebar Chat/Agent tabs just switch which list is visible; they don't reset the conversation
+  // spin up a brand-new blank agent: a fresh conversation with an EMPTY system prompt
+  function newAgent() {
+    promptOverrides.agent = "";   // the new agent starts with no system prompt
+    try { localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides)); } catch (e) {}
+    switchMode("agent", true);
+  }
+  // ---- custom agents: name + "what is it for", saved locally, listed in the Agent sidebar ----
+  let customAgents = [];
+  try { customAgents = JSON.parse(localStorage.getItem("catalyst.customAgents") || "[]"); } catch (e) { customAgents = []; }
+  let currentCustomAgent = null;   // the custom agent currently open (so Save writes back to IT, per-agent)
+  function saveCustomAgents() { try { localStorage.setItem("catalyst.customAgents", JSON.stringify(customAgents)); } catch (e) {} }
+  const AGENT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></svg>';
+  const PENCIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+  function selectCustomAgent(a, btn) {
+    closeDrawer();                                           // on mobile, dismiss the sidebar so the agent shows
+    if (a.prompt == null) a.prompt = a.purpose || "";        // first time: seed the editable prompt from the purpose
+    promptOverrides.agent = a.prompt;                        // run with THIS agent's saved prompt (survives switching)
+    try { localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides)); } catch (e) {}
+    switchMode("agent", true);                               // (clears currentCustomAgent) …
+    currentCustomAgent = a;                                  // … then mark this agent as the open one
+    $("#ap-prompt").value = a.prompt;                        // Config shows the saved prompt
+    document.querySelectorAll(".rail-item").forEach((x) => x.classList.remove("active"));
+    if (btn) btn.classList.add("active");                    // highlight the selected agent (black)
+    if (a.name) { $("#hero-title").textContent = a.name; }    // greet with the agent's name
+    if (a.purpose) { $("#hero-sub").textContent = a.purpose; }
+    apManageSync();                                          // show rename/delete for this agent in the panel header
+    restoreDS();                                            // this agent's own design system (agent-specific)
+  }
+  function renderCustomAgents() {
+    const pane = document.querySelector('.side-pane[data-side="agent"]');
+    const addBtn = $("#rail-add");
+    pane.querySelectorAll(".rail-item.custom").forEach((n) => n.remove());
+    customAgents.forEach((a) => {
+      // Rename/delete live in the right-hand agent panel header; just the icon + name here (no objective tag).
+      const row = document.createElement("div");
+      row.className = "rail-item custom" + (currentCustomAgent === a ? " active" : "");
+      row.title = a.name + (a.purpose ? " — " + a.purpose : "");
+      row.innerHTML =
+        '<button class="ri-main" type="button">' + AGENT_ICON +
+        '<span class="ri-text"><span class="ri-name side-lbl"></span></span></button>';
+      row.querySelector(".ri-name").textContent = a.name;
+      row.querySelector(".ri-main").onclick = () => selectCustomAgent(a, row);
+      pane.insertBefore(row, addBtn);
+    });
+  }
+  function deleteCustomAgent(a) {
+    customAgents = customAgents.filter((x) => x !== a);
+    saveCustomAgents();
+    if (currentCustomAgent === a) { currentCustomAgent = null; switchMode("agent", true); }
+    else renderCustomAgents();
+  }
+  // defer the first render when signed-in (a token exists) until the account is confirmed & scoped (onSignedIn),
+  // so we never briefly show the previous user's agents on a shared browser
+  if (!(function () { try { return localStorage.getItem("catalyst.token"); } catch (e) { return null; } })()) renderCustomAgents();
+  function openNewAgent() {
+    document.body.classList.remove("rail-open");   // close the mobile drawer behind the modal
+    $("#na-name").value = ""; $("#na-purpose").value = ""; $("#na-err").hidden = true;
+    $("#newagent-modal").hidden = false; $("#na-name").focus();
+  }
+  $("#na-create").onclick = () => {
+    const name = $("#na-name").value.trim(), purpose = $("#na-purpose").value.trim();
+    if (!name) { $("#na-err").textContent = "Give your agent a name."; $("#na-err").hidden = false; return; }
+    const agent = { name, purpose, prompt: purpose };
+    customAgents.push(agent); saveCustomAgents(); renderCustomAgents();
+    $("#newagent-modal").hidden = true;
+    const btns = document.querySelectorAll('.side-pane[data-side="agent"] .rail-item.custom');
+    selectCustomAgent(agent, btns[btns.length - 1]);
+    generateStagesFor(agent);   // auto-break the new agent's purpose into stages
+  };
+  $("#newagent-close").onclick = () => { $("#newagent-modal").hidden = true; };
+  $("#newagent-modal").addEventListener("click", (e) => { if (e.target === $("#newagent-modal")) $("#newagent-modal").hidden = true; });
+  // sidebar Chat/Agent tabs now start a fresh session: Chat = new chat, Agent = new blank agent
   function sideTab(name) {
     document.querySelectorAll(".side-tab").forEach((t) => t.classList.toggle("active", t.dataset.side === name));
     document.querySelectorAll(".side-pane").forEach((p) => p.classList.toggle("active", p.dataset.side === name));
   }
-  document.querySelectorAll(".side-tab").forEach((t) => (t.onclick = () => sideTab(t.dataset.side)));
+  // clicking a sidebar tab: Chat → new chat; Agent → select the FIRST agent (don't spin up a blank one)
+  document.querySelectorAll(".side-tab").forEach((t) => (t.onclick = () => {
+    if (t.dataset.side === "chat") { switchMode("chat", true); return; }
+    sideTab("agent");                                           // show the agent list
+    const first = document.querySelector(".rail-item");         // pick the first agent (Food ordering)
+    if (mode === "chat" && first) switchMode(first.dataset.mode);
+  }));
 
   function switchMode(modeName, force) {
     if (mode === modeName && !force) { $("#input").focus(); return; }  // already here — keep going
     mode = modeName;
+    currentCustomAgent = null;   // built-in modes / plain agent: Save writes to the mode key, not a custom agent
     currentConvoId = null;   // a fresh, unsaved conversation
     document.querySelectorAll(".rail-item").forEach((x) => x.classList.toggle("active", x.dataset.mode === modeName));
     document.querySelectorAll(".hist-item").forEach((x) => x.classList.remove("active"));
@@ -1573,16 +2592,18 @@
     // switching starts a FRESH chat scoped to this mode; no auto-generation
     history = []; components = null; currentSurface = null;
     agentState = { cart: [], lastMenu: null, coords: null };
-    $("#stat").style.visibility = "hidden";
+    resetStat();
     $("#mode-hint").hidden = true;
     $("#messages").innerHTML = "";
     setEmpty(true); renderHero(mode);   // centered hero + input until the first message
     $("#input").value = ""; $("#input").focus();
     sideTab(mode === "chat" ? "chat" : "agent");
+    restoreDS();   // apply this context's own design system (chat / built-in mode) — not a global one
   }
   // empty-state hero (large mark + greeting for agents; a heading for chat)
   const HERO = {
     chat: { mark: false, title: "What can I build for you?", sub: "Describe a screen — it renders right here in the chat." },
+    agent: { mark: true, title: "New agent", sub: GREET.agent },
     food: { mark: true, title: "Food ordering", sub: GREET.food },
     booking: { mark: true, title: "Appointment booking", sub: GREET.booking },
   };
@@ -1594,16 +2615,38 @@
     $("#hero-sub").textContent = h.sub;
   }
   function setEmpty(on) { $("#chat").classList.toggle("is-empty", !!on); }
-  $("#new-chat").onclick = () => switchMode("chat", true);
-  document.querySelectorAll(".rail-item").forEach((b) => { b.onclick = () => switchMode(b.dataset.mode); });
+  // reset the navbar stat line to dashes (shown even before the first turn)
+  function resetStat() {
+    const defaults = { "s-lat": "0s", "s-in": "0", "s-out": "0", "s-tot": "0", "s-model": "–", "s-phase": "–" };
+    Object.entries(defaults).forEach(([id, v]) => { const el = $("#" + id); if (el) el.textContent = v; });
+  }
+  $("#new-chat").onclick = () => { switchMode("chat", true); closeDrawer(); };
+  document.querySelectorAll(".rail-item:not(.custom)").forEach((b) => { b.onclick = () => { switchMode(b.dataset.mode); closeDrawer(); }; });
 
-  // collapse the sidebar to a thin icon strip (toggle lives in the header, top-right)
+  // collapse the sidebar to a thin icon strip (desktop only)
   $("#rail-collapse").onclick = () => {
     const c = document.body.classList.toggle("rail-collapsed");
     localStorage.setItem("catalyst.railCollapsed", c ? "1" : "0");
     $("#rail-collapse").title = c ? "Expand sidebar" : "Collapse sidebar";
   };
   if (localStorage.getItem("catalyst.railCollapsed") === "1") { document.body.classList.add("rail-collapsed"); $("#rail-collapse").title = "Expand sidebar"; }
+
+  // ---- mobile sidebar drawer: hamburger opens it, backdrop / navigation closes it ----
+  const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+  function openDrawer()  { document.body.classList.add("rail-open"); }
+  function closeDrawer() { document.body.classList.remove("rail-open"); }
+  $("#rail-toggle").onclick = () => document.body.classList.toggle("rail-open");
+  $("#rail-scrim").onclick  = closeDrawer;
+  // tapping either sidebar tab still leaves the drawer open so you can pick a chat/agent;
+  // selecting an actual item (handled above) closes it. Also close on Escape.
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+  // close the drawer if the viewport grows back to desktop
+  if (window.matchMedia) {
+    const mq = window.matchMedia("(max-width: 820px)");
+    (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))((e) => {
+      if (!e.matches) closeDrawer();
+    });
+  }
 
   // ---- conversation history (Recents): persisted in this browser, delete on hover ----
   let convos = [];
@@ -1627,18 +2670,23 @@
     renderHistory();
   }
   function renderHistory() {
-    const list = $("#history-list");
-    if (!convos.length) { list.innerHTML = '<div class="hist-empty side-lbl">No conversations yet</div>'; return; }
-    list.innerHTML = "";
-    convos.slice().sort((a, b) => b.ts - a.ts).forEach((c) => {
-      const it = document.createElement("div");
-      it.className = "hist-item" + (c.id === currentConvoId ? " active" : "");
-      it.innerHTML = '<span class="hist-title side-lbl"></span><button class="hist-del" title="Delete">' + trashSvg + "</button>";
-      it.querySelector(".hist-title").textContent = c.title;
-      it.onclick = (e) => { if (!e.target.closest(".hist-del")) loadConvo(c.id); };
-      it.querySelector(".hist-del").onclick = (e) => { e.stopPropagation(); deleteConvo(c.id); };
-      list.appendChild(it);
-    });
+    // chat conversations live under the Chat tab; agent conversations under the Agent tab
+    const paint = (el, items) => {
+      if (!el) return;
+      if (!items.length) { el.innerHTML = '<div class="hist-empty side-lbl">No conversations yet</div>'; return; }
+      el.innerHTML = "";
+      items.sort((a, b) => b.ts - a.ts).forEach((c) => {
+        const it = document.createElement("div");
+        it.className = "hist-item" + (c.id === currentConvoId ? " active" : "");
+        it.innerHTML = '<span class="hist-title side-lbl"></span><button class="hist-del" title="Delete">' + trashSvg + "</button>";
+        it.querySelector(".hist-title").textContent = c.title;
+        it.onclick = (e) => { if (!e.target.closest(".hist-del")) loadConvo(c.id); };
+        it.querySelector(".hist-del").onclick = (e) => { e.stopPropagation(); deleteConvo(c.id); };
+        el.appendChild(it);
+      });
+    };
+    paint($("#history-list"), convos.filter((c) => c.mode === "chat"));
+    const ah = $("#ap-history"); if (ah) paint(ah, convos.filter((c) => c.mode !== "chat"));  // agent history → panel History tab
   }
   function deleteConvo(id) {
     convos = convos.filter((c) => c.id !== id);
@@ -1653,7 +2701,7 @@
     apOpen(mode !== "chat", mode);
     history = (c.history || []).slice(); components = c.components || null; currentSurface = null;
     agentState = { cart: [], lastMenu: null, coords: null };
-    $("#mode-hint").hidden = true; $("#stat").style.visibility = "hidden";
+    $("#mode-hint").hidden = true; resetStat();
     $("#messages").innerHTML = "";
     history.forEach((h) => addMsg(h.role === "user" ? "user" : "bot", h.content));
     setEmpty(history.length === 0); if (!history.length) renderHero(mode);
@@ -1672,16 +2720,17 @@
     dst.innerHTML = src.innerHTML; dst.value = src.value;
   }
   $("#ct-ds").addEventListener("change", (e) => { window.__cat.applyDS(e.target.value); syncChatTools(); });
-  $("#ct-components").onclick = () => $("#gallery-btn").click();
 
-  // ---- initial paint ----
-  renderHistory(); renderHero("chat"); syncChatTools();
+  // ---- initial paint ----   (defer Recents until the account is confirmed if signed-in — see onSignedIn)
+  if (!(function () { try { return localStorage.getItem("catalyst.token"); } catch (e) { return null; } })()) renderHistory();
+  renderHero("chat"); syncChatTools();
 
   // ---- agent system-prompt editor (⚙ Prompt) ----
   let agentPromptDefaults = {};
   let promptOverrides = {};
   try { promptOverrides = JSON.parse(localStorage.getItem("catalyst.agentPrompts") || "{}"); } catch (e) {}
-  fetch("/api/chat").then((r) => r.json()).then((d) => {
+  fetch("/api/chat", { headers: (localStorage.getItem("catalyst.token") ? { "Authorization": "Bearer " + localStorage.getItem("catalyst.token") } : {}) })
+    .then((r) => r.json()).then((d) => {
     agentPromptDefaults = d.prompts || {};
     apFillModels(d.models);
     // if the panel is already open and the user hasn't customized this mode, fill in the freshly-loaded default
@@ -1722,13 +2771,47 @@
     $("#agent-panel").classList.toggle("open", !!on);
     document.body.classList.toggle("agent-mode", !!on);   // hides the header DS picker + gallery; the panel owns them now
     if (on) {
+      $("#agent-panel").classList.remove("collapsed");
       $("#ap-mode").textContent = m; $("#ap-prompt").value = effectivePrompt(m);
-      apSyncAgent(); apSyncDS(); apClearTrace(); apTab("config"); apCompRendered = false;
+      apSyncAgent(); apSyncDS(); apClearTrace(); apTab("config"); apCompRendered = false; apManageSync();
     }
   }
   function apClearTrace() {
     $("#ap-trace").innerHTML = '<div class="ap-empty">Send a message — the agent’s steps for each turn show up here.</div>';
   }
+  // Rename / delete for the OPEN custom agent live in the panel header (shown only for custom agents).
+  function apManageSync() {
+    const on = !!currentCustomAgent;
+    $("#ap-rename").hidden = !on;
+    $("#ap-delete").hidden = !on;
+    // The agent NAME is the prominent title; the purpose/objective is the small tag beside it.
+    if (on) {
+      $("#ap-title").textContent = currentCustomAgent.name || "Agent";
+      const tag = (currentCustomAgent.purpose || "custom").trim();
+      $("#ap-mode").textContent = tag;
+      $("#ap-mode").hidden = !tag;
+    } else {
+      $("#ap-title").textContent = "Agent";
+    }
+  }
+  $("#ap-delete").onclick = () => { if (currentCustomAgent) deleteCustomAgent(currentCustomAgent); };
+  $("#ap-rename").onclick = () => {
+    const a = currentCustomAgent; if (!a) return;
+    const span = $("#ap-title");                                  // rename edits the NAME (not the tag)
+    if (span.parentNode.querySelector(".ap-mode-input")) return;  // already editing
+    const input = el("input", "ap-mode-input"); input.value = a.name || "";
+    span.style.display = "none"; span.parentNode.insertBefore(input, span.nextSibling);
+    input.focus(); input.select();
+    let closed = false;
+    const done = (save) => {
+      if (closed) return; closed = true;
+      const v = input.value.trim();
+      if (save && v) { a.name = v; saveCustomAgents(); renderCustomAgents(); const h = $("#hero-title"); if (h) h.textContent = v; }
+      span.textContent = a.name || "Agent"; span.style.display = ""; input.remove();
+    };
+    input.onkeydown = (e) => { if (e.key === "Enter") done(true); else if (e.key === "Escape") done(false); };
+    input.onblur = () => done(true);
+  };
   function apStartTurn(text) {
     const wrap = $("#ap-trace"); const empty = wrap.querySelector(".ap-empty"); if (empty) empty.remove();
     const turn = document.createElement("div");
@@ -1788,39 +2871,76 @@
   }
   $("#ap-save").onclick = () => {
     const v = $("#ap-prompt").value;
-    if (v.trim() === (agentPromptDefaults[mode] || "").trim()) delete promptOverrides[mode];
-    else promptOverrides[mode] = v;
+    promptOverrides[mode] = v;
+    if (currentCustomAgent) { currentCustomAgent.prompt = v; saveCustomAgents(); }   // persist to THIS agent
+    else if (v.trim() === (agentPromptDefaults[mode] || "").trim()) delete promptOverrides[mode];
     localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
     const b = $("#ap-save"), t = b.textContent; b.textContent = "Saved"; setTimeout(() => (b.textContent = t), 1100);
   };
   $("#ap-reset").onclick = () => {
-    delete promptOverrides[mode];
+    const def = currentCustomAgent ? (currentCustomAgent.purpose || "") : (agentPromptDefaults[mode] || "");
+    if (currentCustomAgent) { currentCustomAgent.prompt = def; saveCustomAgents(); promptOverrides[mode] = def; }
+    else delete promptOverrides[mode];
     localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
-    $("#ap-prompt").value = agentPromptDefaults[mode] || "";
+    $("#ap-prompt").value = def;
+  };
+  // "Improve with AI" — expand what's there into a comprehensive system prompt, then save it
+  $("#ap-ai").onclick = async () => {
+    const btn = $("#ap-ai"), ta = $("#ap-prompt"), skel = $("#ap-skeleton"), orig = btn.innerHTML;
+    btn.disabled = true; btn.textContent = "Improving…";
+    ta.hidden = true; skel.hidden = false;                            // one-bar skeleton while it generates
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
+        body: JSON.stringify({ writePrompt: true, current: ta.value.trim(),
+          purpose: (currentCustomAgent && (currentCustomAgent.purpose || currentCustomAgent.name)) || undefined,
+          token: authToken || undefined, model: (apModel && apModel !== "auto") ? apModel : undefined })
+      });
+      const d = await r.json();
+      if (d.prompt) {
+        ta.value = d.prompt;
+        promptOverrides[mode] = d.prompt;                               // persist like Save
+        if (currentCustomAgent) { currentCustomAgent.prompt = d.prompt; saveCustomAgents(); }
+        localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+        applyCredits(d.credits_remaining);                             // AI usage counts toward credits
+      } else if (d.error) { alert(d.error); }
+    } catch (e) { alert("Couldn't reach the AI — try again."); }
+    skel.hidden = true; ta.hidden = false;
+    btn.disabled = false; btn.innerHTML = orig;
   };
 
   // model preference (threads to /api/chat as `model`; "auto" lets the server pick per turn)
   let apModel = localStorage.getItem("catalyst.apModel") || "auto";
-  function apFillModels(models) {
-    const sel = $("#ap-model");
-    const opts = (models && models.length) ? models : [{ id: "auto", label: "Auto (recommended)" }];
+  let chatModel = localStorage.getItem("catalyst.chatModel") || "auto";   // model for chat mode (picker in the chat toolbar)
+  function fillModelSelect(sel, current) {
+    const opts = (window.__models && window.__models.length) ? window.__models : [{ id: "auto", label: "Auto (recommended)" }];
     sel.innerHTML = opts.map((m) => '<option value="' + m.id + '">' + m.label + "</option>").join("");
-    if (![...sel.options].some((o) => o.value === apModel)) apModel = "auto";
-    sel.value = apModel;
+    if (![...sel.options].some((o) => o.value === current)) current = "auto";
+    sel.value = current;
+    return current;
+  }
+  function apFillModels(models) {
+    window.__models = models;
+    apModel = fillModelSelect($("#ap-model"), apModel);
+    if ($("#ct-model")) chatModel = fillModelSelect($("#ct-model"), chatModel);
   }
   $("#ap-model").addEventListener("change", (e) => {
     apModel = e.target.value; localStorage.setItem("catalyst.apModel", apModel);
   });
+  if ($("#ct-model")) $("#ct-model").addEventListener("change", (e) => {
+    chatModel = e.target.value; localStorage.setItem("catalyst.chatModel", chatModel);
+  });
 
   // web-search connector (threads to /api/chat as `webSearch`; default on for agents)
   let apWeb = localStorage.getItem("catalyst.apWeb");
-  apWeb = apWeb == null ? true : apWeb === "1";
+  apWeb = apWeb == null ? true : apWeb === "1";   // web search ON by default (fast via search-API; agentic fallback if no key)
   function apSyncWeb() { $("#ap-web").classList.toggle("on", apWeb); $("#ap-web").setAttribute("aria-checked", apWeb ? "true" : "false"); }
   apSyncWeb();
   $("#ap-web").onclick = () => { apWeb = !apWeb; localStorage.setItem("catalyst.apWeb", apWeb ? "1" : "0"); apSyncWeb(); };
 
   // "your agent endpoint" connector reuses the existing bring-your-own-agent modal
-  $("#ap-agent-btn").onclick = () => $("#rail-add").click();
+  $("#ap-agent-btn").onclick = () => openConnectModal();
   function apSyncAgent() {
     const on = !!agentEndpoint, b = $("#ap-agent-btn");
     b.textContent = on ? "Manage" : "Connect"; b.classList.toggle("connected", on);
@@ -1857,20 +2977,205 @@
     document.querySelectorAll(".ap-tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
     document.querySelectorAll(".ap-pane").forEach((p) => p.classList.toggle("active", p.dataset.pane === name));
     if (name === "ui") apRenderComponents();
+    if (name === "stages") renderStages();
+    if (name === "history") renderHistory();
   }
   document.querySelectorAll(".ap-tab").forEach((t) => (t.onclick = () => apTab(t.dataset.tab)));
 
+  // ---- Stages: the system prompt split into steps; edit (auto-save) + Retry previews that screen ----
+  const STAGE_FIX = {
+    food: [
+      { id: "discover", title: "Discover restaurants",
+        prompt: "Ask for the user's location and craving if unknown, then show 3–5 nearby restaurants as image Cards (photo, name, cuisine, rating, and a 'Select' button).",
+        fixture: [{ role: "user", content: "I want pizza — I'm in Edinburgh" }] },
+      { id: "menu", title: "Restaurant menu",
+        prompt: "When a place is selected, show its menu as dish Cards (photo, dish name, one-line description, price, and an 'Add' button).",
+        fixture: [{ role: "user", content: "pizza in Edinburgh" }, { role: "assistant", content: "Here are a few great pizza places I found." }, { role: "user", content: "Select — Civerinos" }] },
+      { id: "cart", title: "Cart / order summary",
+        prompt: "Show an order-summary Card: the line items with prices, a total, and a 'Checkout' button.",
+        fixture: [{ role: "user", content: "pizza in Edinburgh" }, { role: "assistant", content: "Civerinos menu" }, { role: "user", content: "Add — Margherita £11" }] },
+      { id: "payment", title: "Payment",
+        prompt: "Show a payment screen: Input fields for card number, expiry, CVC and name on card, plus a 'Pay' button with the total.",
+        fixture: [{ role: "user", content: "Civerinos, Margherita in cart" }, { role: "user", content: "Checkout" }] },
+      { id: "confirm", title: "Confirmation + tracking",
+        prompt: "Show an order-confirmed Card plus a live delivery Map, the driver name/ETA and a Progress bar.",
+        fixture: [{ role: "user", content: "Paid for my Civerinos order to Edinburgh" }, { role: "user", content: "Pay" }] },
+    ],
+    booking: [
+      { id: "intake", title: "Confirm the booking",
+        prompt: "Confirm the service, location and preferred time — ask only what you don't know.",
+        fixture: [{ role: "user", content: "Book a haircut in Edinburgh on Tuesday" }] },
+      { id: "providers", title: "Show providers",
+        prompt: "Show local providers (salons/clinics/studios) as image Cards (photo, name, service, rating, 'Select').",
+        fixture: [{ role: "user", content: "haircut in Edinburgh Tuesday" }] },
+      { id: "slots", title: "Time slots",
+        prompt: "When a provider is selected, show available time-slot Buttons.",
+        fixture: [{ role: "user", content: "haircut Edinburgh" }, { role: "assistant", content: "Here are salons." }, { role: "user", content: "Select — Ruffians" }] },
+      { id: "confirm", title: "Confirm + map",
+        prompt: "Show a booking-summary Card, then a confirmation Card with the provider details and a live Map of the location.",
+        fixture: [{ role: "user", content: "Ruffians, Tuesday 3pm" }, { role: "user", content: "Confirm booking" }] },
+    ],
+  };
+  let stagePrompts = {};
+  try { stagePrompts = JSON.parse(localStorage.getItem("catalyst.stagePrompts") || "{}"); } catch (e) { stagePrompts = {}; }
+  // a custom agent carries its OWN stages (generated from its purpose); built-ins use STAGE_FIX
+  const customStages = () => (mode === "agent" && currentCustomAgent && Array.isArray(currentCustomAgent.stages)) ? currentCustomAgent.stages : null;
+  function stageDefs(m) {
+    const cs = (m === "agent") ? customStages() : null;
+    if (cs && cs.length) return cs.map((s, i) => ({ id: "cs" + i, title: s.title || ("Step " + (i + 1)),
+      prompt: s.prompt || "", fixture: [{ role: "user", content: (currentCustomAgent.purpose || s.title || "start") }] }));
+    return STAGE_FIX[m] || [];
+  }
+  const stagePrompt = (m, id) => {
+    const def = stageDefs(m).find((x) => x.id === id);
+    if (m === "agent" && customStages()) return def ? def.prompt : "";   // custom: the value lives on the agent's stages
+    const s = (stagePrompts[m] || {})[id];
+    if (s != null) return s;
+    return def ? def.prompt : "";
+  };
+  // fold the edited steps into ONE system-prompt override the live agent uses
+  function composeSystemPrompt(m) {
+    const defs = stageDefs(m); if (!defs.length) return;
+    const body = defs.map((d) => "## " + d.title + "\n" + stagePrompt(m, d.id)).join("\n\n");
+    const composed = "You are a hands-on concierge agent in a live demo. Never say you're an AI or that you " +
+      "can't actually order/book — just play the role and carry the task through to confirmation. A tapped Card or " +
+      "Button is the user's choice: acknowledge briefly and advance to the next step, rendering it as tappable Cards. " +
+      "Walk these steps, ONE screen per step:\n\n" + body;
+    promptOverrides[m] = composed;
+    if (m === "agent" && currentCustomAgent) { currentCustomAgent.prompt = composed; saveCustomAgents(); }
+    localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides));
+    if ($("#ap-prompt") && mode === m) $("#ap-prompt").value = composed;   // keep Config's prompt in sync
+  }
+  function saveStagePrompt(m, id, val) {
+    if (m === "agent" && customStages()) {
+      const i = stageDefs(m).findIndex((x) => x.id === id);
+      if (i >= 0 && currentCustomAgent.stages[i]) { currentCustomAgent.stages[i].prompt = val; saveCustomAgents(); }
+    } else {
+      stagePrompts[m] = stagePrompts[m] || {};
+      stagePrompts[m][id] = val;
+      localStorage.setItem("catalyst.stagePrompts", JSON.stringify(stagePrompts));
+    }
+    composeSystemPrompt(m);
+  }
+  // generate an agent's stages from its purpose (AI), store them on the agent
+  async function generateStagesFor(agent) {
+    if (!agent) return;
+    agent.stagesLoading = true;
+    if (mode === "agent" && currentCustomAgent === agent) renderStages();
+    try {
+      const r = await fetch("/api/chat", { method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
+        body: JSON.stringify({ writeStages: true, purpose: agent.purpose || agent.prompt || agent.name,
+          token: authToken || undefined, model: (apModel && apModel !== "auto") ? apModel : undefined }) });
+      const d = await r.json();
+      if (Array.isArray(d.stages) && d.stages.length) agent.stages = d.stages;
+      else if (d.error) alert(d.error);
+      applyCredits(d.credits_remaining);                              // AI usage counts toward credits
+    } catch (e) { /* leave stages empty; user can retry */ }
+    agent.stagesLoading = false; saveCustomAgents();
+    if (mode === "agent" && currentCustomAgent === agent) renderStages();
+  }
+  const refreshSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg>';
+  function renderStages() {
+    const host = $("#ap-stages"); if (!host) return;
+    if (mode === "agent" && currentCustomAgent && currentCustomAgent.stagesLoading) {
+      host.innerHTML = '<div class="stage-empty" style="padding:16px">✦ Breaking your agent into steps…</div>'; return;
+    }
+    const defs = stageDefs(mode);
+    if (!defs.length) {
+      if (mode === "agent" && currentCustomAgent) {
+        host.innerHTML = '<div class="stage-empty" style="padding:16px;display:flex;flex-direction:column;gap:10px">' +
+          '<span>No steps yet for this agent.</span>' +
+          '<button id="gen-stages" class="ap-btn" style="align-self:flex-start">✦ Generate steps with AI</button></div>';
+        const g = $("#gen-stages"); if (g) g.onclick = () => generateStagesFor(currentCustomAgent);
+        return;
+      }
+      host.innerHTML = '<div class="stage-empty" style="padding:14px">This agent has no predefined steps. Use the Config tab to write its system prompt.</div>'; return;
+    }
+    host.innerHTML = "";
+    defs.forEach((d, i) => {
+      const card = document.createElement("div"); card.className = "stage-card";
+      card.innerHTML =
+        '<div class="stage-hd"><span class="stage-n">' + (i + 1) + '</span><span class="stage-title">' + d.title + '</span>' +
+          '<button class="stage-retry">' + refreshSvg + '<span>Retry</span></button></div>' +
+        '<div class="stage-body">' +
+          '<textarea class="stage-prompt" spellcheck="false"></textarea>' +
+          '<div class="stage-saved"></div>' +
+          '<div class="stage-preview"><div class="stage-empty">Hit Retry to render this step\'s screen</div></div>' +
+        '</div>';
+      const ta = card.querySelector(".stage-prompt"), saved = card.querySelector(".stage-saved");
+      ta.value = stagePrompt(mode, d.id);
+      let t = null;
+      ta.addEventListener("input", () => {                 // auto-save as you type
+        clearTimeout(t);
+        t = setTimeout(() => { saveStagePrompt(mode, d.id, ta.value); saved.textContent = "saved ✓"; setTimeout(() => (saved.textContent = ""), 1200); }, 350);
+      });
+      card.querySelector(".stage-retry").onclick = (e) => previewStage(d, ta.value, card.querySelector(".stage-preview"), e.currentTarget);
+      host.appendChild(card);
+    });
+  }
+  // one small call: render just this step's screen from its prompt + fixture (no full agent run)
+  async function previewStage(def, promptText, surfWrap, btn) {
+    btn.classList.add("busy"); const lbl = btn.querySelector("span"), orig = lbl.textContent; lbl.textContent = "…";
+    // live progress so it doesn't feel frozen while the model works
+    const phases = ["Reading the step…", "Generating the screen…", "Composing components…", "Almost there…"];
+    const t0 = performance.now();
+    surfWrap.innerHTML = '<div class="stage-progress"><div class="stage-bar"><span></span></div><div class="stage-phase"></div></div>';
+    const phaseEl = surfWrap.querySelector(".stage-phase");
+    phaseEl.textContent = phases[0] + " · 0s";
+    const tick = setInterval(() => {
+      const n = Math.floor((performance.now() - t0) / 1000);
+      phaseEl.textContent = phases[Math.min(phases.length - 1, Math.floor(n / 2))] + " · " + n + "s";
+    }, 250);
+    try {
+      const r = await fetch("/api/chat", { method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authToken ? { "Authorization": "Bearer " + authToken } : {}),
+        body: JSON.stringify({ history: def.fixture, mode, agentPrompt: promptText, webSearch: false }) });
+      const out = await r.json();
+      clearInterval(tick);
+      if (out.error) { surfWrap.innerHTML = '<div class="stage-empty">⚠ ' + out.error + "</div>"; return; }
+      applyCredits(out.credits_remaining);                            // Retry renders a real screen → counts as usage
+      const comps = out.components;
+      if (Array.isArray(comps) && comps.length) {
+        // NOTE: no data-agent → compact vertical render that fits the narrow panel (no wide tap-rail)
+        const surf = document.createElement("div"); surf.className = "gen-surface";
+        surfWrap.innerHTML = ""; surfWrap.appendChild(surf); window.renderA2UI(comps, null, surf);
+      } else {
+        surfWrap.innerHTML = '<div class="stage-empty">' + (out.reply ? out.reply : "no screen for this step") + "</div>";
+      }
+    } catch (e) { clearInterval(tick); surfWrap.innerHTML = '<div class="stage-empty">⚠ ' + e.message + "</div>"; }
+    finally { clearInterval(tick); btn.classList.remove("busy"); lbl.textContent = orig; }
+  }
+
   // UI tab: design-system picker mirrors the header select (which drives window.__cat.applyDS)
   function apSyncDS() {
-    const src = $("#ds-select"), dst = $("#ap-ds"); if (!dst) return;
-    dst.innerHTML = src.innerHTML; dst.value = src.value;
+    const src = $("#ds-select"); if (!src) return;
+    const dst = $("#ap-ds");     if (dst) { dst.innerHTML = src.innerHTML; dst.value = src.value; }
+    const cfg = $("#ap-ds-cfg"); if (cfg) { cfg.innerHTML = src.innerHTML; cfg.value = src.value; }   // Config-tab picker
     const tag = $("#ap-comp-ds"); if (tag) tag.textContent = src.options[src.selectedIndex] ? src.options[src.selectedIndex].text : src.value;
   }
   $("#ap-ds").addEventListener("change", (e) => {
     window.__cat.applyDS(e.target.value); apSyncDS();
     if (document.querySelector('.ap-pane[data-pane="ui"]').classList.contains("active")) apRenderComponents(true);
   });
+  // Config-tab design-system picker — applyDS re-renders the current screen immediately
+  { const cfg = $("#ap-ds-cfg"); if (cfg) cfg.addEventListener("change", (e) => { window.__cat.applyDS(e.target.value); apSyncDS(); }); }
   $("#ap-ds-import").onclick = () => $("#ds-import-btn").click();
+
+  // UI tab: "Add a component" — AI-add to the current agent screen, with Undo / Reset
+  $("#ap-add-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const inp = $("#ap-add-input"), t = inp.value.trim(); if (!t) return;
+    if (!(Array.isArray(components) && components.length)) { $("#ap-add-status").textContent = "Generate a screen first, then add to it."; return; }
+    const btn = $("#ap-add-btn"), o = btn.textContent, st = $("#ap-add-status");
+    btn.disabled = true; btn.textContent = "Adding…"; st.textContent = "";
+    const res = await runScreenEdit("Add to the current screen: " + t);
+    st.textContent = res.error ? ("⚠ " + (res.error === "no change" ? "no change made" : res.error)) : "Added ✓";
+    if (!res.error) inp.value = "";
+    btn.disabled = false; btn.textContent = o; setTimeout(() => (st.textContent = ""), 2000);
+  });
+  $("#ap-add-undo").onclick = screenUndo;
+  $("#ap-add-reset").onclick = screenReset;
 
   // Components tab: render the whole catalog for the selected design system
   function apRenderComponents(force) {
@@ -1925,37 +3230,107 @@
     const pct = creditsTotal ? Math.round((used / creditsTotal) * 100) : 0;
     if (fill) fill.style.width = pct + "%";
     document.querySelectorAll(".ap-usage-bar").forEach((b) => b.classList.toggle("low", credits <= 3));
-    // modal usage screen (opened from the profile menu)
-    const mu = $("#cm-usage-used"), mt = $("#cm-usage-total"), mf = $("#cm-usage-fill");
-    if (mu) mu.textContent = used;
-    if (mt) mt.textContent = creditsTotal;
-    if (mf) mf.style.width = pct + "%";
-    const bal = $("#credits-bal"); if (bal) bal.textContent = credits;
+    // usage modal (opened from the profile menu / "Usage") — just a percentage + bar
+    const uf = $("#um-usage-fill"), up = $("#um-pct");
+    if (uf) uf.style.width = pct + "%";
+    if (up) up.textContent = pct + "%";
   }
   function saveCredits() {
     localStorage.setItem("catalyst.credits", String(credits));
     localStorage.setItem("catalyst.creditsTotal", String(creditsTotal));
     renderCredits();
   }
-  function openCredits() { renderCredits(); $("#credits-modal").hidden = false; }
-  $("#ap-buy-btn").onclick = openCredits;
+  // usage modal = "where am I at"; buy modal = "get more" — kept as two separate surfaces
+  function openUsage() { renderCredits(); $("#usage-modal").hidden = false; }
+  function openCredits() { renderCredits(); selectPack(document.querySelector('.credit-pack[data-pack="plus"]') || document.querySelector(".credit-pack")); $("#credits-modal").hidden = false; }
+  { const b = $("#ap-buy-btn"); if (b) b.onclick = openCredits; }
+  $("#ap-collapse").onclick = () => $("#agent-panel").classList.toggle("collapsed");
+  $("#um-buy").onclick = () => { $("#usage-modal").hidden = true; openCredits(); };
+  $("#usage-close").onclick = () => { $("#usage-modal").hidden = true; };
+  $("#usage-modal").addEventListener("click", (e) => { if (e.target === $("#usage-modal")) $("#usage-modal").hidden = true; });
   $("#credits-close").onclick = () => { $("#credits-modal").hidden = true; };
   $("#credits-modal").addEventListener("click", (e) => { if (e.target === $("#credits-modal")) $("#credits-modal").hidden = true; });
-  document.querySelectorAll(".credit-pack").forEach((b) => {
-    b.onclick = () => {
-      const add = parseInt(b.dataset.add, 10); credits += add; creditsTotal += add; saveCredits();
-      const s = b.querySelector("em"), t = s.textContent; s.textContent = "Added ✓";
-      setTimeout(() => { s.textContent = t; $("#credits-modal").hidden = true; }, 750);
-    };
-  });
+  function grantCredits(add) { credits += add; creditsTotal += add; saveCredits(); }
+  // apply a server-authoritative balance (used by every AI action so usage stays in sync)
+  function applyCredits(n) { if (typeof n === "number") { credits = n; if (credits > creditsTotal) creditsTotal = credits; saveCredits(); } }
+  // ---- select a pack: highlight it + fill the order summary (no charge yet) ----
+  let selectedPack = null;
+  function selectPack(tile) {
+    if (!tile) return;
+    selectedPack = tile;
+    document.querySelectorAll(".credit-pack").forEach((t) => t.classList.toggle("selected", t === tile));
+    const price = Number(tile.dataset.price);
+    const cEl = $("#cm-sum-credits"); if (cEl) cEl.textContent = "";
+    const sEl = $("#cm-sum-screens"); if (sEl) sEl.textContent = "";
+    $("#cm-sum-total").textContent = "£" + price.toFixed(2);
+  }
+  document.querySelectorAll(".credit-pack").forEach((t) => (t.onclick = () => selectPack(t)));
+  // ---- Stripe checkout (real payments) with a graceful demo fallback ----
+  let stripeEnabled = false;
+  fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "config" }) })
+    .then((r) => r.json()).then((d) => {
+      stripeEnabled = !!d.enabled;
+      const note = $("#cm-pay-note");
+      if (note && !stripeEnabled) note.textContent = "Demo mode — no Stripe key set, so your plan is applied instantly without a real charge.";
+    }).catch(() => {});
+  async function checkout() {
+    const tile = selectedPack; if (!tile) return;
+    const btn = $("#cm-pay"), orig = btn.textContent;
+    if (stripeEnabled) {
+      btn.disabled = true; btn.textContent = "Redirecting to Stripe…";
+      try {
+        const r = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "create", pack: tile.dataset.pack, origin: location.origin }) });
+        const d = await r.json();
+        if (d.url) { location.href = d.url; return; }          // off to Stripe Checkout — it collects the card
+        btn.textContent = d.error ? ("Error: " + d.error) : orig;
+      } catch (e) { btn.textContent = "Error — try again"; }
+      btn.disabled = false; setTimeout(() => (btn.textContent = orig), 2000);
+      return;
+    }
+    // demo mode — no Stripe key: add instantly
+    grantCredits(Number(tile.dataset.credits));
+    btn.textContent = "Added ✓"; setTimeout(() => { btn.textContent = orig; $("#credits-modal").hidden = true; }, 800);
+  }
+  $("#cm-pay").onclick = checkout;
+  // returning from Stripe: verify the session server-side, then grant the credits
+  (function handleCheckoutReturn() {
+    const q = new URLSearchParams(location.search);
+    const state = q.get("checkout");
+    if (!state) return;
+    const clean = () => history.replaceState({}, "", location.pathname);
+    if (state !== "success") { clean(); return; }
+    const sid = q.get("session_id");
+    if (!sid) { clean(); return; }
+    fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "verify", session_id: sid, token: localStorage.getItem("catalyst.token") || "" }) })
+      .then((r) => r.json()).then((d) => {
+        if (d.paid && d.credits) {
+          if (d.credits_remaining != null) { credits = d.credits_remaining; if (credits > creditsTotal) creditsTotal = credits; saveCredits(); }  // server balance
+          else grantCredits(d.credits);   // demo fallback
+          addMsg("bot", "Payment received — " + d.credits + " credits added. Thanks!");
+        }
+        clean();
+      }).catch(clean);
+  })();
   renderCredits();
 
   // ---- profile menu (header): email + usage/credits + theme + sign out ----
   function pmSync() {
     const emailEl = $("#account-email"), signedIn = !!(emailEl && emailEl.textContent.trim() && !emailEl.hidden);
-    $("#pm-email").textContent = signedIn ? emailEl.textContent.trim() : "Not signed in";
+    const label = signedIn ? emailEl.textContent.trim() : "Not signed in";
+    $("#pm-email").textContent = label;
+    const rn = $("#rp-name"); if (rn) rn.textContent = signedIn ? label : "Account";
+    // profile avatar shows the first letter of the email when signed in, else the generic person icon
+    const av = $("#rp-avatar");
+    if (av) {
+      if (signedIn && label) { av.textContent = label[0]; av.classList.add("has-initial"); }
+      else { av.classList.remove("has-initial"); av.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 4-6 8-6s7.5 2 8 6"/></svg>'; }
+    }
     $("#pm-signout").hidden = !signedIn;
   }
+  pmSync();
   $("#profile-btn").onclick = (e) => {
     e.stopPropagation();
     const m = $("#profile-menu"); const show = m.hidden; pmSync(); m.hidden = !show;
@@ -1964,23 +3339,88 @@
     const m = $("#profile-menu");
     if (!m.hidden && !m.contains(e.target) && !$("#profile-btn").contains(e.target)) m.hidden = true;
   });
-  $("#pm-usage").onclick = () => { $("#profile-menu").hidden = true; openCredits(); };
+  $("#pm-usage").onclick = () => { $("#profile-menu").hidden = true; openUsage(); };
+  // ---- feedback → emails the team via /api/auth ----
+  $("#pm-feedback").onclick = () => {
+    $("#profile-menu").hidden = true;
+    $("#feedback-err").hidden = true; $("#feedback-text").value = "";
+    $("#feedback-modal").hidden = false; $("#feedback-text").focus();
+  };
+  $("#feedback-close").onclick = () => { $("#feedback-modal").hidden = true; };
+  $("#feedback-modal").addEventListener("click", (e) => { if (e.target === $("#feedback-modal")) $("#feedback-modal").hidden = true; });
+  $("#feedback-send").onclick = async () => {
+    const msg = $("#feedback-text").value.trim();
+    if (!msg) { $("#feedback-err").textContent = "Write a little feedback first."; $("#feedback-err").hidden = false; return; }
+    const btn = $("#feedback-send"), o = btn.textContent; btn.disabled = true; btn.textContent = "Sending…"; $("#feedback-err").hidden = true;
+    try {
+      const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "feedback", message: msg, token: authToken || undefined }) });
+      const d = await r.json();
+      if (d.ok) { $("#feedback-modal").hidden = true; if (typeof toast === "function") toast("Thanks — feedback sent ✓"); }
+      else { $("#feedback-err").textContent = d.error || "Couldn't send — try again."; $("#feedback-err").hidden = false; }
+    } catch (e) { $("#feedback-err").textContent = "Couldn't send — try again."; $("#feedback-err").hidden = false; }
+    btn.disabled = false; btn.textContent = o;
+  };
+  // API keys are coming soon — the menu item is disabled, so no handler opens the modal.
   $("#pm-theme").onclick = () => { $("#theme-btn").click(); };
+
+  // ---- API keys & developers ----
+  async function keysPost(action, extra) {
+    const r = await fetch("/api/keys", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ action, token: localStorage.getItem("catalyst.token") || "" }, extra || {})) });
+    return r.json();
+  }
+  function keysSnippet(key) {
+    $("#keys-snippet").textContent =
+      '<script src="' + location.origin + '/embed.js"><\/script>\n' +
+      '<div id="surface"><\/div>\n' +
+      '<script>\n' +
+      '  const app = Catalyst.app({ apiKey: "' + (key || "ck_your_api_key") + '", mount: "#surface" });\n' +
+      '  app.send("a pricing page");   // Catalyst generates + renders, metered to your key\n' +
+      '<\/script>';
+  }
+  function renderKeys(d) {
+    $("#keys-credits").textContent = (d.credits != null ? d.credits : "—") + " credits";
+    const list = $("#keys-list");
+    if (!d.keys || !d.keys.length) { list.innerHTML = '<div class="keys-empty">No keys yet — create one to call the API.</div>'; return; }
+    list.innerHTML = "";
+    d.keys.forEach((k) => {
+      const row = document.createElement("div"); row.className = "key-row";
+      row.innerHTML = '<span class="kr-mask"></span><span class="kr-label"></span><button class="kr-revoke">Revoke</button>';
+      row.querySelector(".kr-mask").textContent = k.masked || "ck_…";
+      row.querySelector(".kr-label").textContent = k.label || "";
+      row.querySelector(".kr-revoke").onclick = async () => { await keysPost("revoke", { masked: k.masked }); openKeys(); };
+      list.appendChild(row);
+    });
+  }
+  async function openKeys() {
+    $("#keys-new").hidden = true; keysSnippet();
+    $("#keys-modal").hidden = false;
+    const d = await keysPost("list");
+    if (d.error) { $("#keys-list").innerHTML = '<div class="keys-empty">' + (d.error === "not signed in" ? "Sign in to manage API keys." : d.error) + "</div>"; $("#keys-credits").textContent = "—"; return; }
+    renderKeys(d);
+  }
+  $("#keys-close").onclick = () => { $("#keys-modal").hidden = true; };
+  $("#keys-modal").addEventListener("click", (e) => { if (e.target === $("#keys-modal")) $("#keys-modal").hidden = true; });
+  $("#keys-create").onclick = async () => {
+    const d = await keysPost("create", { label: "API key" });
+    if (d.error) { alert(d.error === "not signed in" ? "Sign in first to create an API key." : d.error); return; }
+    $("#keys-new-val").textContent = d.key; $("#keys-new").hidden = false; keysSnippet(d.key);
+    openKeys.__lastKey = d.key;
+    const l = await keysPost("list"); if (!l.error) renderKeys(l);
+  };
   $("#pm-signout").onclick = () => { $("#profile-menu").hidden = true; $("#signout-btn").click(); };
 
   // ---- Import modal: the Figma / design-system agent lives here (not in the chat) ----
   $("#ds-import-btn").onclick = () => { $("#ag-modal").hidden = false; };
+  $("#ct-import").onclick = () => { $("#ag-modal").hidden = false; };
   $("#ag-modal-close").onclick = () => { $("#ag-modal").hidden = true; };
   $("#ag-modal").addEventListener("click", (e) => { if (e.target === $("#ag-modal")) $("#ag-modal").hidden = true; });
 
   // ---- bring-your-own-agent: route the chat to a team's own endpoint ----
   let agentEndpoint = localStorage.getItem("catalyst.agentEndpoint") || "";
   function updateConnectUI() {
-    const on = !!agentEndpoint;
-    const add = $("#rail-add");
-    add.classList.toggle("connected", on);
-    add.querySelector(".side-lbl").textContent = on ? "Your agent" : "Connect agent";
-    add.title = on ? "Your agent is connected — click to manage" : "Connect your own agent";
+    // the sidebar button is "New agent" now; connection state is reflected in the agent panel
     apSyncAgent();
   }
   function connectStatus(msg, ok) {
@@ -1991,10 +3431,11 @@
       body: JSON.stringify({ endpoint, body }) });
     return r.json();
   }
-  $("#rail-add").onclick = () => {
+  function openConnectModal() {
     $("#connect-url").value = agentEndpoint; $("#connect-status").hidden = true;
     $("#connect-modal").hidden = false; $("#connect-url").focus();
-  };
+  }
+  $("#rail-add").onclick = () => openNewAgent();   // sidebar button opens the "New agent" form (name + purpose)
   $("#connect-close").onclick = () => { $("#connect-modal").hidden = true; };
   $("#connect-modal").addEventListener("click", (e) => { if (e.target === $("#connect-modal")) $("#connect-modal").hidden = true; });
   $("#connect-test").onclick = async () => {
@@ -2013,13 +3454,14 @@
     agentEndpoint = url;
     if (url) localStorage.setItem("catalyst.agentEndpoint", url); else localStorage.removeItem("catalyst.agentEndpoint");
     updateConnectUI(); $("#connect-modal").hidden = true;
+    if (url) newAgent();   // connecting a new agent starts a fresh agent session with an empty system prompt
     addMsg("bot", url ? "Connected to your agent — your next messages go to it, rendered in the selected design system."
-                      : "Disconnected — back to Catalyst's built-in agent.");
+                      : "Disconnected — back to Catalystic UI's built-in agent.");
   };
   $("#connect-clear").onclick = () => {
     $("#connect-url").value = ""; agentEndpoint = ""; localStorage.removeItem("catalyst.agentEndpoint");
     updateConnectUI(); $("#connect-modal").hidden = true;
-    addMsg("bot", "Disconnected — back to Catalyst's built-in agent.");
+    addMsg("bot", "Disconnected — back to Catalystic UI's built-in agent.");
   };
   updateConnectUI();
 
@@ -2090,12 +3532,32 @@
     $("#doc-snippet").textContent = DOCS[lang];
   }
   document.querySelectorAll(".doc-tab").forEach((t) => { t.onclick = () => setDoc(t.dataset.lang); });
-  document.querySelector(".doc-copy").onclick = () => {
-    navigator.clipboard.writeText($("#doc-snippet").textContent);
-    const b = document.querySelector(".doc-copy"), o = b.textContent;
-    b.textContent = "Copied"; setTimeout(() => (b.textContent = o), 1200);
-  };
+  // both Copy buttons copy the <pre> in their own .doc-code block
+  document.querySelectorAll(".doc-copy").forEach((b) => (b.onclick = () => {
+    const pre = b.parentNode.querySelector("pre");
+    navigator.clipboard.writeText(pre.textContent);
+    const o = b.textContent; b.textContent = "Copied"; setTimeout(() => (b.textContent = o), 1200);
+  }));
   setDoc("curl");
+  // the "Embed in your app" snippet — front-end drop-in that renders the agent's tree
+  (function () {
+    const el = $("#embed-snippet"); if (!el) return;
+    const url = ($("#connect-url") && $("#connect-url").value.trim()) || "https://your-api.com/agent";
+    el.textContent =
+      '<!-- add once, anywhere in your app -->\n' +
+      '<script src="' + location.origin + '/embed.js"><\/script>\n' +
+      '<div id="surface"><\/div>\n\n' +
+      '<script>\n' +
+      '  // run the whole loop against YOUR agent endpoint:\n' +
+      '  const chat = Catalyst.connect({\n' +
+      '    endpoint: "' + url + '",\n' +
+      '    mount: "#surface",\n' +
+      '  });\n' +
+      '  chat.send("a login screen");   // your agent returns { reply, components }; we render it\n\n' +
+      '  // …or render a tree you already have, taps flow back to you:\n' +
+      '  // Catalyst.render("#surface", agentResponse.components, { onAction: label => chat.send(label) });\n' +
+      '<\/script>';
+  })();
 
   // ---- component gallery: render every component in the current design system ----
   function renderTree(comps, surface) {
@@ -2229,10 +3691,36 @@
       body: JSON.stringify(Object.assign({ action }, extra || {})) });
     return r.json();
   }
-  function onSignedIn(email) {
+  // Per-account isolation: chats/agents live in this browser's localStorage. If a DIFFERENT email signs in
+  // on the same browser, wipe the previous user's local content so one account can never see another's.
+  function applyAccountScope(email) {
+    const cur = email || "";
+    let prev = ""; try { prev = localStorage.getItem("catalyst.account") || ""; } catch (e) {}
+    const changed = prev !== cur;
+    if (changed) {
+      ["catalyst.convos", "catalyst.customAgents", "catalyst.stagePrompts", "catalyst.agentPrompts", "catalyst.pins",
+       "catalyst.agentEndpoint", "catalyst.credits", "catalyst.creditsTotal"]
+        .forEach((k) => { try { localStorage.removeItem(k); } catch (e) {} });
+      try { localStorage.setItem("catalyst.account", cur); } catch (e) {}
+      convos = []; customAgents = []; currentCustomAgent = null; stagePrompts = {}; promptOverrides = {}; agentEndpoint = "";
+      credits = 0; creditsTotal = 0;     // the new account's real balance is set from the server below
+    }
+    return changed;
+  }
+  function revealApp() { const c = document.getElementById("boot-cover"); if (c) c.classList.add("gone"); }
+  function onSignedIn(email, serverCredits) {
+    revealApp();
     $("#auth-gate").hidden = true;
     $("#signout-btn").hidden = false;
     $("#account-email").textContent = email; $("#account-email").hidden = false;
+    applyAccountScope(email);            // isolate this account's data before anything renders
+    if (typeof serverCredits === "number") {   // server balance is authoritative — never carry over another account's
+      credits = serverCredits;
+      creditsTotal = Math.max(serverCredits, 1);   // anchor "100%" to the current balance so usage starts at 0%, not a stale total
+      saveCredits();
+    } else { renderCredits(); }
+    renderHistory(); renderCustomAgents();
+    pmSync();
   }
   async function onGoogleCred(resp) {
     $("#auth-err").hidden = true;
@@ -2254,15 +3742,23 @@
     let n = 0; const iv = setInterval(() => { if (init() || ++n > 50) clearInterval(iv); }, 100);
   }
   async function initAuth() {
+    if (DEMO) {   // landing demo: open app, no sign-in, canned prompt pre-filled, only the chat interactive
+      revealApp();
+      document.body.classList.add("demo");
+      $("#auth-gate").hidden = true; credits = 999; renderHistory(); renderCustomAgents();
+      $("#input").value = "A screen to book a salon appointment: pick a service, choose date and time, enter name and phone, confirm.";
+      const hl = $("#history-list");   // one recent, already selected (visual only, not persisted)
+      if (hl) hl.innerHTML = '<div class="hist-item active demo-recent"><span class="hist-title side-lbl">A screen to book a salon appointment</span></div>';
+      return;
+    }
     let st; try { st = await authPost("status"); } catch (e) { st = { enabled: false }; }
-    if (!st.enabled) { $("#auth-gate").hidden = true; return; }   // datastore not set up → app open
+    if (!st.enabled) { revealApp(); $("#auth-gate").hidden = true; renderHistory(); renderCustomAgents(); return; }   // datastore not set up → app open
     if (authToken) {
       const me = await authPost("me", { token: authToken });
-      if (me.email) { onSignedIn(me.email); return; }
+      if (me.email) { onSignedIn(me.email, me.credits); return; }
       authToken = ""; localStorage.removeItem("catalyst.token");
     }
-    if (st.googleClientId) setupGoogle(st.googleClientId);
-    setAuthMode("signup"); $("#auth-gate").hidden = false;
+    location.href = "login.html?next=" + encodeURIComponent(location.pathname + location.search);
   }
   $("#auth-submit").onclick = async () => {
     const email = $("#auth-email").value.trim(), password = $("#auth-pass").value;
@@ -2281,7 +3777,7 @@
     try { await authPost("logout", { token: authToken }); } catch (e) {}
     authToken = ""; localStorage.removeItem("catalyst.token");
     $("#signout-btn").hidden = true; $("#account-email").hidden = true;
-    setAuthMode("login"); $("#auth-gate").hidden = false;
+    location.href = "login.html?mode=login";
   };
   initAuth();
 
@@ -2296,12 +3792,7 @@
   $("#theme-btn").onclick = () => setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark");
   setTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
 
-  // ---- front landing page ----
-  try { if (localStorage.getItem("catalyst.landingSeen")) $("#landing").hidden = true; } catch (e) {}
-  $("#landing-go").onclick = () => {
-    $("#landing").hidden = true;
-    try { localStorage.setItem("catalyst.landingSeen", "1"); } catch (e) {}
-  };
+  // (the old "Get started" front splash was removed — the app opens straight into the workspace)
 
   boot();
 </script>

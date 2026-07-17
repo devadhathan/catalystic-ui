@@ -414,12 +414,12 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
     use_search = (mode in AGENT_CONTEXT) and not mechanical
     if web_pref is False:            # user turned the Web-search connector OFF in the UI
         use_search = False
+    # default to the FAST model everywhere for low latency; smart is opt-in via Model Preference
     if provider == "openai":
-        model, fast, effort = (OPENAI_SMART if tier == "complex" else OPENAI_FAST), OPENAI_FAST, None
+        model, fast, effort = OPENAI_FAST, OPENAI_FAST, None
     else:
-        model = ANTHROPIC_SMART if tier == "complex" else ANTHROPIC_FAST
-        fast = ANTHROPIC_FAST
-        effort = "low" if tier == "complex" else None  # keep the smart model fast
+        model = fast = ANTHROPIC_FAST
+        effort = None
     # explicit model preference from the UI overrides the automatic tier/provider pick
     ov_provider, ov_model = _resolve_model(model_sel)
     if ov_model:

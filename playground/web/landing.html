@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catalystic UI — the rendering layer for AI agents</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: hsl(240 10% 9%);
+    --muted: hsl(240 4% 44%);
+    --line: hsl(240 6% 89%);
+    --divider: hsl(240 6% 94.5%);
+    --soft: hsl(240 6% 97%);
+    --dark: #16150f;
+    --dark-fg: #f3f1ea;
+    --dark-muted: #b4afa3;
+    --accent: hsl(221 83% 53%);
+    --accent-soft: hsl(221 90% 97%);
+    --sans: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    --serif: Georgia, "Times New Roman", Times, serif;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+  img, svg, pre { max-width: 100%; }
+  em { font-style: italic; }
+  .wrap { max-width: 1300px; margin: 0 auto; padding: 0 40px; }
+  @media (max-width: 640px) { .wrap { padding: 0 22px; } }
+  .u { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .serif { font-family: var(--sans); }
+
+  /* nav */
+  header { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30; background: hsl(0 0% 100% / .86); backdrop-filter: saturate(180%) blur(10px); }
+  .nav { display: flex; align-items: center; gap: 28px; height: 72px; }
+  .nav .logo { height: 26px; width: 26px; }
+  .brand { display: inline-flex; align-items: center; gap: 9px; }
+  .brandname { font-family: var(--sans); font-size: 20px; font-weight: 700; letter-spacing: -.02em; color: var(--fg); }
+  .nav .sp { flex: 1; }
+  .nav a.link { font-size: 15px; color: var(--fg); opacity: .8; transition: opacity .12s; }
+  .nav a.link:hover { opacity: 1; }
+  @media (max-width: 780px) { .nav a.link { display: none; } }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans); font-size: 15px; font-weight: 500; cursor: pointer;
+    border-radius: 999px; padding: 9px 18px; border: 1px solid var(--fg); background: transparent; color: var(--fg);
+    transition: background .14s, color .14s, opacity .14s; white-space: nowrap; }
+  .btn:hover { background: var(--fg); color: #fff; }
+  .btn.solid { background: var(--fg); color: #fff; }
+  .btn.solid:hover { opacity: .9; }
+  .btn.cream { background: var(--dark-fg); color: var(--dark); border-color: var(--dark-fg); }
+  .btn.cream:hover { opacity: .9; background: var(--dark-fg); }
+  .btn.lg { padding: 13px 24px; font-size: 16px; }
+  .btn svg { width: 15px; height: 15px; }
+  /* icon-only nav button (GitHub) */
+  .nav-ic { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 999px;
+    border: 1px solid var(--divider); color: var(--fg); opacity: .85; transition: opacity .12s, border-color .12s; }
+  .nav-ic:hover { opacity: 1; border-color: var(--fg); }
+  .nav-ic svg { width: 18px; height: 18px; }
+
+  /* hero — left-aligned kicker + big headline + big muted subhead + pill CTA */
+  .hero { padding: 76px 0 40px; }
+  @media (max-width: 900px) { .hero { padding: 46px 0 28px; } }
+  .he-lead { max-width: 760px; }
+  .he-kicker { font-family: var(--sans); font-size: 15px; color: var(--muted); display: block; margin-bottom: 18px; }
+  .he-title { font-family: var(--sans); font-weight: 600; font-size: clamp(26px, 3.3vw, 38px); line-height: 1.05; letter-spacing: -.03em; color: var(--fg); }
+  .he-sub { font-family: var(--sans); font-weight: 400; font-size: clamp(22px, 3.1vw, 34px); line-height: 1.12;
+     letter-spacing: -.02em; color: var(--muted); margin-top: 12px; max-width: 26ch; }
+  .he-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+  .btn.pill { border-radius: 999px; }
+  /* showcase — 3 columns, each with a mini product visual on a dark card */
+  .feat-cols { padding: 64px 0; border-top: 1px solid var(--divider); }
+  .showcase { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  @media (max-width: 900px) { .showcase { grid-template-columns: 1fr; gap: 34px; } }
+  .sc-card { background: var(--soft); border: 1px solid var(--divider); border-radius: 18px; padding: 24px 24px 26px; }
+  .sc-card h3 { font-family: var(--sans); font-size: 18px; font-weight: 600; letter-spacing: -.02em; color: var(--fg); }
+  .sc-card > p { font-family: var(--sans); font-size: 15px; color: var(--muted); margin-top: 8px; line-height: 1.45; max-width: 36ch; }
+  .sc-visual { margin-top: 22px; background: #16181d; border: 1px solid #262a31; border-radius: 16px; padding: 18px;
+     min-height: 236px; overflow: hidden; }
+  /* visual 1: prompt → rendered UI */
+  .sc-chat { display: flex; flex-direction: column; }
+  .scv-user { align-self: flex-end; background: #2a2f37; color: #e7ecf1; font-size: 12px; padding: 7px 11px;
+     border-radius: 12px 12px 3px 12px; margin-bottom: 14px; width: fit-content; max-width: 84%; }
+  .scv-app { background: #fff; border-radius: 12px; padding: 14px; }
+  .scv-h { font-size: 14px; font-weight: 700; color: #14171c; }
+  .scv-subt { font-size: 11.5px; color: #6b7480; margin-top: 2px; }
+  .scv-chips { display: flex; gap: 6px; margin: 12px 0; }
+  .scv-chips span { font-size: 11px; padding: 5px 10px; border-radius: 7px; border: 1px solid #e4e6eb; color: #333; }
+  .scv-chips span.on { background: hsl(221 83% 53%); color: #fff; border-color: transparent; }
+  .scv-input { font-size: 11px; color: #9aa3af; border: 1px solid #e4e6eb; border-radius: 7px; padding: 8px 10px; margin-bottom: 10px; }
+  .scv-cta { background: hsl(221 83% 53%); color: #fff; font-size: 12px; font-weight: 600; text-align: center; padding: 9px; border-radius: 8px; }
+  /* visual 2: design systems */
+  .sc-ds { display: flex; flex-direction: column; gap: 15px; justify-content: center; }
+  .scv-dsrow { display: flex; align-items: center; gap: 12px; }
+  .scv-dstag { font-size: 11px; color: #8b93a0; width: 60px; flex: 0 0 60px; }
+  .scv-b { font-size: 12px; font-weight: 600; padding: 8px 18px; border: 0; color: #fff; cursor: default; }
+  .b-shadcn { background: #e7ecf1; color: #14171c; border-radius: 8px; }
+  .b-polaris { background: #008060; border-radius: 8px; }
+  .b-material { background: #6750a4; border-radius: 20px; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+  .b-carbon { background: #0f62fe; border-radius: 0; }
+  /* visual 3: JSON schema */
+  .sc-code { display: flex; align-items: center; }
+  .sc-code pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.7;
+     color: #cbd3dd; white-space: pre; margin: 0; }
+  .sc-code .j-key { color: #7cc4ff; } .sc-code .j-str { color: #9be29b; }
+  .rule { border: 0; border-top: 1px solid var(--divider); margin: 40px 0; }
+  .he-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; }
+  @media (max-width: 900px) { .he-cols { grid-template-columns: 1fr 1fr; gap: 32px 28px; } }
+  @media (max-width: 560px) { .he-cols { grid-template-columns: 1fr; } }
+  .he-col h3 { font-family: var(--sans); font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+  .he-col p { font-family: var(--sans); font-size: 16px; color: var(--muted); margin-top: 11px; line-height: 1.5; }
+  .he-ic { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; margin-bottom: 12px;
+     background: var(--soft); border: 1px solid var(--divider); color: var(--accent); }
+  .he-ic svg { width: 18px; height: 18px; }
+
+  /* magazine content grid — featured pre-styled shot + labeled feature items */
+  .feat-shot { width: 100%; height: auto; display: block; border-radius: var(--radius); }
+  .mag { display: grid; grid-template-columns: 1.35fr 1fr; gap: 56px; align-items: start; padding-bottom: 64px; border-bottom: 1px solid var(--divider); }
+  @media (max-width: 900px) { .mag { grid-template-columns: 1fr; gap: 36px; padding-bottom: 56px; } }
+  .feat-cap { margin-top: 22px; }
+  .feat-cap .lbl { font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+  .feat-cap h3 { font-family: var(--sans); font-size: clamp(20px, 2.2vw, 26px); font-weight: 700; letter-spacing: -.025em; line-height: 1.08; margin-top: 10px; }
+  .feat-cap p { font-family: var(--sans); font-size: 16px; color: var(--muted); margin-top: 12px; max-width: 46ch; line-height: 1.5; }
+  .items { display: flex; flex-direction: column; }
+  .item { padding: 22px 0; border-top: 1px solid var(--divider); }
+  .item:first-child { border-top: 0; padding-top: 0; }
+  .item .cat { font-family: var(--sans); font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .item h4 { font-family: var(--sans); font-size: 18px; font-weight: 600; letter-spacing: -.015em; margin-top: 9px; }
+  .item h4 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .item p { font-family: var(--sans); font-size: 16px; color: var(--muted); margin-top: 9px; line-height: 1.5; }
+
+  /* product screenshot in a browser frame */
+  .shot { padding: 0 0 8px; }
+  .browser { max-width: 1000px; margin: 0 auto; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+    box-shadow: 0 44px 90px -56px hsl(240 30% 20% / .34); background: #fff; }
+  .browser .bbar { display: flex; align-items: center; gap: 7px; height: 40px; padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--soft); }
+  .browser .bbar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); }
+  .browser .bbar .url { margin-left: 12px; font-size: 12px; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 7px; padding: 4px 12px; }
+  .browser img { width: 100%; height: auto; display: block; }
+  .shot-cap { text-align: center; font-family: var(--sans); font-size: 16px; color: var(--muted); margin: 22px auto 0; max-width: 56ch; }
+
+  /* dark statement card — serif headline */
+  .card-dark { background: var(--dark); color: var(--dark-fg); border-radius: 22px; padding: clamp(44px, 6vw, 82px) 28px; text-align: center; }
+  .card-dark h2 { font-family: var(--sans); font-weight: 500; font-size: clamp(27px, 3.8vw, 40px); line-height: 1.04; letter-spacing: -.005em; }
+  .card-dark p { font-family: var(--sans); font-size: clamp(15px, 1.7vw, 19px); color: var(--dark-muted); margin: 24px auto 32px; max-width: 48ch; line-height: 1.5; }
+
+  /* section scaffold */
+  section.block { padding: clamp(88px, 11vw, 148px) 0; border-top: 1px solid var(--divider); }
+  .head { max-width: 760px; }
+  .kicker { font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+  .head h2 { font-family: var(--sans); font-weight: 500; font-size: clamp(23px, 2.7vw, 31px); line-height: 1.1; letter-spacing: -.01em; margin-top: 16px; }
+  .head p { font-family: var(--sans); font-size: 17px; color: var(--muted); margin-top: 18px; }
+
+  /* what it is — component cards */
+  .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 48px; }
+  @media (max-width: 820px) { .cols { grid-template-columns: 1fr; gap: 14px; } }
+  .col { border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; }
+  .col .ic { width: 40px; height: 40px; border-radius: 11px; background: var(--accent-soft); color: var(--accent);
+    display: grid; place-items: center; margin-bottom: 18px; }
+  .col .ic svg { width: 20px; height: 20px; }
+  .col h3 { font-family: var(--sans); font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .col p { font-family: var(--sans); font-size: 15.5px; color: var(--muted); margin-top: 9px; line-height: 1.5; }
+
+  /* architecture pipeline */
+  .arch { display: flex; align-items: stretch; gap: 0; margin-top: 48px; }
+  .node { flex: 1 1 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 18px; background: #fff; }
+  .node .nic { width: 36px; height: 36px; border-radius: 10px; background: var(--soft); color: var(--muted);
+    display: grid; place-items: center; margin-bottom: 16px; }
+  .node .nic svg { width: 18px; height: 18px; }
+  .node.on { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .node.on .nic { background: #fff; color: var(--accent); }
+  .node b { font-family: var(--sans); font-size: 15px; font-weight: 600; letter-spacing: -.01em; display: block; }
+  .node span { font-family: var(--sans); font-size: 13px; color: var(--muted); display: block; margin-top: 6px; line-height: 1.4; }
+  .node.on span { color: hsl(221 45% 42%); }
+  .arrow { display: grid; place-items: center; padding: 0 10px; color: hsl(240 5% 78%); flex: 0 0 auto; }
+  .arrow svg { width: 18px; height: 18px; }
+  @media (max-width: 820px) { .arch { flex-direction: column; } .node { width: 100%; } .arrow { padding: 10px 0; } .arrow svg { transform: rotate(90deg); } }
+  .arch-detail { display: grid; grid-template-columns: .92fr 1.08fr; gap: 48px; align-items: center; margin-top: 48px; }
+  @media (max-width: 820px) { .arch-detail { grid-template-columns: 1fr; gap: 30px; } .arch-art { order: -1; } }
+  .arch-art { display: grid; place-items: center; }
+  .arch-art img { width: 100%; max-width: 320px; height: auto; display: block; }
+  .arch-points { display: flex; flex-direction: column; gap: 26px; }
+  .arch-point h4 { font-family: var(--sans); font-size: 18px; font-weight: 600; letter-spacing: -.015em; }
+  .arch-point p { font-family: var(--sans); font-size: 16px; color: var(--muted); margin-top: 8px; line-height: 1.55; }
+  .arch-point code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--soft);
+    border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+
+  /* how it works — editorial numbered rows */
+  .steps { border-top: 1px solid var(--line); margin-top: 44px; }
+  .step { display: grid; grid-template-columns: 60px 1fr 1.3fr; gap: 24px; align-items: baseline; padding: 30px 0; border-bottom: 1px solid var(--line); }
+  @media (max-width: 720px) { .step { grid-template-columns: 40px 1fr; } .step .step-d { grid-column: 2; } }
+  .step .num { font-family: var(--sans); font-size: 20px; color: var(--muted); }
+  .step .step-t { font-family: var(--sans); font-size: clamp(19px, 2.3vw, 26px); letter-spacing: -.02em; font-weight: 600; }
+  .step .step-d { font-family: var(--sans); font-size: 17px; color: var(--muted); line-height: 1.5; }
+
+  /* design systems */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 36px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 460px) { .grid { grid-template-columns: 1fr; } }
+  .sys { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; }
+  .sys .canvas { padding: 20px 20px 8px; display: grid; place-items: center; }
+  .sys .canvas svg { width: 100%; max-width: 200px; height: auto; }
+  .sys .meta { padding: 13px 16px 17px; border-top: 1px solid var(--line); }
+  .sys .name { font-family: var(--sans); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .sys .name .swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .sys .desc { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 5px; }
+
+  /* figma import */
+  /* performance & security — centered intro + 3 clean columns with dividers */
+  .trust-clean { text-align: center; }
+  .trust-intro { max-width: 720px; margin: 0 auto; }
+  .trust-top-ic { display: inline-grid; place-items: center; color: var(--fg); margin-bottom: 22px; }
+  .trust-top-ic svg { width: 46px; height: 46px; }
+  .trust-clean h2 { font-family: var(--sans); font-weight: 500; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.08; letter-spacing: -.02em; }
+  .trust-lead { font-family: var(--sans); font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); line-height: 1.55; margin: 18px auto 0; max-width: 62ch; }
+  .trust-cols { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 66px; text-align: left; }
+  .trust-cols .tc { padding: 2px 46px; border-left: 1px solid var(--divider); }
+  .trust-cols .tc:first-child { border-left: 0; padding-left: 0; }
+  .trust-cols .tc:last-child { padding-right: 0; }
+  .tc-ic { display: block; color: var(--muted); margin-bottom: 46px; }
+  .tc-ic svg { width: 26px; height: 26px; }
+  .trust-cols h4 { font-family: var(--sans); font-size: 20px; font-weight: 600; letter-spacing: -.02em; color: var(--fg); }
+  .trust-cols p { font-family: var(--sans); font-size: 15px; color: var(--muted); line-height: 1.6; margin-top: 14px; }
+  @media (max-width: 820px) { .trust-cols { grid-template-columns: 1fr; gap: 42px; margin-top: 44px; } .trust-cols .tc { border-left: 0; padding: 0; } .tc-ic { margin-bottom: 18px; } }
+  /* 4-column variant (What you get) */
+  .trust-cols.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .trust-cols.cols-4 .tc { padding: 2px 32px; }
+  @media (min-width: 821px) and (max-width: 1080px) { .trust-cols.cols-4 .tc { padding: 2px 24px; } }
+  @media (max-width: 820px) {
+    .trust-cols.cols-4 { grid-template-columns: 1fr 1fr; row-gap: 44px; }
+    .trust-cols.cols-4 .tc { border-left: 1px solid var(--divider); padding: 0 26px; }
+    .trust-cols.cols-4 .tc:nth-child(2n+1) { border-left: 0; padding-left: 0; }
+  }
+  @media (max-width: 540px) { .trust-cols.cols-4 { grid-template-columns: 1fr; } .trust-cols.cols-4 .tc { border-left: 0; padding: 0; } }
+
+  /* get-started band before the footer */
+  .get-band { background: var(--soft); border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
+  .get-started { text-align: center; padding: clamp(72px, 11vw, 128px) 0; }
+  .get-started h2 { font-family: var(--sans); font-weight: 600; font-size: clamp(30px, 4.4vw, 50px); line-height: 1.05; letter-spacing: -.03em; color: var(--fg); }
+  .get-started p { font-family: var(--sans); font-size: clamp(15px, 1.6vw, 18px); color: var(--muted); margin: 16px auto 0; max-width: 46ch; }
+  .get-started .he-cta { justify-content: center; margin-top: 30px; }
+
+  .figma-row { display: grid; grid-template-columns: 280px 1fr; gap: 56px; align-items: center; }
+  @media (max-width: 820px) { .figma-row { grid-template-columns: 1fr; gap: 22px; } .figma-art { order: -1; } }
+  .figma-art { display: grid; place-items: center; }
+  .figma-art img { width: 100%; max-width: 210px; height: auto; display: block; }
+
+  /* bring your own agent */
+  .byo { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; margin-top: 48px; }
+  @media (max-width: 820px) { .byo { grid-template-columns: 1fr; gap: 24px; } }
+  .byo p { font-family: var(--sans); font-size: 17px; color: var(--muted); line-height: 1.55; }
+  .byo p + p { margin-top: 12px; }
+  .code { border-radius: var(--radius); overflow: hidden; background: #17160f; box-shadow: 0 34px 70px -46px hsl(240 30% 20% / .38); }
+  .code .bar { display: flex; align-items: center; gap: 7px; padding: 12px 16px; border-bottom: 1px solid hsl(0 0% 100% / .08); }
+  .code .bar i { width: 10px; height: 10px; border-radius: 50%; background: hsl(0 0% 100% / .16); }
+  .code .bar .fname { margin-left: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: hsl(0 0% 100% / .5); }
+  .code pre { margin: 0; padding: 18px 20px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.8; color: #e7e5dc; overflow-x: auto; }
+  .code .c { color: #8c8878; } .code .k { color: #8ab4ff; } .code .s { color: #a6d18a; }
+
+  /* idea + small illustration */
+  .idea { display: grid; grid-template-columns: 260px 1fr; gap: 56px; align-items: center; margin-top: 8px; }
+  @media (max-width: 820px) { .idea { grid-template-columns: 1fr; gap: 22px; } }
+  .idea-art { display: grid; place-items: center; }
+  .idea-art img { width: 100%; max-width: 220px; height: auto; display: block; }
+  .idea h3 { font-family: var(--sans); font-weight: 500; font-size: clamp(21px, 2.5vw, 28px); line-height: 1.1; letter-spacing: -.01em; }
+  .idea p { font-family: var(--sans); font-size: 16.5px; color: var(--muted); margin-top: 16px; max-width: 48ch; }
+
+  /* performance & security */
+  .trust-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 40px; }
+  @media (max-width: 820px) { .trust-grid { grid-template-columns: 1fr; gap: 18px; } }
+  .trust-col { border: 1px solid var(--divider); border-radius: 18px; padding: 24px 26px 26px; background: var(--soft); }
+  .trust-art { display: block; width: 100%; height: 128px; border-radius: 12px; margin: 2px 0 20px; object-fit: contain;
+     padding: 16px; background: #fff; border: 1px solid var(--divider); }
+  .trust-head { display: flex; align-items: center; gap: 14px; }
+  .trust-head .tic { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; display: grid; place-items: center;
+     background: var(--accent-soft); color: var(--accent); }
+  .trust-head .tic svg { width: 22px; height: 22px; }
+  .trust-col h4 { font-family: var(--sans); font-size: 18px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+  .trust-sub { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 2px; display: block; }
+  .trust-col ul { list-style: none; margin-top: 22px; display: flex; flex-direction: column; gap: 13px; }
+  .trust-col li { font-family: var(--sans); font-size: 14.5px; color: var(--muted); line-height: 1.5; padding-left: 28px; position: relative; }
+  .trust-col li::before { content: ""; position: absolute; left: 0; top: 3px; width: 17px; height: 17px; border-radius: 50%;
+     background-repeat: no-repeat; background-position: center; background-size: 11px;
+     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6 9 17l-5-5'/></svg>");
+     background-color: var(--accent); }
+  .trust-col li b { color: var(--fg); font-weight: 600; }
+  .trust-col code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+  .trust-note { font-family: var(--sans); font-size: 15px; color: var(--muted); margin-top: 26px; padding: 16px 20px;
+     background: var(--soft); border: 1px solid var(--divider); border-radius: 12px; max-width: none; line-height: 1.55; }
+
+  /* closing */
+  .closing { text-align: center; padding: 78px 0; border-top: 1px solid var(--divider); }
+  .closing h2 { font-family: var(--sans); font-weight: 500; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.05; letter-spacing: -.01em; }
+  .closing p { font-family: var(--sans); font-size: 17px; color: var(--muted); margin: 18px auto 30px; max-width: 46ch; }
+
+  /* footer */
+  footer { border-top: 1px solid var(--line); }
+  .foot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; height: 78px; }
+  .foot .logo { height: 18px; opacity: .7; }
+  .foot .sp { flex: 1; }
+  .foot small { font-size: 13px; color: var(--muted); }
+  .foot a { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+  .foot a:hover { color: var(--fg); }
+  .foot a svg { width: 15px; height: 15px; }
+
+  /* ===== live interactive demo — the REAL product chat, iframed in demo mode, on a painted canvas ===== */
+  /* demo: the painting frame aligns with the hero; a slightly smaller UI floats inside a taller frame */
+  .demo-live { padding: 40px; margin-top: 8px; border-radius: 22px; background: url("demo-bg.jpg") center/cover; }
+  .dl-embed { display: block; width: 100%; max-width: 1120px; height: 820px; margin: 0 auto; border: 1px solid rgba(0,0,0,.08);
+     border-radius: 16px; box-shadow: 0 34px 80px rgba(20,24,32,.34); background: #fff; }
+  @media (max-width: 640px) { .demo-live { padding: 14px 8px; } .dl-embed { height: 580px; } }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="landing.html"><img class="logo" src="logo.svg" alt="" /><span class="brandname">Catalystic UI</span></a>
+      <span class="sp"></span>
+      <a class="link" href="docs.html">Documentation</a>
+      <a class="nav-ic" href="https://github.com/devadhathanmd18/catalystic-ui" target="_blank" rel="noopener" title="View source on GitHub" aria-label="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.79 23.4c.6.11.82-.26.82-.58v-2c-3.34.72-4.04-1.6-4.04-1.6-.55-1.4-1.34-1.77-1.34-1.77-1.1-.75.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.34-5.47-5.96 0-1.32.47-2.39 1.24-3.23-.13-.3-.54-1.53.11-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.65 1.65.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.23 0 4.63-2.8 5.65-5.48 5.95.43.37.81 1.1.81 2.22v3.29c0 .32.22.7.82.58A12 12 0 0 0 12 .5Z"/></svg>
+      </a>
+      <a class="btn solid" href="index.html">Try it</a>
+    </div>
+  </header>
+
+  <!-- ================= HERO (Anthropic Research style) ================= -->
+  <div class="wrap">
+    <section class="hero">
+      <div class="he-lead">
+        <span class="he-kicker">Live demo · the rendering layer for AI agents</span>
+        <h1 class="he-title">Interfaces from intent.</h1>
+        <p class="he-sub">An agent emits a schema — we render it as real, on-brand interactive UI.</p>
+        <div class="he-cta">
+          <a class="btn solid pill lg" href="index.html">Try it
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-left:3px"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= LIVE INTERACTIVE DEMO (real product chat, in an isolated iframe) ================= -->
+  <div class="wrap">
+    <section class="demo-live">
+      <iframe class="dl-embed" src="index.html?demo" title="Catalystic UI live demo" loading="lazy"></iframe>
+    </section>
+  </div>
+
+  <!-- ================= WHAT YOU GET (centered intro + 4 clean columns) ================= -->
+  <div class="wrap">
+    <section class="block trust-clean" id="features">
+      <div class="trust-intro">
+        <span class="trust-top-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.2L19 10l-5.1 1.8L12 17l-1.9-5.2L5 10l5.1-1.8z"/><path d="M19 14l.7 1.9L21.6 16.6l-1.9.7L19 19l-.7-1.9L16.4 16.6l1.9-.7z"/></svg></span>
+        <h2>One prompt, a real screen.</h2>
+        <p class="trust-lead">Describe what you need and Catalystic UI renders it as interactive UI — in your design system, from a schema your agent can trust.</p>
+      </div>
+      <div class="trust-cols cols-4">
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.2L19 10l-5.1 1.8L12 17l-1.9-5.2L5 10l5.1-1.8z"/></svg></span>
+          <h4>Prompt in, UI out</h4>
+          <p>Generate any screen from a single prompt — safely. Not quite right? Tweak it with another prompt; every UI stays flexible.</p>
+        </div>
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+          <h4>Your design system</h4>
+          <p>The same component tree re-renders in shadcn, Polaris, Material, and Carbon — swap systems with a single click.</p>
+        </div>
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></span>
+          <h4>Interactive &amp; recorded</h4>
+          <p>Generated components are real controls. Every tap in the agent workflow is recorded and flows back to the agent.</p>
+        </div>
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"/></svg></span>
+          <h4>Schema, not markup</h4>
+          <p>Your agent emits a JSON component schema, never raw HTML — only known components render, nothing executable.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= IMPORT FROM FIGMA ================= -->
+  <div class="wrap">
+    <section class="block" id="figma">
+      <div class="figma-row">
+        <div class="figma-art"><img src="figma-art.svg" alt="Import a design system from Figma" loading="lazy" /></div>
+        <div class="head" style="margin:0">
+          <span class="kicker">Import from Figma</span>
+          <h2>Bring your own design system.</h2>
+          <p>Point Catalystic UI at your Figma file and it extracts your components, variants, and tokens into a catalog — then every generated screen renders in your brand, not a generic theme.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= PERFORMANCE & SECURITY (centered intro + 3 clean columns) ================= -->
+  <div class="wrap">
+    <section class="block trust-clean" id="trust">
+      <div class="trust-intro">
+        <span class="trust-top-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></svg></span>
+        <h2>Fast to render. Safe by construction.</h2>
+        <p class="trust-lead">Generated UI is only useful if it's quick and can't be turned against you. Both are built into how Catalystic UI renders — from the first token to the last tap.</p>
+      </div>
+      <div class="trust-cols">
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></span>
+          <h4>Fast by design</h4>
+          <p>Screens stream in behind a skeleton and render in ~3–4s. Identical requests hit a cache — 0 tokens, no model call. Edits are tiny JSON patches, never a full re‑generation.</p>
+        </div>
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9.5 12l1.8 1.8 3.5-3.6"/></svg></span>
+          <h4>Safe against prompt injection</h4>
+          <p>The model returns a component tree, never executable code. Only components from a fixed catalog render, and text is inserted as text — an injected script simply can't fire.</p>
+        </div>
+        <div class="tc">
+          <span class="tc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <h4>Hardened end‑to‑end</h4>
+          <p>Sessions are auth‑gated, generation credits are metered server‑side, API keys are hashed, and the bring‑your‑own‑agent proxy is SSRF‑guarded against internal addresses.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= GET STARTED (band before the footer) ================= -->
+  <div class="get-band">
+    <div class="wrap">
+      <section class="get-started">
+        <h2>Turn intent into interfaces.</h2>
+        <p>Spin up an agent and watch it render real, on-brand screens — in your design system, today.</p>
+        <div class="he-cta">
+          <a class="btn solid pill lg" href="index.html">Try it
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;margin-left:3px"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap foot">
+      <img class="logo" src="logo.svg" alt="Catalystic UI" />
+      <span class="sp"></span>
+      <a href="https://github.com/devadhathan/catalyst" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+        GitHub</a>
+      <small>© 2026 Catalystic UI</small>
+    </div>
+  </footer>
+</body>
+</html>

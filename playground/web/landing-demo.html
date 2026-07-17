@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Catalystic UI — live demo</title>
+<!-- the SAME component styles + vars the product renders with -->
+<link rel="stylesheet" href="catalyst-embed.css" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; color: var(--foreground);
+    display: flex; flex-direction: column; background: var(--background); }
+  /* the chat/preview area — the painting is its backdrop, the generated screen floats on top */
+  #screen { flex: 1; min-height: 0; overflow-y: auto; padding: 26px 22px; display: flex; flex-direction: column; gap: 12px;
+    background: linear-gradient(rgba(255,255,255,.66), rgba(255,255,255,.78)), url("demo-bg.jpg") center/cover fixed; }
+  html.dark #screen { background: linear-gradient(rgba(10,12,15,.72), rgba(10,12,15,.82)), url("demo-bg.jpg") center/cover fixed; }
+  .bubble { align-self: flex-end; max-width: 78%; background: var(--primary); color: var(--primary-foreground);
+    padding: 9px 13px; border-radius: 14px 14px 4px 14px; font-size: 13.5px; line-height: 1.4; box-shadow: 0 2px 8px rgba(20,24,32,.12); }
+  .bot { align-self: flex-start; max-width: 82%; background: var(--card); color: var(--foreground); border: 1px solid var(--border);
+    padding: 9px 13px; border-radius: 14px 14px 14px 4px; font-size: 13.5px; line-height: 1.4; box-shadow: 0 2px 10px rgba(20,24,32,.08); }
+  .think { display: inline-flex; gap: 4px; align-items: center; }
+  .think i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted-foreground); animation: th 1s infinite; }
+  .think i:nth-child(2) { animation-delay: .15s; } .think i:nth-child(3) { animation-delay: .3s; }
+  @keyframes th { 0%,100% { opacity: .3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
+  .surf { align-self: stretch; max-width: 460px; margin: 2px auto 4px; width: 100%;
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 8px 30px rgba(20,24,32,.14); }
+  .surf.rise { animation: rise .4s cubic-bezier(.22,.61,.36,1); }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  /* composer — matches the product's bottom bar */
+  .composer { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--background); padding: 12px 14px; }
+  .cbox { display: flex; align-items: flex-end; gap: 8px; border: 1px solid var(--input); border-radius: 16px; padding: 8px 8px 8px 14px;
+    background: var(--card); transition: border-color .12s, box-shadow .12s; }
+  .cbox:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+  .cbox textarea { flex: 1; border: 0; outline: none; resize: none; background: transparent; color: var(--foreground);
+    font: inherit; font-size: 14px; line-height: 1.4; max-height: 90px; }
+  .send { flex: 0 0 auto; width: 34px; height: 34px; border: 0; border-radius: 10px; background: var(--primary); color: var(--primary-foreground);
+    cursor: pointer; display: grid; place-items: center; transition: opacity .12s; }
+  .send:hover { opacity: .9; } .send:disabled { opacity: .5; cursor: default; }
+  .send svg { width: 17px; height: 17px; }
+  .hint { text-align: center; font-size: 11px; color: var(--muted-foreground); margin-top: 7px; }
+</style>
+</head>
+<body>
+  <div id="screen">
+    <div class="bot">Hi — I'm your booking agent. Tell me what you'd like to book, then hit send.</div>
+  </div>
+  <div class="composer">
+    <div class="cbox">
+      <textarea id="prompt" rows="1">Book a table at Bella Cucina for Friday night</textarea>
+      <button id="send" class="send" title="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+      </button>
+    </div>
+    <div class="hint">This is a live demo — edit the prompt and press send.</div>
+  </div>
+
+  <script>try { if (parent && parent.document.documentElement.classList.contains("dark")) document.documentElement.classList.add("dark"); } catch (e) {}</script>
+  <script>window.__CATALYST_LENIENT = true;</script>
+  <script src="renderer.js"></script>
+  <script>
+  (function () {
+    const screen = document.getElementById("screen"), input = document.getElementById("prompt"), send = document.getElementById("send");
+    // the tree the agent "produces" — real, interactive components (rendered by renderer.js, exactly like the product)
+    const TREE = [{ component: "Card", children: [
+      { component: "Text", text: "Book a table", variant: "title" },
+      { component: "Text", text: "Bella Cucina · Friday, 2 guests", variant: "muted" },
+      { component: "Row", gap: "sm", children: [
+        { component: "Button", label: "6:00", variant: "outline", size: "sm" },
+        { component: "Button", label: "7:30", variant: "default", size: "sm" },
+        { component: "Button", label: "9:00", variant: "outline", size: "sm" } ] },
+      { component: "Input", label: "Name on reservation", placeholder: "e.g. Alex Doe" },
+      { component: "Button", label: "Confirm booking", variant: "default" } ] }];
+    let busy = false;
+    function scrollDown() { screen.scrollTop = screen.scrollHeight; }
+    function run() {
+      if (busy) return; busy = true; send.disabled = true;
+      const text = (input.value || "").trim() || "Book a table at Bella Cucina for Friday night";
+      const u = document.createElement("div"); u.className = "bubble"; u.textContent = text; screen.appendChild(u); scrollDown();
+      const t = document.createElement("div"); t.className = "bot"; t.innerHTML = '<span class="think"><i></i><i></i><i></i></span>'; screen.appendChild(t); scrollDown();
+      setTimeout(function () {
+        t.textContent = "Here's your booking screen — pick a time and confirm.";
+        const surf = document.createElement("div"); surf.className = "surf rise"; screen.appendChild(surf);
+        try { window.renderA2UI(TREE, {}, surf); } catch (e) { surf.textContent = "render error"; }
+        scrollDown(); busy = false; send.disabled = false;
+      }, 950);
+    }
+    send.onclick = run;
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); run(); } });
+  })();
+  </script>
+</body>
+</html>

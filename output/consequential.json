@@ -1,0 +1,8 @@
+{
+  "catalogId": "urn:a2ui:catalog:meridian",
+  "consequential": [
+    "Button",
+    "AmountInput",
+    "ConfirmSheet"
+  ]
+}

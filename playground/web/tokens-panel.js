@@ -20,6 +20,42 @@
         "--border": "#e0e0e0", "--input": "#e0e0e0", "--radius": "0px" },
       css: `[data-skin=carbon] .ui-btn,[data-skin=carbon] .ui-card,[data-skin=carbon] .ui-input{border-radius:0}
             [data-skin=carbon] *{font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif}` },
+    // brand-flavoured systems — approximations of these products' look (colour, font, radius)
+    { id: "perplexity", name: "Perplexity", label: "Perplexity",
+      vars: { "--primary": "#20808d", "--primary-foreground": "#fff", "--background": "#fcfcfa",
+        "--card": "#ffffff", "--foreground": "#091717", "--muted": "#f0f3f3", "--muted-foreground": "#4a5a5a",
+        "--border": "#e2e7e7", "--input": "#e2e7e7", "--radius": "8px" },
+      css: `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+            [data-skin=perplexity] *{font-family:'Space Grotesk',ui-sans-serif,system-ui,sans-serif}
+            [data-skin=perplexity] .ui-btn{border-radius:8px;font-weight:500}
+            [data-skin=perplexity] .ui-card{border-radius:12px}` },
+    { id: "claude", name: "Claude", label: "Claude",
+      vars: { "--primary": "#c96442", "--primary-foreground": "#fff", "--background": "#faf9f5",
+        "--card": "#ffffff", "--foreground": "#141413", "--muted": "#f0eee6", "--muted-foreground": "#6b6a63",
+        "--border": "#e6e2d8", "--input": "#e6e2d8", "--radius": "10px" },
+      css: `@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600&family=Inter:wght@400;500;600&display=swap');
+            [data-skin=claude] *{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
+            [data-skin=claude] .ui-text.v-title,[data-skin=claude] .ui-text.v-subtitle{font-family:'Lora',Georgia,serif;letter-spacing:-.01em}
+            [data-skin=claude] .ui-btn{border-radius:9px;font-weight:500}
+            [data-skin=claude] .ui-card{border-radius:12px}` },
+    { id: "chatgpt", name: "ChatGPT", label: "ChatGPT",
+      vars: { "--primary": "#10a37f", "--primary-foreground": "#fff", "--background": "#ffffff",
+        "--card": "#ffffff", "--foreground": "#0d0d0d", "--muted": "#f7f7f8", "--muted-foreground": "#6e6e80",
+        "--border": "#e5e5e5", "--input": "#e5e5e5", "--radius": "14px" },
+      css: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+            [data-skin=chatgpt] *{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
+            [data-skin=chatgpt] .ui-btn{border-radius:999px;font-weight:500}
+            [data-skin=chatgpt] .ui-card{border-radius:16px}
+            [data-skin=chatgpt] .ui-input{border-radius:12px}` },
+    { id: "grok", name: "Grok", label: "Grok",
+      vars: { "--primary": "#111113", "--primary-foreground": "#fff", "--background": "#ffffff",
+        "--card": "#ffffff", "--foreground": "#0a0a0a", "--muted": "#f4f4f5", "--muted-foreground": "#5a5a5e",
+        "--border": "#e4e4e7", "--input": "#e4e4e7", "--radius": "4px" },
+      css: `@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+            [data-skin=grok] *{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
+            [data-skin=grok] .ui-text.v-title,[data-skin=grok] .ui-btn{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:-.02em}
+            [data-skin=grok] .ui-btn{border-radius:6px;font-weight:500}
+            [data-skin=grok] .ui-card{border-radius:6px}` },
   ];
   const VARKEYS = ["--primary","--primary-foreground","--background","--card","--foreground",
     "--muted","--muted-foreground","--border","--input","--radius"];
@@ -145,10 +181,13 @@
     if (sys.css && !document.getElementById("skin-css-" + sys.id)) {
       const st = document.createElement("style"); st.id = "skin-css-" + sys.id; st.textContent = sys.css; document.head.appendChild(st);
     }
-    const sel = document.getElementById("ds-select");
-    if (sel && !sel.querySelector('option[value="' + sys.id + '"]')) {
-      const o = document.createElement("option"); o.value = sys.id; o.textContent = sys.name + " (imported)"; sel.appendChild(o);
-    }
+    // add to every design-system picker: header (source of truth), chat-tools box, agent UI tab
+    ["ds-select", "ct-ds", "ap-ds"].forEach((sid) => {
+      const sel = document.getElementById(sid);
+      if (sel && !sel.querySelector('option[value="' + sys.id + '"]')) {
+        const o = document.createElement("option"); o.value = sys.id; o.textContent = sys.label || (sys.name + " (imported)"); sel.appendChild(o);
+      }
+    });
   }
   // consumed by index.html renderCurrent(): apply / clear the imported skin on a surface.
   window.__skins = {
@@ -176,6 +215,7 @@
     document.getElementById("ag-from").innerHTML = fromRows.map(([n, v]) => tok(n, v)).join("") || '<div class="ag-empty">—</div>';
     document.getElementById("ag-to").innerHTML = Object.entries(vars).map(([k, v]) => tok(k, v)).join("") || '<div class="ag-empty">—</div>';
     pending = { vars };
+    const res = document.getElementById("ag-result"); if (res) res.hidden = false;   // reveal preview + save once there's a result
     document.getElementById("ag-save").disabled = !Object.keys(vars).length;
   }
   function ingest(json) {
@@ -216,7 +256,11 @@
     #tab-agent .ag-divider::before,#tab-agent .ag-divider::after{content:"";flex:1;height:1px;background:var(--border)}
     #tab-agent .ag-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     #tab-agent h5{margin:2px 0 6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-foreground)}
-    #tab-agent .box{border:1px solid var(--border);border-radius:10px;padding:8px 10px;height:158px;overflow:auto;background:var(--card)}
+    #tab-agent .box{border:1px solid var(--border);border-radius:10px;padding:8px 10px;height:116px;overflow:auto;background:var(--card)}
+    #tab-agent .ag-link{background:none;border:0;color:var(--muted-foreground);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;align-self:flex-start;padding:0}
+    #tab-agent .ag-link:hover{color:var(--foreground)}
+    #tab-agent [hidden]{display:none}
+    #tab-agent #ag-result{display:flex;flex-direction:column;gap:10px;margin-top:2px}
     .ag-tok{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:11.5px}
     .ag-tok .sw{width:13px;height:13px;border-radius:4px;border:1px solid rgba(0,0,0,.12);flex:none}
     .ag-tok .nm{color:var(--muted-foreground);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -237,20 +281,29 @@
         <div class="ag-row"><input id="ag-url" placeholder="Paste a Figma file link…"/><button class="go primary" id="ag-import">Import</button></div>
         <input type="file" id="ag-file" accept=".json,application/json" style="display:none"/>
         <button class="go outline wide" id="ag-file-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>Upload a design-tokens JSON file</button>
-        <div class="ag-divider">or paste JSON</div>
-        <textarea id="ag-paste" placeholder="Figma Variables · W3C DTCG · Tokens-Studio JSON"></textarea>
-        <button class="go outline wide" id="ag-convert">Convert pasted JSON</button>
-        <div id="ag-status">Paste, upload, or link a Figma file — the agent converts the tokens to renderer variables.</div>
-        <div class="ag-cols">
-          <div><h5>Tokens you had</h5><div class="box" id="ag-from"><div class="ag-empty">—</div></div></div>
-          <div><h5>Converted → renderer</h5><div class="box" id="ag-to"><div class="ag-empty">—</div></div></div>
+        <button class="ag-link" id="ag-paste-toggle">or paste tokens JSON</button>
+        <div id="ag-paste-wrap" hidden>
+          <textarea id="ag-paste" placeholder="Figma Variables · W3C DTCG · Tokens-Studio JSON"></textarea>
+          <button class="go outline wide" id="ag-convert" style="margin-top:8px">Convert pasted JSON</button>
         </div>
-        <div class="ag-save-row">
-          <input id="ag-name" placeholder="Name this design system (e.g. Acme)"/>
-          <button id="ag-save" disabled>Save to dropdown</button>
+        <div id="ag-status">Link, upload, or paste a Figma / tokens file — the agent converts it to a design system.</div>
+        <div id="ag-result" hidden>
+          <div class="ag-cols">
+            <div><h5>Tokens you had</h5><div class="box" id="ag-from"><div class="ag-empty">—</div></div></div>
+            <div><h5>Converted → renderer</h5><div class="box" id="ag-to"><div class="ag-empty">—</div></div></div>
+          </div>
+          <div class="ag-save-row">
+            <input id="ag-name" placeholder="Name this design system (e.g. Acme)"/>
+            <button id="ag-save" disabled>Save to dropdown</button>
+          </div>
         </div>
-        <div class="ag-hint">A Figma link needs a FIGMA_TOKEN on the server. No token? Upload or paste the tokens JSON — that always works. Saved systems appear in the design-system dropdown.</div>
+        <div class="ag-hint">A Figma link needs a FIGMA_TOKEN on the server. No token? Upload or paste the tokens JSON — that always works.</div>
       </div>`;
+    document.getElementById("ag-paste-toggle").onclick = () => {
+      const w = document.getElementById("ag-paste-wrap"), t = document.getElementById("ag-paste-toggle");
+      const show = w.hidden; w.hidden = !show; t.hidden = show;
+      if (show) document.getElementById("ag-paste").focus();
+    };
     document.getElementById("ag-convert").onclick = () => ingest(document.getElementById("ag-paste").value);
     // upload a JSON file → read it, preview it, convert it
     const fileInput = document.getElementById("ag-file");

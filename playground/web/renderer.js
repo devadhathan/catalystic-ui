@@ -6,8 +6,47 @@
 // a change re-paints the tree instantly (no API call).
 let RS = { list: [], byId: {}, mount: null, state: {} };
 
+// STRICT by default: the renderer assumes verified input and renders literally. LENIENT is
+// turned ON only in the playground (which composes exploratory, unverified surfaces). It gates
+// the salvage behaviors — TVAR variant remapping, strChild fallback, and the ui-unknown default
+// path via the verifier below. See window.setRendererLenient / window.__CATALYST_LENIENT.
+let LENIENT = (typeof window !== "undefined" && window.__CATALYST_LENIENT === true) || false;
+
+// Verification gate. When a catalog is present (window.__catalog) and verify.js is loaded, every
+// surface is checked against the catalog before it renders. Non-consequential failures are repaired
+// (lenient) or fatal (strict); consequential failures are always rejected — never coerced.
+function verifyGate(list, mount) {
+  const w = (typeof window !== "undefined") ? window : {};
+  const catalog = w.__catalog;
+  if (!catalog || typeof w.verifySurface !== "function") return { list };  // no catalog -> no-op (back-compat)
+  const res = w.verifySurface(list, catalog, { lenient: LENIENT });
+  res.results.forEach((r) => {
+    if (r.action !== "keep") console.warn("[catalyst.verify] " + r.component + " -> " + r.action + ": " + (r.errors || []).join("; "));
+  });
+  if (!LENIENT) {
+    if (!res.ok) { mount.innerHTML = ""; mount.appendChild(renderVerifyError(res)); return { halt: true }; }
+    return { list };                 // strict + verified: render literally
+  }
+  return { list: res.repaired };     // lenient: repaired tree (bad non-consequential fixed; consequential -> inline Alert)
+}
+function renderVerifyError(res) {
+  const box = el("div", "ui-verify-error");
+  box.style.cssText = "border:1px solid hsl(0 72% 55% / .4);background:hsl(0 72% 55% / .06);color:hsl(0 60% 40%);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.5";
+  const h = el("div", null, "This screen was blocked by catalog verification");
+  h.style.cssText = "font-weight:600;margin-bottom:6px";
+  box.appendChild(h);
+  const ul = el("ul"); ul.style.cssText = "margin:0;padding-left:18px";
+  const rows = res.rejected.length ? res.rejected : res.results.filter((r) => r.action !== "keep");
+  rows.forEach((r) => ul.appendChild(el("li", null, (r.component || "?") + " — " + ((r.errors || []).join("; ") || "invalid"))));
+  box.appendChild(ul);
+  return box;
+}
+
 function renderA2UI(components, _data, mount) {
-  const list = Array.isArray(components) ? components : [components];
+  let list = Array.isArray(components) ? components : [components];
+  const gate = verifyGate(list, mount);
+  if (gate.halt) return;             // strict + invalid: a clear error was painted instead
+  list = gate.list;
   const byId = {};
   list.forEach((c) => c && c.id && (byId[c.id] = c));
   RS = { list, byId, mount, state: buildState(list) };
@@ -93,9 +132,13 @@ function iconSvg(name) {
 }
 
 // Text variant aliases the model sometimes uses, mapped to our real variants.
-const TVAR = { headline: "title", heading: "title", h1: "title", h2: "subtitle", h3: "subtitle", caption: "muted", small: "muted" };
+// LENIENT-only: wrapped in a Proxy so that in strict mode the lookup returns undefined and the
+// renderer falls through to the literal variant it was given (no silent remapping).
+const _TVAR = { headline: "title", heading: "title", h1: "title", h2: "subtitle", h3: "subtitle", caption: "muted", small: "muted" };
+const TVAR = new Proxy(_TVAR, { get: (t, k) => (LENIENT ? t[k] : undefined) });
 // Some models put the text content in `children` as a string instead of the text/label prop.
-const strChild = (c) => (typeof c.children === "string" ? c.children : "");
+// LENIENT-only: strict mode assumes verified input and does not salvage misplaced text.
+const strChild = (c) => (LENIENT && typeof c.children === "string" ? c.children : "");
 
 function node(c, byId) {
   if (!c || typeof c !== "object") return document.createComment("empty");
@@ -309,8 +352,12 @@ function node(c, byId) {
 
     /* ---- charts ---- */
     case "BarChart": return barChart(c);
+    case "HBar": case "HorizontalBar": return hbarChart(c);
     case "LineChart": return lineChart(c);
+    case "AreaChart": return lineChart(Object.assign({}, c, { area: true }));
     case "Donut": case "PieChart": return donut(c);
+    case "Gauge": case "Radial": return gauge(c);
+    case "Sparkline": return sparkline(c);
 
     default: return el("div", "ui-unknown", c.component || "unknown");
   }
@@ -318,6 +365,33 @@ function node(c, byId) {
 
 /* ================= charts ================= */
 const PALETTE = ["#4f8df6", "#3fb27f", "#e5a13a", "#5cb85c", "#ef4444", "#06b6d4", "#a855f7"];
+
+// ---- interactive hover tooltip shared by every chart ----
+function chartTip() {
+  let t = document.getElementById("ui-chart-tip");
+  if (!t) {
+    t = document.createElement("div"); t.id = "ui-chart-tip";
+    t.style.cssText = "position:fixed;z-index:9999;pointer-events:none;opacity:0;transition:opacity .08s;" +
+      "background:#1b2129;color:#fff;font:500 12px/1.4 var(--sans,system-ui,sans-serif);padding:6px 9px;" +
+      "border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.22);white-space:nowrap;transform:translate(-50%,-124%)";
+    document.body.appendChild(t);
+  }
+  return t;
+}
+function tipShow(html, x, y) { const t = chartTip(); t.innerHTML = html; t.style.left = x + "px"; t.style.top = y + "px"; t.style.opacity = "1"; }
+function tipHide() { const t = document.getElementById("ui-chart-tip"); if (t) t.style.opacity = "0"; }
+// wire hover on an SVG element: floating tooltip + optional highlight/restore
+function bindTip(elm, htmlFn, onIn, onOut) {
+  elm.style.cursor = "pointer";
+  elm.addEventListener("mousemove", (e) => tipShow(htmlFn(), e.clientX, e.clientY));
+  elm.addEventListener("mouseenter", (e) => { if (onIn) onIn(); tipShow(htmlFn(), e.clientX, e.clientY); });
+  elm.addEventListener("mouseleave", () => { if (onOut) onOut(); tipHide(); });
+}
+function tipRow(name, label, valueStr, color) {
+  return (color ? '<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:' + color + ';margin-right:6px"></span>' : "") +
+    (label != null && label !== "" ? '<span style="opacity:.7">' + label + '</span>  ' : "") +
+    (name ? '<b>' + name + '</b>: ' : "") + '<b>' + valueStr + '</b>';
+}
 
 function fmt(kind) {
   if (kind === "currency") return (v) => "$" + (Math.round(v * 100) / 100).toLocaleString();
@@ -394,9 +468,11 @@ function barChart(c) {
     for (let i = 0; i < n; i++) {
       const f = fmt(c.format);
       const bar = (attrs, se, val) => {
-        const r = svgEl("rect", attrs); r.style.cursor = "pointer";
-        const t = svgEl("title"); t.textContent = (se.name ? se.name + " · " : "") + (labels[i] ?? "") + ": " + f(val);
-        r.appendChild(t); svg.appendChild(r);
+        const r = svgEl("rect", attrs);
+        const color = attrs.fill;
+        bindTip(r, () => tipRow(se.name, labels[i] ?? "", f(val), color),
+          () => r.setAttribute("opacity", "0.82"), () => r.removeAttribute("opacity"));
+        svg.appendChild(r);
       };
       if (stacked) {
         let acc = 0;
@@ -430,11 +506,29 @@ function lineChart(c) {
     const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg" });
     const top = axes(svg, W, H, padL, padT, plotW, plotH, maxV || 1, c.format);
     const step = plotW / Math.max(1, n - 1);
+    const f = fmt(c.format);
+    const baseY = padT + plotH;
     series.forEach((se, si) => {
       const color = se.color || PALETTE[si % PALETTE.length];
-      const pts = se.data.map((v, i) => `${padL + i * step},${padT + plotH - (+v || 0) / top * plotH}`);
-      svg.appendChild(svgEl("polyline", { points: pts.join(" "), fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" }));
-      pts.forEach((p) => { const [x, y] = p.split(","); svg.appendChild(svgEl("circle", { cx: x, cy: y, r: 3, fill: "var(--card,#fff)", stroke: color, "stroke-width": 2 })); });
+      const xy = se.data.map((v, i) => [padL + i * step, padT + plotH - (+v || 0) / top * plotH]);
+      const pts = xy.map((p) => p.join(",")).join(" ");
+      // AreaChart: soft gradient fill under the line
+      if (c.area && xy.length) {
+        const gid = "ag" + Math.random().toString(36).slice(2);
+        const defs = svgEl("defs", {}); const grad = svgEl("linearGradient", { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 });
+        grad.appendChild(svgEl("stop", { offset: "0%", "stop-color": color, "stop-opacity": 0.28 }));
+        grad.appendChild(svgEl("stop", { offset: "100%", "stop-color": color, "stop-opacity": 0.02 }));
+        defs.appendChild(grad); svg.appendChild(defs);
+        const area = pts + " " + xy[xy.length - 1][0] + "," + baseY + " " + xy[0][0] + "," + baseY;
+        svg.appendChild(svgEl("polygon", { points: area, fill: "url(#" + gid + ")", stroke: "none" }));
+      }
+      svg.appendChild(svgEl("polyline", { points: pts, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" }));
+      xy.forEach(([x, y], i) => {
+        const dot = svgEl("circle", { cx: x, cy: y, r: 3, fill: "var(--card,#fff)", stroke: color, "stroke-width": 2 });
+        bindTip(dot, () => tipRow(se.name, labels[i] ?? "", f(+se.data[i] || 0), color),
+          () => dot.setAttribute("r", "5.5"), () => dot.setAttribute("r", "3"));
+        svg.appendChild(dot);
+      });
     });
     labels.forEach((l, i) => {
       const lab = svgEl("text", { x: padL + i * step, y: H - 8, "text-anchor": "middle", class: "chart-lbl" });
@@ -449,13 +543,18 @@ function donut(c) {
     const size = 170, r = 58, cx = size / 2, cy = size / 2, C = 2 * Math.PI * r;
     const total = data.reduce((s, d) => s + (+d.value || 0), 0) || 1;
     const svg = svgEl("svg", { viewBox: `0 0 ${size} ${size}`, class: "chart-svg chart-donut" });
+    const f = fmt(c.format);
     let off = 0;
     data.forEach((d, i) => {
       const frac = (+d.value || 0) / total;
-      svg.appendChild(svgEl("circle", {
-        cx, cy, r, fill: "none", stroke: PALETTE[i % PALETTE.length], "stroke-width": 20,
+      const color = d.color || PALETTE[i % PALETTE.length];
+      const seg = svgEl("circle", {
+        cx, cy, r, fill: "none", stroke: color, "stroke-width": 20,
         "stroke-dasharray": `${frac * C} ${C}`, "stroke-dashoffset": -off * C, transform: `rotate(-90 ${cx} ${cy})`,
-      }));
+      });
+      bindTip(seg, () => tipRow(d.label || "", "", f(+d.value || 0) + " · " + Math.round(frac * 100) + "%", color),
+        () => seg.setAttribute("stroke-width", "24"), () => seg.setAttribute("stroke-width", "20"));
+      svg.appendChild(seg);
       off += frac;
     });
     if (c.center) {
@@ -467,6 +566,58 @@ function donut(c) {
   });
 }
 
+function hbarChart(c) {
+  return chartFrame(c, () => {
+    const { labels, series } = normalize(c);
+    const se = series[0] || { data: [] }, data = se.data;
+    const n = Math.max(labels.length, data.length, 1);
+    const W = 560, rowH = 34, padL = 116, padR = 54, padT = 6, H = padT * 2 + n * rowH;
+    const maxV = Math.max(1, ...data.map((v) => +v || 0)), plotW = W - padL - padR;
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg" });
+    const f = fmt(c.format);
+    for (let i = 0; i < n; i++) {
+      const val = +data[i] || 0, w = (val / maxV) * plotW, y = padT + i * rowH + 4, bh = rowH - 14;
+      const lab = svgEl("text", { x: padL - 12, y: y + bh / 2 + 4, "text-anchor": "end", class: "chart-lbl" });
+      lab.textContent = labels[i] ?? ""; svg.appendChild(lab);
+      svg.appendChild(svgEl("rect", { x: padL, y, width: plotW, height: bh, rx: 5, fill: "var(--muted,#eee)", opacity: 0.5 }));
+      const color = se.color || PALETTE[i % PALETTE.length];
+      const bar = svgEl("rect", { x: padL, y, width: Math.max(2, w), height: bh, rx: 5, fill: color });
+      bindTip(bar, () => tipRow("", labels[i] ?? "", f(val), color), () => bar.setAttribute("opacity", "0.82"), () => bar.removeAttribute("opacity"));
+      svg.appendChild(bar);
+      const vt = svgEl("text", { x: padL + w + 8, y: y + bh / 2 + 4, class: "chart-tick" }); vt.textContent = f(val); svg.appendChild(vt);
+    }
+    return { svg, series: [] };
+  });
+}
+function gauge(c) {
+  return chartFrame(c, () => {
+    const val = +bindVal(c.value) || 0, max = +c.max || 100, frac = Math.max(0, Math.min(1, max ? val / max : 0));
+    const size = 180, r = 64, cx = size / 2, cy = size / 2, C = 2 * Math.PI * r, color = c.color || PALETTE[0];
+    const svg = svgEl("svg", { viewBox: `0 0 ${size} ${size}`, class: "chart-svg chart-donut" });
+    svg.appendChild(svgEl("circle", { cx, cy, r, fill: "none", stroke: "var(--muted,#eee)", "stroke-width": 16, opacity: 0.5 }));
+    const ring = svgEl("circle", { cx, cy, r, fill: "none", stroke: color, "stroke-width": 16, "stroke-linecap": "round",
+      "stroke-dasharray": `${frac * C} ${C}`, transform: `rotate(-90 ${cx} ${cy})` });
+    bindTip(ring, () => tipRow(c.label || "", "", fmt(c.format)(val) + " / " + max),
+      () => ring.setAttribute("stroke-width", "19"), () => ring.setAttribute("stroke-width", "16"));
+    svg.appendChild(ring);
+    const t = svgEl("text", { x: cx, y: cy + 2, "text-anchor": "middle", class: "chart-center" });
+    t.textContent = (c.centerLabel != null ? c.centerLabel : Math.round(frac * 100) + "%"); svg.appendChild(t);
+    if (c.label) { const s = svgEl("text", { x: cx, y: cy + 24, "text-anchor": "middle", class: "chart-lbl" }); s.textContent = c.label; svg.appendChild(s); }
+    return { svg, series: [] };
+  });
+}
+function sparkline(c) {
+  const wrap = el("div", "ui-chart");
+  const data = (bindVal(c.data) || c.values || []).map((v) => +bindVal(v && v.value != null ? v.value : v) || 0);
+  const W = 160, H = 40, pad = 3, color = c.color || PALETTE[0];
+  const max = Math.max(1, ...data), min = Math.min(0, ...data), rng = (max - min) || 1;
+  const step = (W - pad * 2) / Math.max(1, data.length - 1);
+  const pts = data.map((v, i) => `${pad + i * step},${H - pad - ((v - min) / rng) * (H - pad * 2)}`).join(" ");
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart-svg" }); svg.style.height = "40px";
+  svg.appendChild(svgEl("polyline", { points: pts, fill: "none", stroke: color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  wrap.appendChild(svg); return wrap;
+}
+
 function toast(msg) {
   let t = document.getElementById("toast");
   if (!t) { t = el("div"); t.id = "toast"; document.body.appendChild(t); }
@@ -475,3 +626,6 @@ function toast(msg) {
 }
 
 window.renderA2UI = renderA2UI;
+// Strict by default; the playground opts into lenient salvage behaviors.
+window.setRendererLenient = (v) => { LENIENT = !!v; };
+window.isRendererLenient = () => LENIENT;

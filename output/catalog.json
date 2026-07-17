@@ -7,6 +7,7 @@
   "components": {
     "Button": {
       "type": "object",
+      "x-consequential": true,
       "allOf": [
         {
           "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
@@ -110,6 +111,7 @@
     },
     "AmountInput": {
       "type": "object",
+      "x-consequential": true,
       "allOf": [
         {
           "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"
@@ -402,6 +404,7 @@
     },
     "ConfirmSheet": {
       "type": "object",
+      "x-consequential": true,
       "allOf": [
         {
           "$ref": "https://a2ui.org/specification/v0_9/common_types.json#/$defs/ComponentCommon"

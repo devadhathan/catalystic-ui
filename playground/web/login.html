@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sign in — Catalystic UI</title>
+<style>
+  :root {
+    --background: #ffffff;
+    --card: #ffffff;
+    --foreground: hsl(240 10% 3.9%);
+    --muted: hsl(240 4.8% 95.9%);
+    --muted-foreground: hsl(240 3.8% 46.1%);
+    --border: hsl(240 5.9% 90%);
+    --input: hsl(240 5.9% 90%);
+    --primary: hsl(240 5.9% 10%);
+    --primary-foreground: hsl(0 0% 98%);
+    --destructive: hsl(0 72% 51%);
+    --ring: hsl(240 5% 65%);
+    --accent: hsl(221 83% 53%);
+    --radius: 10px;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  html.dark {
+    --background: #0b0e12; --card: #151a20; --foreground: #e7ecf1; --muted: #1a2027;
+    --muted-foreground: #97a3af; --border: #262d36; --input: #2b333d; --primary: #e7ecf1;
+    --primary-foreground: #0b0e12; --ring: #3b4855;
+  }
+  html.dark .logo-img { filter: brightness(0) invert(1); opacity: .92; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--background); color: var(--foreground); -webkit-font-smoothing: antialiased;
+    display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+  a { color: inherit; }
+  @media (max-width: 860px) { body { grid-template-columns: 1fr; } .aside { display: none; } }
+  @media (max-width: 480px) {
+    .form-side { padding: 20px 20px 28px; }
+    .form-card h1 { font-size: 23px; }
+    #google-btn { display: flex; justify-content: center; }
+  }
+
+  /* ---- form side ---- */
+  .form-side { display: flex; flex-direction: column; padding: 32px 40px; }
+  .form-top { display: flex; align-items: center; gap: 9px; }
+  .form-top .logo-img { height: 26px; width: 26px; }
+  .form-top .brandname { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+  .form-top .spacer { flex: 1; }
+  .back { font-size: 13px; color: var(--muted-foreground); display: inline-flex; align-items: center; gap: 6px; transition: color .12s; }
+  .back:hover { color: var(--foreground); }
+  .back svg { width: 15px; height: 15px; }
+  .form-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .form-card { width: 100%; max-width: 360px; margin: 0 auto; }
+  .form-card h1 { font-size: 26px; letter-spacing: -.02em; font-weight: 680; }
+  .form-card .sub { font-size: 14px; color: var(--muted-foreground); margin-top: 8px; }
+
+  .gbtn { margin-top: 26px; width: 100%; height: 44px; display: flex; align-items: center; justify-content: center;
+    gap: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--foreground);
+    font: inherit; font-size: 14.5px; font-weight: 500; cursor: pointer; transition: border-color .12s, background .12s; }
+  .gbtn:hover { border-color: var(--ring); background: var(--muted); }
+  .gbtn svg { width: 18px; height: 18px; }
+  /* rendered Google button (GSI) sits here when a client id is configured */
+  #google-btn { margin-top: 26px; display: flex; justify-content: center; min-height: 44px; }
+  #google-btn:empty { display: none; }
+  #google-btn:not(:empty) + .gbtn { display: none; }
+
+  .or { display: flex; align-items: center; gap: 12px; color: var(--muted-foreground); font-size: 12px; margin: 20px 0; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  .field { margin-top: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 550; color: var(--muted-foreground); margin-bottom: 6px; }
+  .field input { width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--input); border-radius: var(--radius);
+    background: var(--card); color: var(--foreground); font: inherit; font-size: 14.5px; transition: border-color .12s, box-shadow .12s; }
+  .field input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px hsl(240 5% 65% / .15); }
+
+  .submit { margin-top: 22px; width: 100%; height: 44px; border: 1px solid var(--primary); border-radius: var(--radius);
+    background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 14.5px; font-weight: 550;
+    cursor: pointer; transition: transform .12s, opacity .12s; }
+  .submit:hover { transform: translateY(-1px); }
+  .submit:disabled { opacity: .6; cursor: default; transform: none; }
+
+  .err { font-size: 12.5px; color: var(--destructive); margin-top: 14px; }
+  .err[hidden] { display: none; }
+  .switch { font-size: 13.5px; color: var(--muted-foreground); margin-top: 22px; text-align: center; }
+  .switch a { color: var(--foreground); font-weight: 550; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; margin-left: 4px; }
+  .legal { font-size: 12px; color: var(--muted-foreground); margin-top: 26px; text-align: center; line-height: 1.5; }
+  .form-bottom { font-size: 12px; color: var(--muted-foreground); }
+
+  /* ---- illustration side ---- */
+  .aside { position: relative; overflow: hidden; padding: 44px;
+    background:
+      radial-gradient(120% 90% at 80% 10%, hsl(221 83% 55% / .12), transparent 55%),
+      radial-gradient(90% 80% at 10% 90%, hsl(199 89% 52% / .10), transparent 55%),
+      var(--muted);
+    border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+  html.dark .aside { border-left-color: var(--border); }
+  .aside .headline { max-width: 30ch; }
+  .aside .tag { font-size: 12px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .aside .headline h2 { font-size: 30px; line-height: 1.12; letter-spacing: -.025em; font-weight: 700; margin-top: 12px; }
+  .aside .headline p { font-size: 15px; color: var(--muted-foreground); margin-top: 14px; max-width: 34ch; }
+  .stage { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .stage svg { width: 100%; max-width: 420px; height: auto; }
+  .stage-img { width: 100%; max-width: 480px; height: auto; display: block; }
+  .aside .quotes { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { font-size: 12.5px; background: var(--card); border: 1px solid var(--border); border-radius: 999px;
+    padding: 7px 13px; color: var(--muted-foreground); }
+  .float { animation: floaty 6s ease-in-out infinite; transform-origin: center; }
+  .float.b { animation-delay: -2s; }
+  .float.c { animation-delay: -4s; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  #code { text-align: center; letter-spacing: .5em; font-size: 20px; font-weight: 600; padding-left: .5em; }
+  #verify-form .switch { justify-content: center; gap: 8px; }
+  #verify-form .switch a { cursor: pointer; }
+</style>
+</head>
+<body>
+  <!-- =============== FORM =============== -->
+  <div class="form-side">
+    <div class="form-top">
+      <img class="logo-img" src="logo.svg" alt="" />
+      <span class="brandname">Catalystic UI</span>
+      <span class="spacer"></span>
+      <a class="back" href="landing.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Back to home</a>
+    </div>
+
+    <div class="form-mid">
+      <div class="form-card">
+        <h1 id="title">Create your account</h1>
+        <div class="sub" id="sub">Start turning intent into on-brand, interactive screens.</div>
+
+        <!-- Google (GSI renders into #google-btn when configured AND the origin is authorized) -->
+        <div id="google-area" hidden>
+          <div id="google-btn"></div>
+          <div class="or"><span>or</span></div>
+        </div>
+
+        <form id="auth-form">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="you@company.com" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="pass">Password</label>
+            <input id="pass" type="password" placeholder="8+ characters" autocomplete="current-password" required />
+          </div>
+          <div class="err" id="err" hidden></div>
+          <button class="submit" id="submit" type="submit">Create account</button>
+        </form>
+
+        <div class="switch"><span id="switch-text">Already have an account?</span><a id="switch-link">Sign in</a></div>
+        <div class="legal">By continuing you agree to Catalystic UI's Terms and acknowledge the Privacy Policy.</div>
+
+        <!-- verification step (shown after signup emails a code) -->
+        <form id="verify-form" hidden>
+          <div class="field">
+            <label for="code">Enter the 6-digit code</label>
+            <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" required />
+          </div>
+          <div class="err" id="verr" hidden></div>
+          <button class="submit" id="verify-submit" type="submit">Verify &amp; continue</button>
+          <div class="switch"><a id="resend-link">Resend code</a> · <a id="back-link">Use a different email</a></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="form-bottom">
+      <a href="https://github.com/devadhathan/catalyst" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:inherit">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:15px;height:15px"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.2 1.77 1.2 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.2-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.5 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.75.81 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+        GitHub
+      </a>
+      &nbsp;·&nbsp; © 2026 Catalystic UI
+    </div>
+  </div>
+
+  <!-- =============== ILLUSTRATION =============== -->
+  <div class="aside">
+    <div class="headline">
+      <span class="tag">Generative UI</span>
+      <h2>Walk out of the chat box and into the interface.</h2>
+      <p>One component tree, rendered live in your own design system. Sign in to compose real screens from plain language.</p>
+    </div>
+
+    <div class="stage">
+      <img class="stage-img float" src="hero-art.svg" alt="Catalystic UI — turning intent into interfaces" />
+    </div>
+
+    <div class="quotes">
+      <span class="chip">shadcn</span>
+      <span class="chip">Polaris</span>
+      <span class="chip">Material</span>
+      <span class="chip">Your Figma tokens</span>
+    </div>
+  </div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+  try { if (localStorage.getItem("catalyst.theme") === "dark") document.documentElement.classList.add("dark"); } catch (e) {}
+  const $ = (s) => document.querySelector(s);
+  let mode = "signup";
+
+  function setMode(m) {
+    mode = m;
+    $("#title").textContent = m === "signup" ? "Create your account" : "Welcome back";
+    $("#sub").textContent = m === "signup"
+      ? "Start turning intent into on-brand, interactive screens."
+      : "Sign in to keep composing screens from plain language.";
+    $("#submit").textContent = m === "signup" ? "Create account" : "Sign in";
+    $("#pass").autocomplete = m === "signup" ? "new-password" : "current-password";
+    $("#switch-text").textContent = m === "signup" ? "Already have an account?" : "New to Catalystic UI?";
+    $("#switch-link").textContent = m === "signup" ? "Sign in" : "Create account";
+    $("#err").hidden = true;
+  }
+  function showErr(msg) { $("#err").textContent = msg; $("#err").hidden = false; }
+
+  async function authPost(action, extra) {
+    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ action }, extra || {})) });
+    return r.json();
+  }
+  function signedIn(token) {
+    try { localStorage.setItem("catalyst.token", token); } catch (e) {}
+    const next = new URLSearchParams(location.search).get("next");
+    location.href = (next && next.startsWith("/") ) ? next : "index.html";
+  }
+
+  // ---- Google ----
+  async function onGoogleCred(resp) {
+    $("#err").hidden = true;
+    try {
+      const out = await authPost("google", { credential: resp.credential });
+      if (out.error) return showErr(out.error);
+      signedIn(out.token);
+    } catch (e) { showErr("Google sign-in failed — try again."); }
+  }
+  function setupGoogle(clientId) {
+    const area = $("#google-area");
+    const init = () => {
+      if (!(window.google && google.accounts && google.accounts.id)) return false;
+      area.hidden = false;   // container MUST be laid out (visible) before GSI renders, or the button won't paint / won't be clickable
+      // size the Google button to the card so it never overflows on narrow phones
+      const gw = Math.max(200, Math.min(360, Math.round(($("#google-btn").clientWidth || area.clientWidth || 340))));
+      try {
+        google.accounts.id.initialize({ client_id: clientId, callback: onGoogleCred });
+        google.accounts.id.renderButton($("#google-btn"), { theme: "outline", size: "large", text: "continue_with", width: gw });
+      } catch (e) { area.hidden = true; return false; }
+      // if the button never paints (origin not authorized), hide the area again so email/password stays clean
+      let tries = 0;
+      const check = setInterval(() => {
+        if ($("#google-btn").childElementCount > 0) clearInterval(check);
+        else if (++tries > 25) { area.hidden = true; clearInterval(check); }
+      }, 200);
+      return true;
+    };
+    if (init()) return;
+    let n = 0; const iv = setInterval(() => { if (init() || ++n > 50) clearInterval(iv); }, 100);
+  }
+
+  // ---- email / password ----
+  let pendingEmail = "";
+  function showVerify(email) {
+    pendingEmail = email;
+    $("#google-area").hidden = true;
+    $("#auth-form").hidden = true;
+    document.querySelector(".form-card .switch").hidden = true;   // the sign-in / create switch
+    document.querySelector(".form-card .legal").hidden = true;
+    $("#verify-form").hidden = false;
+    $("#title").textContent = "Check your email";
+    $("#sub").textContent = "We sent a 6-digit code to " + email + ". Enter it below to finish.";
+    $("#verr").hidden = true; $("#code").value = ""; $("#code").focus();
+  }
+  function showVerifyErr(msg) { $("#verr").textContent = msg; $("#verr").hidden = false; }
+
+  $("#auth-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = $("#email").value.trim(), password = $("#pass").value;
+    $("#err").hidden = true;
+    const btn = $("#submit"); btn.disabled = true;
+    try {
+      const out = await authPost(mode, { email, password });
+      if (out.error) { showErr(out.error); return; }
+      if (out.pending) { showVerify(email); return; }   // email verification required
+      signedIn(out.token);
+    } catch (e) { showErr("Something went wrong — try again."); }
+    finally { btn.disabled = false; }
+  });
+  $("#switch-link").onclick = () => setMode(mode === "signup" ? "login" : "signup");
+
+  // ---- verification code ----
+  $("#code").addEventListener("input", (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 6); });
+  $("#verify-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const code = $("#code").value.trim();
+    $("#verr").hidden = true;
+    const btn = $("#verify-submit"); btn.disabled = true;
+    try {
+      const out = await authPost("verify", { email: pendingEmail, code });
+      if (out.error) { showVerifyErr(out.error); return; }
+      signedIn(out.token);
+    } catch (e) { showVerifyErr("Something went wrong — try again."); }
+    finally { btn.disabled = false; }
+  });
+  $("#resend-link").onclick = async () => {
+    $("#verr").hidden = true;
+    const out = await authPost("resend", { email: pendingEmail });
+    if (out.error) showVerifyErr(out.error);
+    else showVerifyErr("A fresh code is on its way.");
+  };
+  $("#back-link").onclick = () => {
+    $("#verify-form").hidden = true;
+    $("#auth-form").hidden = false;
+    document.querySelector(".form-card .switch").hidden = false;
+    document.querySelector(".form-card .legal").hidden = false;
+    setMode("signup");
+    $("#title").textContent = "Create your account";
+    $("#sub").textContent = "Start turning intent into on-brand, interactive screens.";
+  };
+
+  // ---- boot ----
+  (async function () {
+    // honor ?mode=login
+    if (new URLSearchParams(location.search).get("mode") === "login") setMode("login"); else setMode("signup");
+    let st; try { st = await authPost("status"); } catch (e) { st = { enabled: false }; }
+    if (!st.enabled) { location.href = "index.html"; return; }   // datastore off → app is open, skip login
+    // already signed in? bounce through.
+    const token = (function () { try { return localStorage.getItem("catalyst.token") || ""; } catch (e) { return ""; } })();
+    if (token) {
+      const me = await authPost("me", { token });
+      if (me.email) { signedIn(token); return; }
+      try { localStorage.removeItem("catalyst.token"); } catch (e) {}
+    }
+    if (st.googleClientId) setupGoogle(st.googleClientId);
+  })();
+</script>
+</body>
+</html>
