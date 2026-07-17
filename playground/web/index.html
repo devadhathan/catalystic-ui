@@ -855,6 +855,11 @@
   .sk-wave span:nth-child(4) { animation-delay: .33s; }
   .sk-wave span:nth-child(5) { animation-delay: .44s; }
   @keyframes sk-wave { 0%, 100% { transform: translateY(0) scale(.82); opacity: .35; } 50% { transform: translateY(-11px) scale(1); opacity: 1; } }
+  /* UI-generating loader: a blue dithering pixel matrix */
+  .sk-dither { display: grid; grid-template-columns: repeat(5, 7px); grid-template-rows: repeat(5, 7px); gap: 3px; }
+  .sk-dither i { width: 7px; height: 7px; border-radius: 2px; background: hsl(221 83% 53%); opacity: .14;
+     animation: sk-dith 1.15s ease-in-out infinite; }
+  @keyframes sk-dith { 0%, 100% { opacity: .12; } 45% { opacity: 1; } }
   .sk-tag { font-size: 12px; color: var(--muted-foreground); letter-spacing: .01em; }
   .sk-lines { width: min(320px, 78%); display: flex; flex-direction: column; gap: 9px; }
   .sk-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, var(--muted) 25%, var(--border) 50%, var(--muted) 75%);
@@ -1790,12 +1795,16 @@
     const s = JSON.stringify(comps || {});
     return (/"(Chart|Table|Grid)"/.test(s) || /"width"\s*:\s*"lg"/.test(s)) ? "lg" : "sm";
   }
-  const SKELETON =
-    '<div class="sk-wrap">' +
-      '<div class="sk-wave"><span></span><span></span><span></span><span></span><span></span></div>' +
+  // UI-generating loader: a blue "dither" pixel matrix (each pixel flickers on its own delay)
+  const SKELETON = () => {
+    const px = Array.from({ length: 25 }, () =>
+      '<i style="animation-delay:' + (Math.random() * 1.2).toFixed(2) + 's"></i>').join("");
+    return '<div class="sk-wrap">' +
+      '<div class="sk-dither">' + px + '</div>' +
       '<div class="sk-tag">✦ building your screen…</div>' +
       '<div class="sk-lines"><span class="sk-line"></span><span class="sk-line" style="width:82%"></span><span class="sk-line" style="width:58%"></span></div>' +
     '</div>';
+  };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const domainOf = (u) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; } };
 
@@ -2051,9 +2060,7 @@
       const label = mode === "chat"
         ? "Thinking " + n + "s…"
         : AGENT_PHASES[Math.min(AGENT_PHASES.length - 1, Math.floor(n / 3))] + " · " + n + "s";
-      // one loader at a time: once the skeleton is up, the phase lives ON it; otherwise in the bubble
-      if (streamSurf) { const tag = streamSurf.querySelector(".sk-tag"); if (tag) tag.textContent = "✦ " + label; }
-      else thinkText.textContent = label;
+      thinkText.textContent = label;   // the thinking bubble stays up the whole time (separate from the UI-generating loader)
       if (mode !== "chat") { if (n >= 6) apAdvance(apTurn, "compose"); else if (n >= 3) apAdvance(apTurn, "search"); }
     }, 250);
     // once we can tell a screen is coming, show a SKELETON placeholder and hold it until the
@@ -2065,9 +2072,8 @@
       if (!comps || !comps.length) return;      // still just the reply/thinking text — no screen yet
       streamSurf = document.createElement("div"); streamSurf.className = "gen-surface";
       if (mode !== "chat") streamSurf.dataset.agent = "";
-      streamSurf.innerHTML = SKELETON;          // loading state until the screen is fully generated
+      streamSurf.innerHTML = SKELETON();        // UI-generating loader (blue dither) — shown BELOW the thinking bubble
       $("#messages").appendChild(streamSurf); currentSurface = streamSurf;
-      pending.style.display = "none";           // single loader: hand off from the bubble to the skeleton (phase text moves onto it)
       apMark(apTurn, "understand", "done"); apMark(apTurn, "compose", "run");
       scrollDown();
     };
