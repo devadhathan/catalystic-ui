@@ -140,6 +140,13 @@ def handle(body):
                 try:
                     if _kv_cmd("SET", "paid:" + sid, "1", "NX", "EX", 2592000):   # first time only
                         bal = _kv_cmd("INCRBY", "credits:" + email, credits)
+                        # keep the granted TOTAL in sync so usage stays stable across logins
+                        try:
+                            if _kv_cmd("GET", "granted:" + email) is None:
+                                _kv_cmd("SET", "granted:" + email, 50)   # seed the free allotment first
+                            _kv_cmd("INCRBY", "granted:" + email, credits)
+                        except Exception:
+                            pass
                         out["credits_remaining"] = int(bal)
                     else:
                         cv = _kv_cmd("GET", "credits:" + email)

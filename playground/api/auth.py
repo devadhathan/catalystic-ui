@@ -248,7 +248,19 @@ def handle(body):
             credits = int(c) if c is not None else 50   # matches chat.FREE_CREDITS / keys.DEFAULT_CREDITS
         except Exception:
             credits = None
-        return {"email": email, "credits": credits}
+        # granted = the TOTAL ever allotted (free seed + purchases). Tracked server-side so "usage"
+        # (granted - remaining) is stable across logout/login. Backfill it once for existing accounts.
+        granted = None
+        try:
+            g = _cmd("GET", "granted:" + email)
+            if g is None:
+                granted = max(50, credits if isinstance(credits, int) else 50)
+                _cmd("SET", "granted:" + email, granted)
+            else:
+                granted = int(g)
+        except Exception:
+            granted = None
+        return {"email": email, "credits": credits, "granted": granted}
 
     if action == "logout":
         t = body.get("token")

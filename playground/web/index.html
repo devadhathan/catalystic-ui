@@ -3826,7 +3826,7 @@
     return changed;
   }
   function revealApp() { const c = document.getElementById("boot-cover"); if (c) c.classList.add("gone"); }
-  function onSignedIn(email, serverCredits) {
+  function onSignedIn(email, serverCredits, serverGranted) {
     revealApp();
     $("#auth-gate").hidden = true;
     $("#signout-btn").hidden = false;
@@ -3834,7 +3834,9 @@
     applyAccountScope(email);            // isolate this account's data before anything renders
     if (typeof serverCredits === "number") {   // server balance is authoritative — never carry over another account's
       credits = serverCredits;
-      creditsTotal = Math.max(serverCredits, 1);   // anchor "100%" to the current balance so usage starts at 0%, not a stale total
+      // usage = granted - remaining. The GRANTED total is server-tracked (free allotment + purchases),
+      // so it stays stable across logout/login instead of resetting to the current balance.
+      creditsTotal = Math.max(typeof serverGranted === "number" ? serverGranted : serverCredits, serverCredits, 1);
       saveCredits();
     } else { renderCredits(); }
     renderHistory(); renderCustomAgents();
@@ -3873,7 +3875,7 @@
     if (!st.enabled) { revealApp(); $("#auth-gate").hidden = true; renderHistory(); renderCustomAgents(); return; }   // datastore not set up → app open
     if (authToken) {
       const me = await authPost("me", { token: authToken });
-      if (me.email) { onSignedIn(me.email, me.credits); return; }
+      if (me.email) { onSignedIn(me.email, me.credits, me.granted); return; }
       authToken = ""; localStorage.removeItem("catalyst.token");
     }
     location.href = "login.html?next=" + encodeURIComponent(location.pathname + location.search);
