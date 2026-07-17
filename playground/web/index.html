@@ -2429,12 +2429,17 @@
       const btn = e.target.closest(".ui-btn");
       if (btn && surf.contains(btn)) {
         const t = (btn.textContent || "").trim(), low = t.toLowerCase();
-        // deterministic built-in flows (no model)
-        if (/add more|back to menu/.test(low)) return showLastMenu();
-        if (/^remove\b/.test(low)) return cartRemove(t);
-        if (/^add\b/.test(low)) return cartAdd(btn.closest(".ui-card"));
-        if (/checkout|proceed/.test(low)) return showPayment();
-        if (/^pay\b|confirm & pay|confirm and pay/.test(low)) return showConfirmation();
+        // The deterministic cart/checkout/pay flow ONLY belongs to the built-in commerce agents.
+        // For every other agent (resume, custom, etc.) taps go to the model — otherwise a generic
+        // "Add …" or "Proceed" button wrongly triggers a shopping cart / card-details screen.
+        const COMMERCE = (mode === "food" || mode === "booking");
+        if (COMMERCE) {
+          if (/add more|back to menu/.test(low)) return showLastMenu();
+          if (/^remove\b/.test(low)) return cartRemove(t);
+          if (/^add\b/.test(low)) return cartAdd(btn.closest(".ui-card"));
+          if (/checkout|proceed/.test(low)) return showPayment();
+          if (/^pay\b|confirm & pay|confirm and pay/.test(low)) return showConfirmation();
+        }
         // otherwise: send the action + whatever the user filled in on this screen
         const title = titleOf(btn.closest(".ui-card"));
         const action = t;
@@ -2470,6 +2475,7 @@
     currentSurface = surf;
     renderCurrent();
     scrollDown();
+    saveCurrentConvo();   // persist these deterministic (cart/pay) steps to history too
   }
   function cartAdd(card) {
     if (!card) return;
