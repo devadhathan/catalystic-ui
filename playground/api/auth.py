@@ -82,7 +82,11 @@ def _send_email(to, subject, html):
         payload = json.dumps({"from": frm, "to": [to], "subject": subject, "html": html}).encode()
         req = urllib.request.Request(
             "https://api.resend.com/emails", data=payload,
-            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"},
+            # A real User-Agent is required: Resend is behind Cloudflare, which blocks the default
+            # "Python-urllib" client signature with error 1010. Send a normal UA + Accept.
+            headers={"Authorization": "Bearer " + key, "Content-Type": "application/json",
+                     "Accept": "application/json",
+                     "User-Agent": "Mozilla/5.0 (compatible; CatalysticUI/1.0; +https://catalysticui.space)"},
             method="POST")
         try:
             with urllib.request.urlopen(req, timeout=10) as r:
