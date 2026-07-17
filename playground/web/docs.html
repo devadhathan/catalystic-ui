@@ -37,29 +37,38 @@
   .nav-ic { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; border: 1px solid var(--divider); opacity: .85; }
   .nav-ic:hover { opacity: 1; border-color: var(--fg); } .nav-ic svg { width: 18px; height: 18px; }
 
-  .shell { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 210px 1fr; gap: 48px; }
-  @media (max-width: 820px) { .shell { grid-template-columns: 1fr; gap: 0; } .side { display: none; } }
-  .side { position: sticky; top: 96px; align-self: start; padding-top: 52px; font-size: 14px; }
-  .side h5 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 22px 0 10px; font-weight: 600; }
-  .side a { display: block; padding: 5px 0; color: var(--muted); } .side a:hover { color: var(--fg); }
+  .shell { max-width: 1200px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 220px 1fr; gap: 48px; }
+  @media (max-width: 860px) { .shell { grid-template-columns: 1fr; gap: 0; } .side { display: none; } }
+  .side { position: sticky; top: 96px; align-self: start; padding-top: 52px; font-size: 14px; max-height: calc(100vh - 96px); overflow: auto; scrollbar-width: thin; }
+  .side h5 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 22px 0 8px; font-weight: 600; }
+  .side a { display: block; padding: 4px 0; color: var(--muted); } .side a:hover { color: var(--fg); }
 
-  main { padding: 52px 0 120px; max-width: 760px; }
+  main { padding: 52px 0 120px; max-width: 780px; min-width: 0; }
   .lead-title { font-size: clamp(30px, 4vw, 42px); font-weight: 600; letter-spacing: -.03em; line-height: 1.06; }
   .lead-sub { font-size: 18px; color: var(--muted); margin-top: 14px; }
-  section.doc { padding-top: 56px; scroll-margin-top: 92px; }
-  section.doc > h2 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 8px; }
-  section.doc h3 { font-size: 16px; font-weight: 600; margin: 26px 0 8px; }
+  section.doc { padding-top: 54px; scroll-margin-top: 92px; }
+  section.doc > h2 { font-size: 24px; font-weight: 600; letter-spacing: -.02em; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  section.doc h3 { font-size: 16px; font-weight: 600; margin: 24px 0 8px; }
   section.doc p { color: hsl(240 6% 26%); margin: 10px 0; }
   section.doc ul { margin: 10px 0 10px 20px; color: hsl(240 6% 26%); }
-  section.doc li { margin: 5px 0; }
+  section.doc li { margin: 6px 0; }
+  strong { font-weight: 650; color: var(--fg); }
+  em { font-style: italic; }
   code { background: var(--soft); border: 1px solid var(--divider); border-radius: 5px; padding: 1px 6px; font-size: 13px; }
   pre { background: #16150f; color: #eceae2; border-radius: var(--radius); padding: 18px 20px; overflow-x: auto; margin: 14px 0; font-size: 13px; line-height: 1.6; }
   pre code { background: none; border: 0; padding: 0; color: inherit; }
-  .tok { color: #b7c4ff; } .str { color: #b9e6a8; } .cmt { color: #8a8778; }
+  .tok { color: #b7c4ff; } .str { color: #b9e6a8; } .cmt { color: #8a8778; } .kw { color: #f0a868; }
   table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
-  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--divider); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--divider); vertical-align: top; }
   th { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
   .note { background: var(--accent-soft); border: 1px solid hsl(221 80% 90%); border-radius: 12px; padding: 14px 16px; margin: 16px 0; font-size: 14px; color: hsl(221 45% 30%); }
+  .badge { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .badge.ship { background: hsl(142 60% 45% / .14); color: hsl(142 55% 32%); border: 1px solid hsl(142 50% 45% / .3); }
+  .badge.soon { background: hsl(38 92% 50% / .14); color: hsl(32 70% 38%); border: 1px solid hsl(38 80% 50% / .3); }
+  .principle { font-size: 20px; font-weight: 650; letter-spacing: -.02em; color: var(--fg); background: var(--soft);
+     border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 18px 0; }
+  .flow { background: var(--soft); border: 1px solid var(--divider); border-radius: 12px; padding: 16px 18px; margin: 16px 0;
+     font-family: var(--mono); font-size: 12.5px; color: hsl(240 6% 30%); white-space: pre; overflow-x: auto; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -77,50 +86,164 @@
 
   <div class="shell">
     <aside class="side">
-      <h5>Getting started</h5>
-      <a href="#intro">Overview</a>
-      <a href="#how">How it works</a>
-      <a href="#quickstart">Quickstart</a>
+      <h5>Concepts</h5>
+      <a href="#overview">Overview</a>
+      <a href="#shift">Interfaces that build themselves</a>
+      <a href="#trust">The trust problem</a>
+      <a href="#a2ui">A2UI — the standard</a>
+      <a href="#core-idea">The core idea</a>
+      <h5>Architecture</h5>
+      <a href="#glance">At a glance</a>
+      <a href="#pipeline">Build-time pipeline</a>
+      <a href="#determinism">Determinism: build vs run</a>
+      <a href="#runtime">Runtime: verify &amp; render</a>
+      <a href="#fast">Fast by default</a>
+      <a href="#capabilities">Capabilities</a>
       <h5>Reference</h5>
-      <a href="#a2ui">The A2UI schema</a>
-      <a href="#catalog">Catalog &amp; verification</a>
-      <a href="#api">Generate API</a>
+      <a href="#schema">The A2UI schema</a>
+      <a href="#generate">Generate API</a>
       <a href="#byo">Bring your own agent</a>
-      <h5>Accounts</h5>
       <a href="#credits">Credits &amp; billing</a>
+      <h5>Project</h5>
+      <a href="#status">Status &amp; roadmap</a>
+      <a href="#remember">The one idea</a>
     </aside>
 
     <main>
-      <h1 class="lead-title">Documentation</h1>
-      <p class="lead-sub">Catalystic UI is a rendering layer for AI agents: your agent emits a component schema, and we render it as real, on-brand, interactive UI.</p>
+      <h1 class="lead-title">A guide to trustworthy generative UI</h1>
+      <p class="lead-sub">From the basics of generative interfaces to how Catalystic UI makes them safe enough to ship.</p>
 
-      <section class="doc" id="intro">
+      <section class="doc" id="overview">
         <h2>Overview</h2>
-        <p>Instead of returning markdown or raw HTML, an agent returns a small JSON <strong>component tree</strong> (we call it A2UI). Catalystic UI validates that tree against a design-system <strong>catalog</strong> and renders it with real components — buttons, forms, charts, cards — in the design system you choose (shadcn, Polaris, Material, Carbon, or your own imported from Figma).</p>
-        <p>Because the model returns data and never executable code, an injected script can't run: only components that exist in the catalog render, and all text is inserted as text.</p>
+        <p>Catalystic UI turns your <strong>design system</strong> into a <strong>catalog</strong> that lets an AI agent compose interfaces which look like <em>your</em> product — and, crucially, can be trusted with the parts that must never break, like payment and confirmation.</p>
+        <p>Instead of returning markdown or raw HTML, an agent returns a small JSON <strong>component tree</strong>. Catalystic UI validates that tree against the catalog and renders it with real components in the design system you choose — shadcn, Polaris, Material, Carbon, or your own imported from Figma.</p>
       </section>
 
-      <section class="doc" id="how">
-        <h2>How it works</h2>
-        <ul>
-          <li><strong>Intent →</strong> the user (or an upstream system) sends a message.</li>
-          <li><strong>Schema →</strong> the agent returns an A2UI component tree.</li>
-          <li><strong>Verify →</strong> the tree is checked against <code>catalog.json</code>; non-consequential mismatches are repaired, consequential ones are rejected.</li>
-          <li><strong>Render →</strong> the tree is painted with the active design system, fully interactive.</li>
-        </ul>
+      <section class="doc" id="shift">
+        <h2>Interfaces that build themselves</h2>
+        <p>For decades, interfaces were fixed. Developers wrote every screen ahead of time and the app showed the right one at the right moment. A menu was a menu; a checkout was a checkout. Nothing was decided at runtime.</p>
+        <p>Generative UI breaks that assumption. Instead of only returning text, an agent returns <em>interface</em> — cards, forms, charts, buttons — assembled on the fly from what the user actually asked for. Say <em>"show me chicken dishes under £10"</em> and the agent composes exactly that view rather than routing you to a pre-built page.</p>
+        <div class="note">On <strong>June 17, 2026</strong>, Google published guidance on <strong>A2UI + MCP Apps</strong> — a strong signal that the industry is moving toward agent-composed interfaces as a first-class pattern. Catalystic UI is the trust layer on top of that pattern.</div>
       </section>
 
-      <section class="doc" id="quickstart">
-        <h2>Quickstart</h2>
-        <p>Open the studio, describe what you want, and watch it render. To drive it programmatically, create an API key under <em>Settings → API keys</em> and call the generate endpoint:</p>
-        <pre><code><span class="cmt"># POST a prompt, get back a rendered component tree</span>
-curl https://playground-eta-eight.vercel.app/api/chat \
-  -H <span class="str">"Authorization: Bearer ck_your_key"</span> \
-  -H <span class="str">"Content-Type: application/json"</span> \
-  -d <span class="str">'{"prompt": "a booking screen for a hair salon"}'</span></code></pre>
+      <section class="doc" id="trust">
+        <h2>The problem nobody demos: trust</h2>
+        <p>Generative UI demos beautifully and ships almost nowhere. A model is powerful <em>because</em> it's non-deterministic — it improvises. That's wonderful for knowledge, but a UI is something you <em>act</em> through, and hallucination is not a feature there. No bank, no store, no serious product team will let a language model freestyle a payment screen: one reworded "Confirm," one hallucinated field, one off-brand component isn't a quirk — it's an incident.</p>
+        <p>So the hard problem in generative UI was never <em>generating</em> UI. Everyone can do that now. The hard problem is generating UI you can <strong>trust</strong> — UI that is on-brand, valid, and, where it matters, <strong>exactly the same every time</strong>. That is the problem Catalystic UI is built to solve.</p>
       </section>
 
       <section class="doc" id="a2ui">
+        <h2>A2UI — the standard we build on</h2>
+        <p>Rather than invent a proprietary format, Catalystic UI builds on <strong>A2UI</strong>, an open, declarative protocol for agent-composed interfaces (the <a href="https://github.com/google/A2UI" target="_blank" rel="noopener">A2UI <code>basic</code> catalog</a> format). An agent does <strong>not</strong> emit HTML/CSS/JS — it emits a compact JSON payload that <em>references pre-approved components</em>. The host renders those components natively, in its own design system.</p>
+        <p>That indirection is what makes A2UI safe and portable:</p>
+        <ul>
+          <li><strong>Native rendering</strong> — the same payload renders in React, Flutter, or your own renderer, always in your brand.</li>
+          <li><strong>Capability-based security</strong> — the client only renders components from a known catalog; it can't be tricked into running arbitrary markup.</li>
+          <li><strong>Efficiency</strong> — referencing components by name is far cheaper (in tokens) than regenerating markup every turn.</li>
+        </ul>
+        <p>But A2UI has one dependency that decides whether the whole thing works: the <strong>catalog</strong>. A catalog defines, for every component, its <strong>schemas</strong> (name, props, variant enums, required fields) and its <strong>guidance</strong> (prose telling the agent when to use it and which variant fits, plus hard rules). A weak catalog produces weak output. Catalystic UI's entire job is to produce a great catalog from your design system.</p>
+      </section>
+
+      <section class="doc" id="core-idea">
+        <h2>The core idea: split the mechanical from the judgement</h2>
+        <p>A catalog has two kinds of content, and they should never be produced the same way.</p>
+        <table>
+          <tr><th>Layer</th><th>What it is</th><th>Who writes it</th></tr>
+          <tr><td><strong>Schemas</strong></td><td>Component names, props, variant enums, required fields</td><td><strong>Code</strong> — extracted from the design system, never guessed</td></tr>
+          <tr><td><strong>Guidance</strong></td><td>Prose telling the agent when/why to use a component, plus hard rules</td><td><strong>The model</strong> — this is judgement</td></tr>
+        </table>
+        <p>If your design system says a Button's variant is one of <code>{primary, secondary, ghost, destructive}</code>, that's a <em>fact</em> — asking a model to reproduce it only introduces drift, so it's extracted by code. But there's no "correct" sentence explaining when to use a <code>ConfirmSheet</code>, only a well-judged one — so that half is generated by the model.</p>
+        <div class="principle">AI at the edges. Determinism at the core.</div>
+        <p>Let the model be creative where creativity is safe. Pin down everything that has a correct answer — and everything that must never break.</p>
+      </section>
+
+      <section class="doc" id="glance">
+        <h2>Architecture at a glance</h2>
+        <p>Catalystic UI has two halves: a <strong>build-time pipeline</strong> that produces the catalog, and a <strong>runtime</strong> that renders and verifies agent output against it.</p>
+        <div class="flow">DESIGN SYSTEM  (Figma / Storybook / tokens extraction)
+        │
+        ▼
+┌──────────────────────────────┐
+│ BUILD TIME  (the pipeline)   │
+│ extract → guide → validate   │ →  catalog.json + rules.txt + theme.json
+└──────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────┐
+│ RUN TIME                     │
+│ agent → verify → render      │ →  live UI in your design system
+└──────────────────────────────┘</div>
+        <p>The pipeline runs occasionally (when the design system changes). The runtime runs on every interaction. Determinism lives in different places in each — and getting that right is the whole game.</p>
+      </section>
+
+      <section class="doc" id="pipeline">
+        <h2>The build-time pipeline <span class="badge ship">Shipped</span></h2>
+        <p>The pipeline takes an intermediate representation of your design system (a Figma REST extraction or a Storybook scrape) and produces an A2UI catalog. It alternates deterministic code and model judgement.</p>
+        <p><strong>Stage 1 — Extract schemas</strong> (deterministic, no model). Code reads each component and builds its schema: props, variant enums, required fields. Transient render states (hover, focus, open) are dropped — an agent sets <em>semantic</em> variants, not render states.</p>
+        <pre><code><span class="cmt"># variant properties become enums — straight from extraction, never hallucinated</span>
+<span class="kw">for</span> vprop, values <span class="kw">in</span> comp.get(<span class="str">"variantProperties"</span>, {}).items():
+    props[vprop] = {<span class="str">"type"</span>: <span class="str">"string"</span>, <span class="str">"enum"</span>: values}</code></pre>
+        <p><strong>Stage 2 — Write guidance</strong> (model). For each component the model fills in the <code>description</code> fields: when to use it, which variant fits, common mistakes. Structured output guarantees the JSON shape.</p>
+        <p><strong>Stage 3 — Write rules</strong> (model). The model produces a short <code>rules.txt</code> of hard, non-negotiable MUST-rules (e.g. "For Button, you MUST provide <code>action</code>").</p>
+        <p><strong>Stage 4 — Validate</strong> (deterministic). Code checks the two halves agree: every prop a rule or description leans on must actually exist in the extracted schema. Judgement can't invent a field ground truth doesn't have.</p>
+        <p><strong>Stage 5 — Assemble.</strong> The schemas are assembled into the A2UI catalog shape — each component emitted with <code>unevaluatedProperties: false</code>, strict enums, and <code>const</code> names. That makes <code>catalog.json</code> a strict, machine-checkable contract, not just documentation.</p>
+        <h3>Consequential components</h3>
+        <p>One input field matters more than the rest: a <code>consequentialHint</code> that marks components whose action or content must <strong>not</strong> be recomposed or reworded — <code>Button</code>, <code>AmountInput</code>, <code>ConfirmSheet</code>, anything in a pay/transfer/confirm flow. Catalystic UI carries this flag through the pipeline (surfaced as <code>x-consequential</code> in the catalog and mirrored in <code>consequential.json</code>). Stage 2 turns it into guidance, Stage 3 into a rule. This is the hook that lets the runtime enforce trust exactly where it's expected.</p>
+      </section>
+
+      <section class="doc" id="determinism">
+        <h2>Determinism, precisely: build vs run</h2>
+        <p>There are two kinds of determinism you want, solved differently:</p>
+        <ul>
+          <li><strong>Validity determinism</strong> — the output is always conformant: only real components, valid props, valid variants; consequential components never reworded. It may vary, but it's guaranteed correct and safe.</li>
+          <li><strong>Identity determinism</strong> — the same intent + data produces the <em>same</em> interface every time. This is what makes caching and reproducibility possible.</li>
+        </ul>
+        <p>Catalystic UI gets validity determinism at build time for free: <code>catalog.json</code> is a strict schema. But a schema in a file guarantees nothing at runtime — the agent still emits a surface on every turn, and something has to enforce the contract <em>before</em> that surface renders. That something is the <strong>verifier</strong>.</p>
+      </section>
+
+      <section class="doc" id="runtime">
+        <h2>The runtime: render natively, verify strictly <span class="badge ship">Shipped</span></h2>
+        <p>At runtime the agent proposes an A2UI surface. Before it reaches the screen it passes through one gate — implemented in both the browser (<code>verify.js</code>, AJV) and on the server (<code>verify.py</code>, jsonschema), so client and server agree on what's valid.</p>
+        <div class="flow">model proposes surface
+     │
+     ▼
+VERIFY ── schema gate (validate against catalog.json)
+     │        └─ consequential: reject on failure (never coerce)
+     ▼
+CACHE  (key the verified surface by intent + data)
+     │
+     ▼
+RENDER (native components, your design system)</div>
+        <p><strong>The schema gate.</strong> The surface is validated against <code>catalog.json</code>. Because the catalog uses <code>unevaluatedProperties: false</code> plus enums, this automatically rejects unknown components, invalid variants, hallucinated props, and missing required fields — no per-case logic needed.</p>
+        <p><strong>Failure policy, split by consequence</strong> — the determinism thesis made real:</p>
+        <ul>
+          <li>A <strong>non-consequential</strong> node fails → <strong>repair</strong>: drop the unknown prop, snap a bad variant to its default, or re-ask with the validation error. Tolerance is fine here.</li>
+          <li>A <strong>consequential</strong> node fails → <strong>reject. Do not render.</strong> No silent coercion, no guessing. This is where determinism must be absolute.</li>
+        </ul>
+        <p><strong>Rendering in your brand.</strong> The renderer maps verified nodes to native, design-system-styled components. Because the agent only ever emitted <em>intent</em> (not markup), the output comes out on-brand automatically — a "flight card" or a "metric" looks like <em>your</em> product because your renderer decides how it looks, not the model.</p>
+        <p>The renderer runs <strong>strict by default</strong>: it assumes verified input and renders literally. A <code>LENIENT</code> flag re-enables the forgiving behaviours (remap hallucinated variants, tolerate malformed text) for the demo playground. Forgiveness and determinism are opposites; you choose per surface.</p>
+        <div class="note"><strong>Next:</strong> consequential <em>canonical-match</em> — pinning pay/confirm components server-side, having the agent reference them by <code>id</code> rather than compose them, and asserting the emitted node matches the pinned one byte-for-byte. Today the reject path is enforced; canonical pin-by-id is the next increment.</div>
+      </section>
+
+      <section class="doc" id="fast">
+        <h2>Fast by default: what should <em>not</em> touch the model</h2>
+        <p>A recurring mistake in generative UI is routing everything through the model, which makes apps slow and expensive. The rule of thumb:</p>
+        <ul>
+          <li><strong>Deterministic actions</strong> (add to cart, select, checkout, tap Pay) → handled in code. Zero model calls.</li>
+          <li><strong>Filtering, sorting, toggling</strong> → client-side reactive state; the renderer reads bound values and re-paints instantly — no round-trip.</li>
+          <li><strong>Open-ended composition</strong> ("build me a view of X") → the model, once, then cached (identical requests cost 0 tokens).</li>
+        </ul>
+        <p>Most turns in a real app are the first two. Keeping them off the model is the difference between an interface that <em>feels</em> generative and one that feels slow.</p>
+      </section>
+
+      <section class="doc" id="capabilities">
+        <h2>Extending Catalystic UI: capabilities <span class="badge soon">Roadmap</span></h2>
+        <p>Real users won't hand-wire tools, so capabilities are planned as self-describing bundles — each a plug-in delivered over <strong>MCP</strong>. A capability ships its tools (e.g. <code>search_flights</code>), an A2UI catalog fragment, its pinned consequential components, and a declared auth requirement.</p>
+        <p>Enabling one is a single action: the user clicks <em>Enable</em>, connects credentials, and the fragment is merged into their catalog and checked by the verifier. Because a capability ships <em>intent, not styling</em>, enabling "Flights" makes the flight cards render on-brand in the user's own design system automatically — a property no styled-component plug-in system can match.</p>
+        <div class="note">This is a roadmap item — the bundle/MCP enable-flow is not yet built. Today you can already import your own design system and bring your own agent (below).</div>
+      </section>
+
+      <section class="doc" id="schema">
         <h2>The A2UI schema</h2>
         <p>A surface is an array of component nodes. Each node has a <code>type</code> from the catalog and typed props; children may be nested inline.</p>
         <pre><code>{
@@ -131,21 +254,17 @@ curl https://playground-eta-eight.vercel.app/api/chat \
     { <span class="tok">"type"</span>: <span class="str">"Button"</span>, <span class="tok">"props"</span>: { <span class="tok">"label"</span>: <span class="str">"Confirm"</span>, <span class="tok">"variant"</span>: <span class="str">"primary"</span> } }
   ]
 }</code></pre>
+        <p>Consequential components (<code>Button</code>, <code>AmountInput</code>, <code>ConfirmSheet</code>) validate strictly: if they don't conform, they're rejected rather than repaired.</p>
       </section>
 
-      <section class="doc" id="catalog">
-        <h2>Catalog &amp; verification</h2>
-        <p>Every design system ships a <code>catalog.json</code> describing which components exist and the shape of their props. At render time the tree is verified against it:</p>
-        <ul>
-          <li><strong>Non-consequential</strong> issues (an unknown prop, a bad enum) are <em>repaired</em> so the screen still renders.</li>
-          <li><strong>Consequential</strong> components — anything marked <code>x-consequential</code>, like <code>Button</code>, <code>AmountInput</code>, <code>ConfirmSheet</code> — are <em>rejected</em> if they don't validate, so a malformed action never renders.</li>
-        </ul>
-        <div class="note">The same catalog is enforced in the browser (AJV) and on the server (jsonschema), so client and server agree on what's valid.</div>
-      </section>
-
-      <section class="doc" id="api">
+      <section class="doc" id="generate">
         <h2>Generate API</h2>
         <p>Authenticate with an API key (<code>ck_…</code>) in the <code>Authorization</code> header. Each real generation spends one credit; identical requests are served from cache for free.</p>
+        <pre><code><span class="cmt"># POST a prompt, get back a verified component tree</span>
+curl https://playground-eta-eight.vercel.app/api/chat \
+  -H <span class="str">"Authorization: Bearer ck_your_key"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d <span class="str">'{"prompt": "a booking screen for a hair salon"}'</span></code></pre>
         <table>
           <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
           <tr><td><code>prompt</code></td><td>string</td><td>A single user message. Use <code>history</code> for multi-turn.</td></tr>
@@ -159,7 +278,7 @@ curl https://playground-eta-eight.vercel.app/api/chat \
 
       <section class="doc" id="byo">
         <h2>Bring your own agent</h2>
-        <p>Point Catalystic UI at your own agent endpoint and it drives the renderer. Your endpoint receives the chat turn and must return <code>{ reply, components }</code>. Requests are proxied over HTTPS only, with private/loopback hosts blocked.</p>
+        <p>Point Catalystic UI at your own agent endpoint and it drives the renderer. Your endpoint receives the chat turn and returns <code>{ reply, components }</code>. Requests are proxied over HTTPS only, with private/loopback hosts blocked (SSRF-guarded).</p>
         <pre><code>POST /api/proxy
 { <span class="tok">"endpoint"</span>: <span class="str">"https://your-api/agent"</span>,
   <span class="tok">"body"</span>: { <span class="tok">"history"</span>: [...], <span class="tok">"mode"</span>: <span class="str">"chat"</span> } }</code></pre>
@@ -167,7 +286,33 @@ curl https://playground-eta-eight.vercel.app/api/chat \
 
       <section class="doc" id="credits">
         <h2>Credits &amp; billing</h2>
-        <p>New accounts start with free credits. One credit is one fast generation; a higher-quality generation costs five. Cached (identical) renders are free. Top up any time from <em>Settings → Usage &amp; credits</em> — checkout is handled by Stripe and credits are applied to your account the moment payment confirms.</p>
+        <p>New accounts start with free credits. One credit is one fast generation; a higher-quality generation costs five; cached (identical) renders are free. Top up any time from <em>Settings → Usage &amp; credits</em> — checkout is handled by Stripe and credits are applied to your account the moment payment confirms.</p>
+      </section>
+
+      <section class="doc" id="status">
+        <h2>Status &amp; roadmap</h2>
+        <p>Being honest about what's built and what's next:</p>
+        <h3>Shipped</h3>
+        <ul>
+          <li><strong>Build-time pipeline</strong> — extraction → guidance → validation → strict A2UI catalog (<code>catalog.json</code> + <code>rules.txt</code> + <code>theme.json</code>).</li>
+          <li><strong>Runtime verifier</strong> — the schema gate + consequential-reject policy, enforced in the browser (AJV) and on the server (jsonschema), with a passing parity test suite.</li>
+          <li><strong>Strict renderer</strong> — strict-by-default; lenient fallbacks gated behind a flag.</li>
+          <li><strong>Consequential carried end-to-end</strong> — <code>x-consequential</code> in the catalog drives the reject path at runtime.</li>
+          <li><strong>Live playground</strong> — design-system switching, Figma / design-token import, output caching, credits &amp; billing, bring-your-own-agent.</li>
+        </ul>
+        <h3>Next</h3>
+        <ul>
+          <li><strong>Consequential canonical-match</strong> — pin pay/confirm components by <code>id</code> and assert an exact match, not just schema-validity.</li>
+          <li><strong>Capability bundles over MCP</strong> — the one-click enable model.</li>
+          <li><strong>Real design-system ingestion at scale</strong> — beyond the sample catalog.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="remember">
+        <h2>The one idea to remember</h2>
+        <p>Everyone can make an AI generate an interface. The interesting, valuable, hard thing is making one you can <strong>trust</strong> — on-brand, valid, and, where it counts, identical every time.</p>
+        <div class="principle">AI at the edges. Determinism at the core.</div>
+        <p>Generate freely where it's safe. Pin and verify everything that has a right answer, and everything that must never break. That's the difference between a generative UI that demos well and one that ships.</p>
       </section>
     </main>
   </div>

@@ -178,12 +178,16 @@ def handle(body):
         # If an email provider is configured, hold the account as "pending" and email a code.
         if os.environ.get("RESEND_API_KEY"):
             code = "%06d" % secrets.randbelow(1000000)
-            rec["code"] = code
-            rec["tries"] = 0
-            _cmd("SET", "pending:" + email, json.dumps(rec), "EX", 900)  # 15 min
-            if not _send_code_email(email, code):
-                return {"error": "Couldn't send the verification email — try again in a moment."}
-            return {"pending": True, "email": email}
+            pending_rec = dict(rec, code=code, tries=0)
+            _cmd("SET", "pending:" + email, json.dumps(pending_rec), "EX", 900)  # 15 min
+            if _send_code_email(email, code):
+                return {"pending": True, "email": email}
+            # Email delivery is down/misconfigured (e.g. restricted key) — DON'T dead-end the user.
+            # Create the account immediately (unverified) so sign-up always works; verification is
+            # best-effort and can be re-enabled the moment a working sender is configured.
+            _cmd("DEL", "pending:" + email)
+            _cmd("SET", "user:" + email, json.dumps(rec))
+            return {"token": _new_session(email), "email": email, "unverified": True}
         # No email provider yet → create the account immediately (legacy, unverified).
         _cmd("SET", "user:" + email, json.dumps(rec))
         return {"token": _new_session(email), "email": email}
