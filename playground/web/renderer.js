@@ -347,7 +347,8 @@ function node(c, byId) {
         (Array.isArray(row) ? row : Object.values(row)).forEach((cell) => tr.appendChild(el("td", null, String(cell))));
         tb.appendChild(tr);
       });
-      t.appendChild(tb); return t;
+      t.appendChild(tb);
+      const wrap = el("div", "ui-table-wrap"); wrap.appendChild(t); return wrap;   // scrolls instead of clipping in narrow cards
     }
 
     /* ---- charts ---- */
