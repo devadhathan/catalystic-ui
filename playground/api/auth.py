@@ -175,20 +175,17 @@ def handle(body):
             return {"error": "That email already has an account — sign in instead."}
         salt = os.urandom(16)
         rec = {"salt": salt.hex(), "hash": _hash(pw, salt)}
-        # If an email provider is configured, hold the account as "pending" and email a code.
+        # If an email provider is configured, hold the account as "pending" and email a 6-digit code.
+        # The user MUST enter that code (the "verify" action) before the account is created — no bypass.
         if os.environ.get("RESEND_API_KEY"):
             code = "%06d" % secrets.randbelow(1000000)
             pending_rec = dict(rec, code=code, tries=0)
             _cmd("SET", "pending:" + email, json.dumps(pending_rec), "EX", 900)  # 15 min
-            if _send_code_email(email, code):
-                return {"pending": True, "email": email}
-            # Email delivery is down/misconfigured (e.g. restricted key) — DON'T dead-end the user.
-            # Create the account immediately (unverified) so sign-up always works; verification is
-            # best-effort and can be re-enabled the moment a working sender is configured.
-            _cmd("DEL", "pending:" + email)
-            _cmd("SET", "user:" + email, json.dumps(rec))
-            return {"token": _new_session(email), "email": email, "unverified": True}
-        # No email provider yet → create the account immediately (legacy, unverified).
+            if not _send_code_email(email, code):
+                _cmd("DEL", "pending:" + email)   # don't strand a pending record we couldn't deliver
+                return {"error": "Couldn't send the verification email — try again in a moment."}
+            return {"pending": True, "email": email}
+        # No email provider configured → create the account immediately (legacy, unverified).
         _cmd("SET", "user:" + email, json.dumps(rec))
         return {"token": _new_session(email), "email": email}
 
