@@ -2596,6 +2596,10 @@
   // ---- custom agents: name + "what is it for", saved locally, listed in the Agent sidebar ----
   let customAgents = [];
   try { customAgents = JSON.parse(localStorage.getItem("catalyst.customAgents") || "[]"); } catch (e) { customAgents = []; }
+  // every agent needs a stable id so its conversation can be remembered/restored (backfill older ones)
+  let _agentsMigrated = false;
+  customAgents.forEach((a) => { if (!a.id) { a.id = "ag" + Date.now() + Math.floor(Math.random() * 1e4); _agentsMigrated = true; } });
+  if (_agentsMigrated) { try { localStorage.setItem("catalyst.customAgents", JSON.stringify(customAgents)); } catch (e) {} }
   let currentCustomAgent = null;   // the custom agent currently open (so Save writes back to IT, per-agent)
   function saveCustomAgents() { try { localStorage.setItem("catalyst.customAgents", JSON.stringify(customAgents)); } catch (e) {} }
   const AGENT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><path d="M2 14h2M20 14h2"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>';
@@ -2606,7 +2610,7 @@
     if (a.prompt == null) a.prompt = a.purpose || "";        // first time: seed the editable prompt from the purpose
     promptOverrides.agent = a.prompt;                        // run with THIS agent's saved prompt (survives switching)
     try { localStorage.setItem("catalyst.agentPrompts", JSON.stringify(promptOverrides)); } catch (e) {}
-    switchMode("agent", true);                               // (clears currentCustomAgent) …
+    switchMode("agent", true, true);                         // fresh (clears currentCustomAgent); we restore below …
     currentCustomAgent = a;                                  // … then mark this agent as the open one
     $("#ap-prompt").value = a.prompt;                        // Config shows the saved prompt
     document.querySelectorAll(".rail-item").forEach((x) => x.classList.remove("active"));
@@ -2615,6 +2619,9 @@
     if (a.purpose) { $("#hero-sub").textContent = a.purpose; }
     apManageSync();                                          // show rename/delete for this agent in the panel header
     restoreDS();                                            // this agent's own design system (agent-specific)
+    // reopen THIS agent's most recent conversation instead of a blank one
+    const saved = convos.filter((c) => c.agentId === a.id).sort((x, y) => y.ts - x.ts)[0];
+    if (saved) { loadConvo(saved.id); if (btn) btn.classList.add("active"); }
   }
   function renderCustomAgents() {
     const pane = document.querySelector('.side-pane[data-side="agent"]');
@@ -2650,7 +2657,7 @@
   $("#na-create").onclick = () => {
     const name = $("#na-name").value.trim(), purpose = $("#na-purpose").value.trim();
     if (!name) { $("#na-err").textContent = "Give your agent a name."; $("#na-err").hidden = false; return; }
-    const agent = { name, purpose, prompt: purpose };
+    const agent = { id: "ag" + Date.now() + Math.floor(Math.random() * 1e4), name, purpose, prompt: purpose };
     customAgents.push(agent); saveCustomAgents(); renderCustomAgents();
     $("#newagent-modal").hidden = true;
     const btns = document.querySelectorAll('.side-pane[data-side="agent"] .rail-item.custom');
@@ -2672,7 +2679,7 @@
     if (mode === "chat" && first) switchMode(first.dataset.mode);
   }));
 
-  function switchMode(modeName, force) {
+  function switchMode(modeName, force, fresh) {
     if (mode === modeName && !force) { $("#input").focus(); return; }  // already here — keep going
     mode = modeName;
     currentCustomAgent = null;   // built-in modes / plain agent: Save writes to the mode key, not a custom agent
@@ -2691,6 +2698,13 @@
     $("#input").value = ""; $("#input").focus();
     sideTab(mode === "chat" ? "chat" : "agent");
     restoreDS();   // apply this context's own design system (chat / built-in mode) — not a global one
+    // Unless this was an explicit "New chat/agent", reopen this context's most recent conversation
+    // so navigating between Chat / Agent / built-in modes doesn't blank the visible history.
+    if (!fresh) {
+      const saved = convos.filter((c) => (c.mode || "chat") === modeName && !c.agentId)
+                          .sort((a, b) => b.ts - a.ts)[0];
+      if (saved) loadConvo(saved.id);
+    }
   }
   // empty-state hero (large mark + greeting for agents; a heading for chat)
   const HERO = {
@@ -2712,7 +2726,7 @@
     const defaults = { "s-lat": "0s", "s-in": "0", "s-out": "0", "s-tot": "0", "s-model": "–", "s-phase": "–" };
     Object.entries(defaults).forEach(([id, v]) => { const el = $("#" + id); if (el) el.textContent = v; });
   }
-  $("#new-chat").onclick = () => { switchMode("chat", true); closeDrawer(); };
+  $("#new-chat").onclick = () => { switchMode("chat", true, true); closeDrawer(); };   // fresh blank chat
   document.querySelectorAll(".rail-item:not(.custom)").forEach((b) => { b.onclick = () => { switchMode(b.dataset.mode); closeDrawer(); }; });
 
   // collapse the sidebar to a thin icon strip (desktop only)
@@ -2753,6 +2767,7 @@
   function saveCurrentConvo() {
     if (!history.some((h) => h.role === "user")) return;   // nothing worth saving yet
     const rec = { id: currentConvoId || ("c" + Date.now()), mode, title: convoTitle(),
+                  agentId: currentCustomAgent ? currentCustomAgent.id : null,
                   history: history.slice(), components: components || null, ts: Date.now() };
     currentConvoId = rec.id;
     const i = convos.findIndex((c) => c.id === rec.id);
@@ -2788,9 +2803,16 @@
   function loadConvo(id) {
     const c = convos.find((x) => x.id === id); if (!c) return;
     mode = c.mode || "chat"; currentConvoId = id;
+    currentCustomAgent = c.agentId ? (customAgents.find((a) => a.id === c.agentId) || null) : null;
     document.querySelectorAll(".rail-item").forEach((x) => x.classList.toggle("active", x.dataset.mode === mode));
     $("#chat").dataset.mode = mode;
+    if (currentCustomAgent) promptOverrides.agent = currentCustomAgent.prompt || currentCustomAgent.purpose || "";
     apOpen(mode !== "chat", mode);
+    if (currentCustomAgent) {   // reflect this agent in the panel + hero
+      $("#ap-prompt").value = promptOverrides.agent;
+      if (currentCustomAgent.name) $("#hero-title").textContent = currentCustomAgent.name;
+      apManageSync();
+    }
     history = (c.history || []).slice(); components = c.components || null; currentSurface = null;
     agentState = { cart: [], lastMenu: null, coords: null };
     $("#mode-hint").hidden = true; resetStat();
