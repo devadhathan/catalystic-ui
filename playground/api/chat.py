@@ -283,6 +283,13 @@ Rules:
 - MATCH THE STRUCTURE TYPE to the request: a form request -> a form; a dashboard request ->
   a dashboard. Do NOT add charts, KPI grids, tabs, or filter bars unless the request is
   analytical. A form must not become a dashboard.
+- LAYOUT / ORIENTATION — decide before you build, and default to VERTICAL:
+    • Use a horizontal Row of Cards ONLY for a short set (2–4) of tappable CHOICES the user picks
+      between (places, providers, options, plans). That row scrolls sideways as a pick-one rail.
+    • For EVERYTHING else — content, forms, sections, lists, summaries, a resume, a profile, a
+      settings page — stack vertically with Stack, or use a Grid (cols 2–3) for KPI/dashboard cards.
+    • NEVER put form fields, content sections, or read-and-fill cards in a horizontal Row — long
+      sideways scrolling is hard to use. When unsure, go vertical.
 - BE PREDICTIVE AND HELPFUL within that structure — this is domain-agnostic and applies to
   EVERY request (booking, payments, recipes, health, scheduling, budgeting, anything). It is
   what separates a great generative UI from a bare form. Always:

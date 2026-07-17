@@ -816,32 +816,23 @@
   /* agent mode: cards/buttons are tap-to-select choices */
   .gen-surface[data-agent] .ui-card { cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s; }
   .gen-surface[data-agent] .ui-card:hover { border-color: var(--ring); box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
-  /* choices lay out as a side-scrolling card rail — match ANY Row/Stack/Grid holding ≥2
-     Cards, at any nesting depth (the model isn't consistent about structure) */
-  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card),
-  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card),
-  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) {
+  /* A side-scrolling card rail is ONLY for an explicit horizontal Row of choice cards.
+     Stack stays vertical and Grid stays a grid — so the model's chosen orientation is respected
+     and content (forms, sections, lists) is never forced sideways. */
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) {
      display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important;
      align-items: stretch !important; overflow-x: auto; gap: 12px; padding-bottom: 8px;
      scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
-  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) > .ui-card,
-  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card) > .ui-card,
-  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) > .ui-card {
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) > .ui-card {
      flex: 0 0 auto !important; width: 210px; align-self: stretch; }
-  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar,
-  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card)::-webkit-scrollbar,
-  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card)::-webkit-scrollbar { height: 8px; }
-  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb,
-  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb,
-  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar { height: 8px; }
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card)::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
   /* uniform card internals — the actual skew fix */
   .gen-surface[data-agent] .ui-card { overflow: hidden; }
   .gen-surface[data-agent] .ui-card .ui-image,
   .gen-surface[data-agent] .ui-card .ui-image-ph { max-height: 240px; object-fit: cover !important; border-radius: 10px; }
-  /* inside a rail: compact uniform image + clamp long titles so every card matches height */
-  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) .ui-image,
-  .gen-surface[data-agent] .ui-stack:has(> .ui-card + .ui-card) .ui-image,
-  .gen-surface[data-agent] .ui-grid:has(> .ui-card + .ui-card) .ui-image { height: 120px !important; min-height: 120px; }
+  /* inside a horizontal rail: compact uniform image so every card matches height */
+  .gen-surface[data-agent] .ui-row:has(> .ui-card + .ui-card) .ui-image { height: 120px !important; min-height: 120px; }
   .gen-surface[data-agent] .ui-card .ui-text.v-title {
      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.25; }
 
