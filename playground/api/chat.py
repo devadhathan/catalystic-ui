@@ -121,7 +121,7 @@ _CACHE = {}
 
 
 def _cache_key(history, components, mode, agent_prompt, model_sel=None, web_pref=None):
-    payload = json.dumps({"h": history[-6:], "c": components, "m": mode, "p": agent_prompt or "",
+    payload = json.dumps({"h": history[-26:], "n": len(history), "c": components, "m": mode, "p": agent_prompt or "",
                           "md": model_sel or "auto", "ws": web_pref},
                          sort_keys=True, default=str)
     return "gen:" + hashlib.sha256(payload.encode()).hexdigest()[:40]
@@ -275,6 +275,11 @@ INTERACTIVITY (make a filter actually change the data):
 - Only add bindings when the screen has a filter meant to drive the data. Keep maps small and realistic.
 
 Rules:
+- MEMORY — use the WHOLE conversation as context. Track everything the user has already told you
+  or filled in on earlier screens (name, contact, dates, preferences, prior choices, form values)
+  and NEVER ask again for anything already provided. When you render a new screen, PREFILL every
+  field whose value you already know from earlier in the chat, and only ask for what's genuinely
+  still missing — advance the task, don't restart it.
 - MATCH THE STRUCTURE TYPE to the request: a form request -> a form; a dashboard request ->
   a dashboard. Do NOT add charts, KPI grids, tabs, or filter bars unless the request is
   analytical. A form must not become a dashboard.
@@ -654,7 +659,15 @@ def chat(history, components, mode="chat", agent_prompt=None, model_sel=None, we
     # agent_prompt (if the user tweaked it in the UI) overrides the built-in agent context
     ctx = agent_prompt if (agent_prompt and agent_prompt.strip()) else AGENT_CONTEXT.get(mode, "")
     ctx += _pin_instruction(pins)   # tell the model which stages the app renders itself
-    hist = history[-6:]
+    # MEMORY: give the model real conversational context. A -6 window made agents forget and
+    # re-ask; instead keep the FIRST user turn (the goal) plus a generous recent window. History
+    # is text-only (replies + tapped labels with the fields the user filled), so this stays cheap.
+    if len(history) > 26:
+        first_user = next((m for m in history if m.get("role") == "user"), None)
+        recent = history[-25:]
+        hist = ([first_user] + recent) if (first_user and first_user not in recent) else recent
+    else:
+        hist = list(history)
 
     # Cache: an identical request skips the LLM entirely (0ms, 0 tokens).
     ckey = _cache_key(history, components, mode, agent_prompt, model_sel, web_pref)
@@ -806,7 +819,15 @@ def chat_stream(history, components, mode="chat", agent_prompt=None, model_sel=N
                + json.dumps(_trim_components(components))) if components else ""
     ctx = agent_prompt if (agent_prompt and agent_prompt.strip()) else AGENT_CONTEXT.get(mode, "")
     ctx += _pin_instruction(pins)   # tell the model which stages the app renders itself
-    hist = history[-6:]
+    # MEMORY: give the model real conversational context. A -6 window made agents forget and
+    # re-ask; instead keep the FIRST user turn (the goal) plus a generous recent window. History
+    # is text-only (replies + tapped labels with the fields the user filled), so this stays cheap.
+    if len(history) > 26:
+        first_user = next((m for m in history if m.get("role") == "user"), None)
+        recent = history[-25:]
+        hist = ([first_user] + recent) if (first_user and first_user not in recent) else recent
+    else:
+        hist = list(history)
 
     ckey = _cache_key(history, components, mode, agent_prompt, model_sel, web_pref)
     hit = _cache_get(ckey)
