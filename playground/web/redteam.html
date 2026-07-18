@@ -57,6 +57,32 @@
   .verdict { padding: 11px 16px; font-size: 12.5px; border-top: 1px solid var(--divider); font-family: var(--mono); }
   .col.naive .verdict { color: hsl(0 55% 42%); background: hsl(0 72% 51% / .04); }
   .col.cat .verdict { color: hsl(142 45% 30%); background: hsl(142 60% 45% / .05); }
+  .verdict:empty { display: none; }
+
+  /* ---- motion: make the attack + block actually happen ---- */
+  .surface > * { animation: fadeUp .4s cubic-bezier(.22,.61,.36,1) both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  /* "composing" placeholder */
+  .surface.composing { display: flex; align-items: center; justify-content: center; color: var(--muted-foreground); font-size: 13px; }
+  .surface.composing::before { content: "✦ agent composing surface…"; animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .4; } }
+  /* naive: the tampered node pulses red — it's live and would reach the user */
+  .danger-pulse { border-color: hsl(0 72% 51% / .55) !important; animation: dangerPulse 1.5s ease-in-out infinite; }
+  @keyframes dangerPulse { 0%,100% { box-shadow: 0 0 0 0 hsl(0 72% 51% / 0); } 50% { box-shadow: 0 0 0 5px hsl(0 72% 51% / .22); } }
+  /* catalyst: a verifier scan sweeps, then the block snaps in */
+  .surface.scanning { position: relative; overflow: hidden; }
+  .surface.scanning::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 100%;
+    background: linear-gradient(180deg, transparent, hsl(221 83% 53% / .16), transparent); animation: scan .85s ease; }
+  @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(120%); } }
+  .verifying { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--accent); font-family: var(--mono); }
+  .verifying .sp { width: 12px; height: 12px; border: 2px solid hsl(221 83% 53% / .3); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .blocked-in { animation: shakeIn .55s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes shakeIn { 0% { opacity: 0; transform: translateX(0); } 15% { opacity: 1; transform: translateX(-7px); }
+    35% { transform: translateX(6px); } 55% { transform: translateX(-4px); } 75% { transform: translateX(3px); } 100% { transform: translateX(0); } }
+  .replay { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 550; border: 1px solid var(--border);
+    background: var(--card); color: var(--fg); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .replay:hover { border-color: var(--ring); } .replay svg { width: 15px; height: 15px; }
 
   .foot { border-top: 1px solid var(--divider); padding: 26px 0 60px; color: var(--muted-foreground); font-size: 13px; }
   .foot a { color: var(--fg); text-decoration: underline; text-underline-offset: 2px; }
@@ -101,7 +127,10 @@
     </section>
 
     <div class="attacks" id="attacks"></div>
-    <div class="desc" id="desc"></div>
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div class="desc" id="desc" style="flex:1;min-width:260px;margin:18px 0 8px"></div>
+      <button class="replay" id="replay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg> Replay</button>
+    </div>
 
     <div class="cols">
       <div class="col naive">
@@ -158,25 +187,44 @@
           { component: "ConfirmSheet", kind: "payment", title: "Pay Meridian Store", amount: "249.00", currency: "GBP", confirmLabel: "Pay £249.00" } ] }] },
     ];
 
-    let CATALOG = null;
+    let CATALOG = null, current = null, timers = [];
     const clone = (x) => JSON.parse(JSON.stringify(x));
+    const wait = (ms, fn) => timers.push(setTimeout(fn, ms));
 
-    function paint(atk) {
-      window.setRendererLenient(true);   // block the bad NODE inline, keep the safe parts
-      // naive: no verification — renders the tampered surface as-is
-      window.__catalog = null;
-      window.renderA2UI(clone(atk.surface), null, $("#naive"));
-      // catalyst: verify against the consequential contract
-      window.__catalog = CATALOG;
-      window.renderA2UI(clone(atk.surface), null, $("#cat"));
-      // verdicts
-      $("#naive-verdict").textContent = atk.safe ? "✓ rendered" : "⚠ rendered the tampered component — it would reach the user";
-      const res = CATALOG ? window.verifySurface(atk.surface, CATALOG, { lenient: true, passUnknown: true }) : { rejected: [] };
-      const rej = res.rejected || [];
-      $("#cat-verdict").textContent = rej.length
-        ? "✓ blocked: " + rej.map((r) => r.component + " — " + (r.errors || []).join("; ")).join(" · ")
-        : "✓ verified — no consequential violations, rendered as-is";
+    // Play the attack as a sequence: compose → naive renders the tampered node → verifier scans → block snaps in.
+    function run(atk) {
+      current = atk;
+      timers.forEach(clearTimeout); timers = [];
+      const naive = $("#naive"), cat = $("#cat");
       $("#desc").innerHTML = atk.desc;
+      naive.className = "surface composing"; naive.innerHTML = "";
+      cat.className = "surface composing"; cat.innerHTML = "";
+      $("#naive-verdict").textContent = ""; $("#cat-verdict").textContent = "";
+      window.setRendererLenient(true);
+
+      // 1) naive side finishes composing and renders the tampered surface as-is
+      wait(650, () => {
+        naive.className = "surface";
+        window.__catalog = null;
+        window.renderA2UI(clone(atk.surface), null, naive);
+        if (!atk.safe) { const bad = naive.querySelector(".ui-confirm, .ui-amount"); if (bad) bad.classList.add("danger-pulse"); }
+        $("#naive-verdict").textContent = atk.safe ? "✓ rendered" : "⚠ rendered the tampered component — it would reach the user";
+      });
+
+      // 2) catalyst side: show a "verifying…" pass, then the block
+      wait(900, () => { cat.className = "surface"; cat.innerHTML = '<span class="verifying"><span class="sp"></span> verifying against catalog…</span>'; });
+      wait(1550, () => {
+        cat.className = "surface scanning"; cat.innerHTML = "";
+        window.__catalog = CATALOG;
+        window.renderA2UI(clone(atk.surface), null, cat);
+        const blocked = cat.querySelector(".ui-alert.v-danger"); if (blocked) blocked.classList.add("blocked-in");
+        const res = CATALOG ? window.verifySurface(atk.surface, CATALOG, { lenient: true, passUnknown: true }) : { rejected: [] };
+        const rej = res.rejected || [];
+        $("#cat-verdict").textContent = rej.length
+          ? "✓ blocked: " + rej.map((r) => r.component + " — " + (r.errors || []).join("; ")).join(" · ")
+          : "✓ verified — no violations, rendered as-is";
+        wait(900, () => { if (cat.classList.contains("scanning")) cat.classList.remove("scanning"); });
+      });
     }
 
     function build() {
@@ -185,14 +233,15 @@
         const b = document.createElement("button");
         b.className = "atk" + (a.safe ? " safe" : "") + (i === 0 ? " active" : "");
         b.textContent = a.label;
-        b.onclick = () => { document.querySelectorAll(".atk").forEach((x) => x.classList.remove("active")); b.classList.add("active"); paint(a); };
+        b.onclick = () => { document.querySelectorAll(".atk").forEach((x) => x.classList.remove("active")); b.classList.add("active"); run(a); };
         box.appendChild(b);
       });
+      $("#replay").onclick = () => { if (current) run(current); };
     }
 
     fetch("catalog.json").then((r) => r.json()).then((c) => { CATALOG = c; }).catch(() => {}).finally(() => {
       build();
-      paint(ATTACKS[0]);
+      run(ATTACKS[0]);
     });
   </script>
 </body>
