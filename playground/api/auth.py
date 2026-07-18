@@ -121,6 +121,21 @@ def _send_code_email(to, code):
     return _send_email(to, code + " is your Catalystic UI verification code", html)
 
 
+def _send_reset_email(to, code):
+    """Send a 6-digit password-reset code. Returns True on success."""
+    html = (
+        '<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:440px;'
+        'margin:0 auto;padding:28px 8px;color:#0b0f14">'
+        '<div style="font-weight:700;font-size:17px;letter-spacing:-.02em">Catalystic UI</div>'
+        '<p style="font-size:15px;color:#54606b;margin:18px 0 8px">Use this code to reset your password.</p>'
+        '<div style="font-size:34px;font-weight:700;letter-spacing:.32em;background:#f4f5f7;border:1px solid #e6e8ec;'
+        'border-radius:12px;padding:18px 0;text-align:center;margin:10px 0 14px">' + code + '</div>'
+        '<p style="font-size:13px;color:#8a94a0;line-height:1.5">This code expires in 15 minutes. '
+        "If you didn't request a password reset, you can safely ignore this email — your password won't change.</p></div>"
+    )
+    return _send_email(to, code + " is your Catalystic UI password reset code", html)
+
+
 def _hash(pw, salt):
     return hashlib.pbkdf2_hmac("sha256", pw.encode(), salt, 120000).hex()
 
@@ -238,6 +253,46 @@ def handle(body):
         if _hash(pw, bytes.fromhex(rec["salt"])) != rec["hash"]:
             return {"error": "Wrong email or password."}
         return {"token": _new_session(email), "email": email}
+
+    if action == "forgot":
+        email = (body.get("email") or "").strip().lower()
+        if not EMAIL_RE.match(email):
+            return {"error": "Enter a valid email address."}
+        # Only email a code if the account exists, but ALWAYS report success (no account enumeration).
+        if _cmd("GET", "user:" + email):
+            code = "%06d" % secrets.randbelow(1000000)
+            _cmd("SET", "reset:" + email, json.dumps({"code": code, "tries": 0}), "EX", 900)  # 15 min
+            _send_reset_email(email, code)
+        return {"ok": True, "email": email}
+
+    if action == "reset":
+        email = (body.get("email") or "").strip().lower()
+        code = (body.get("code") or "").strip()
+        pw = body.get("password") or ""
+        if len(pw) < 8:
+            return {"error": "Password must be at least 8 characters."}
+        raw = _cmd("GET", "reset:" + email)
+        if not raw:
+            return {"error": "This reset code expired — request a new one."}
+        rec = json.loads(raw)
+        if rec.get("tries", 0) >= 6:
+            _cmd("DEL", "reset:" + email)
+            return {"error": "Too many attempts — request a new code."}
+        if not code or code != rec.get("code"):
+            rec["tries"] = rec.get("tries", 0) + 1
+            _cmd("SET", "reset:" + email, json.dumps(rec), "KEEPTTL")
+            return {"error": "Incorrect code — check the 6 digits and try again."}
+        uraw = _cmd("GET", "user:" + email)
+        if not uraw:
+            _cmd("DEL", "reset:" + email)
+            return {"error": "No account for that email."}
+        urec = json.loads(uraw)
+        salt = os.urandom(16)
+        urec["salt"] = salt.hex(); urec["hash"] = _hash(pw, salt)
+        urec.pop("google", None)   # the account now has a password
+        _cmd("SET", "user:" + email, json.dumps(urec))
+        _cmd("DEL", "reset:" + email)
+        return {"token": _new_session(email), "email": email}   # signed in with the new password
 
     if action == "me":
         email = session_email(body.get("token"))
