@@ -41,6 +41,7 @@
   .atk:hover { border-color: var(--ring); }
   .atk.active { background: var(--fg); color: #fff; border-color: var(--fg); }
   .atk.safe.active { background: hsl(142 60% 40%); border-color: hsl(142 60% 40%); }
+  .atk.halluc.active { background: hsl(38 92% 45%); border-color: hsl(38 92% 45%); }
 
   .desc { margin: 18px 0 8px; font-size: 14px; color: var(--muted-foreground); max-width: 70ch; min-height: 20px; }
   .desc b { color: var(--fg); font-weight: 600; }
@@ -84,6 +85,16 @@
     background: var(--card); color: var(--fg); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
   .replay:hover { border-color: var(--ring); } .replay svg { width: 15px; height: 15px; }
 
+  .guarantee { border-top: 1px solid var(--divider); padding: 40px 0 12px; display: grid; grid-template-columns: 1fr 1.1fr; gap: 36px; align-items: start; }
+  @media (max-width: 820px) { .guarantee { grid-template-columns: 1fr; gap: 20px; } }
+  .g-tag { display: inline-block; font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: hsl(142 55% 32%);
+    background: hsl(142 60% 45% / .1); border: 1px solid hsl(142 50% 45% / .3); border-radius: 999px; padding: 4px 11px; }
+  .g-head h2 { font-size: clamp(22px, 2.6vw, 28px); font-weight: 650; letter-spacing: -.02em; margin: 14px 0 12px; }
+  .g-head h2 em { font-style: italic; }
+  .g-head p { font-size: 15px; color: var(--muted-foreground); line-height: 1.6; } .g-head p b { color: var(--fg); font-weight: 600; }
+  .g-code { background: #16150f; color: #eceae2; border-radius: 14px; padding: 20px 22px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.65; }
+  .g-code .c-key { color: #b7c4ff; } .g-code .c-str { color: #b9e6a8; } .g-code .c-bool { color: #f0a868; }
+  .g-code .c-cmt { color: #8a8778; } .g-code .c-rej { color: #ff8a8a; font-weight: 700; } .g-code .c-op { color: #b7c4ff; }
   .foot { border-top: 1px solid var(--divider); padding: 26px 0 60px; color: var(--muted-foreground); font-size: 13px; }
   .foot a { color: var(--fg); text-decoration: underline; text-underline-offset: 2px; }
 
@@ -123,7 +134,7 @@
     <section class="hero">
       <span class="kicker">● Red-team it</span>
       <h1>Watch it refuse a malicious payment screen.</h1>
-      <p>A generative UI is only shippable if it can't be turned against the user. Below, the same agent-emitted surface is rendered two ways: a <b>naive</b> generative UI renders whatever it's given — and Catalystic UI <b>verifies it first</b>, rejecting any tampered payment or confirmation before it ever reaches the screen.</p>
+      <p>A model can emit a wrong payment screen for reasons you can't prevent — an injection, a poisoned tool result, or a plain hallucination. This isn't about stopping the attack; it's about not trusting the <b>output</b>. Below, the same agent-emitted surface renders two ways: a <b>naive</b> generative UI renders whatever it's given — Catalystic UI <b>verifies it first</b> and rejects any tampered or invented confirmation before it reaches the user.</p>
     </section>
 
     <div class="attacks" id="attacks"></div>
@@ -144,6 +155,29 @@
         <div class="verdict" id="cat-verdict"></div>
       </div>
     </div>
+
+    <section class="guarantee">
+      <div class="g-head">
+        <span class="g-tag">Not a hope — a guarantee</span>
+        <h2>Why it <em>cannot</em> render a tampered payment</h2>
+        <p>It doesn't matter whether the bad surface came from an injection, a poisoned tool, or a plain hallucination. Consequential components are a <b>strict, closed contract</b>: a tampered or invented confirm can't validate against it, and a consequential failure is <b>rejected, never repaired</b>. Enforced on every render — by construction, not by luck.</p>
+      </div>
+      <pre class="g-code"><code><span class="c-key">"ConfirmSheet"</span>: {
+  <span class="c-key">"x-consequential"</span>: <span class="c-bool">true</span>,                 <span class="c-cmt">// this component is enforced, not repaired</span>
+  <span class="c-key">"properties"</span>: {
+    <span class="c-key">"component"</span>:    { <span class="c-key">"const"</span>: <span class="c-str">"ConfirmSheet"</span> },
+    <span class="c-key">"kind"</span>:         { <span class="c-key">"enum"</span>: [<span class="c-str">"payment"</span>, <span class="c-str">"transfer"</span>, <span class="c-str">"generic"</span>] },
+    <span class="c-key">"currency"</span>:     { <span class="c-key">"enum"</span>: [<span class="c-str">"GBP"</span>, <span class="c-str">"USD"</span>, <span class="c-str">"EUR"</span>] },   <span class="c-cmt">// "BTC" can't pass</span>
+    <span class="c-key">"confirmLabel"</span>: { <span class="c-key">"type"</span>: <span class="c-str">"string"</span> }
+  },
+  <span class="c-key">"required"</span>: [<span class="c-str">"confirmLabel"</span>],            <span class="c-cmt">// the confirm action can't be stripped</span>
+  <span class="c-key">"unevaluatedProperties"</span>: <span class="c-bool">false</span>       <span class="c-cmt">// no injected props (e.g. "autoApprove")</span>
+}
+
+<span class="c-cmt">// runtime failure policy</span>
+consequential + invalid  <span class="c-op">→</span>  <span class="c-rej">REJECT</span>   <span class="c-cmt">// never coerce, never render</span>
+non-consequential + bad  <span class="c-op">→</span>  repair    <span class="c-cmt">// tolerance is fine here</span></code></pre>
+    </section>
 
     <div class="foot">
       Catalystic UI enforces the fixed structure of <b>consequential</b> components (payment, transfer, confirm): injected
@@ -178,6 +212,12 @@
           { component: "Text", text: "Top up your balance.", variant: "muted" },
           { component: "AmountInput", label: "Amount", currency: "XXX", placeholder: "0.00" },
           { component: "Button", label: "Continue", variant: "default" } ] }] },
+      { id: "halluc", label: "Model hallucination — no attacker", safe: false, halluc: true,
+        desc: "No injection, no attacker. The model was simply asked for a checkout and <b>hallucinated the currency</b> — it invented a code that isn't in the approved set. Being wrong is enough; the model doesn't need to be attacked to emit a dangerous payment screen.",
+        surface: [{ component: "Card", children: [
+          { component: "Text", text: "Complete your purchase", variant: "title" },
+          { component: "Text", text: "Confirm the total for your order.", variant: "muted" },
+          { component: "ConfirmSheet", kind: "payment", title: "Pay now", amount: "249.00", currency: "BTC", confirmLabel: "Pay 249.00" } ] }] },
       { id: "valid", label: "A valid payment", safe: true,
         desc: "A well-formed payment — <b>no violations</b>. Catalyst renders it exactly like the naive one: verification only blocks what's actually tampered, never good UI.",
         surface: [{ component: "Card", children: [
@@ -231,7 +271,7 @@
       const box = $("#attacks");
       ATTACKS.forEach((a, i) => {
         const b = document.createElement("button");
-        b.className = "atk" + (a.safe ? " safe" : "") + (i === 0 ? " active" : "");
+        b.className = "atk" + (a.safe ? " safe" : "") + (a.halluc ? " halluc" : "") + (i === 0 ? " active" : "");
         b.textContent = a.label;
         b.onclick = () => { document.querySelectorAll(".atk").forEach((x) => x.classList.remove("active")); b.classList.add("active"); run(a); };
         box.appendChild(b);
