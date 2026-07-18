@@ -25,6 +25,8 @@ from http.server import BaseHTTPRequestHandler
 
 SESSION_TTL = 60 * 60 * 24 * 30  # 30 days
 SIGNUP_LIMIT = 20                # successful sign-ups allowed per IP per hour (spam guard)
+SEND_COOLDOWN = 45               # seconds between transactional emails to the SAME address (anti-bombing)
+EMAIL_DAILY_CAP = int(os.environ.get("EMAIL_DAILY_CAP", "200"))  # global daily send ceiling (cost/quota safety valve)
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")  # from Google Cloud Console (OAuth web client)
 
@@ -49,6 +51,26 @@ def _cmd(*args):
         method="POST")
     with urllib.request.urlopen(req, timeout=10) as r:
         return json.loads(r.read()).get("result")
+
+
+def _send_gate(email):
+    """Rate-limit transactional email: a per-address cooldown (stops inbox-bombing a victim) plus a
+    global daily ceiling (caps cost/quota if a distributed attack tries to burn the Resend budget).
+    Returns None if allowed, else a short user-facing message. Fails OPEN on KV errors."""
+    import time as _t
+    try:
+        if _cmd("GET", "sendcd:" + email):
+            return "Please wait a moment before requesting another email."
+        day = "sendday:" + _t.strftime("%Y%m%d", _t.gmtime())
+        n = int(_cmd("INCR", day) or 1)
+        if n == 1:
+            _cmd("EXPIRE", day, 172800)   # keep the counter ~2 days
+        if n > EMAIL_DAILY_CAP:
+            return "We've hit today's email limit — please try again later."
+        _cmd("SET", "sendcd:" + email, "1", "EX", SEND_COOLDOWN)
+        return None
+    except Exception:
+        return None   # never block a legitimate user because the rate store hiccuped
 
 
 def _get(url):
@@ -197,6 +219,9 @@ def handle(body):
         # If an email provider is configured, hold the account as "pending" and email a 6-digit code.
         # The user MUST enter that code (the "verify" action) before the account is created — no bypass.
         if os.environ.get("RESEND_API_KEY"):
+            gate = _send_gate(email)
+            if gate:
+                return {"error": gate}
             code = "%06d" % secrets.randbelow(1000000)
             pending_rec = dict(rec, code=code, tries=0)
             _cmd("SET", "pending:" + email, json.dumps(pending_rec), "EX", 900)  # 15 min
@@ -234,6 +259,9 @@ def handle(body):
         raw = _cmd("GET", "pending:" + email)
         if not raw:
             return {"error": "Start sign-up again."}
+        gate = _send_gate(email)
+        if gate:
+            return {"error": gate}
         rec = json.loads(raw)
         code = "%06d" % secrets.randbelow(1000000)
         rec["code"] = code
@@ -258,8 +286,9 @@ def handle(body):
         email = (body.get("email") or "").strip().lower()
         if not EMAIL_RE.match(email):
             return {"error": "Enter a valid email address."}
-        # Only email a code if the account exists, but ALWAYS report success (no account enumeration).
-        if _cmd("GET", "user:" + email):
+        # Only email a code if the account exists AND we're not rate-limited, but ALWAYS report success
+        # (no account enumeration; a rate-limited request just doesn't resend — the recent code still works).
+        if _cmd("GET", "user:" + email) and not _send_gate(email):
             code = "%06d" % secrets.randbelow(1000000)
             _cmd("SET", "reset:" + email, json.dumps({"code": code, "tries": 0}), "EX", 900)  # 15 min
             _send_reset_email(email, code)
