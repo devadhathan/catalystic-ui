@@ -605,6 +605,28 @@
   .msg { max-width: 78%; }   /* comfortable reading width for chat text */
   /* chat-tools: design-system + components box, top-right, chat mode only */
   .chat-tools { position: absolute; top: 12px; right: 16px; z-index: 20; display: flex; align-items: center; gap: 7px; }
+  /* design-system picker: a button that opens a grid of brand preview cards */
+  .ds-picker { position: relative; }
+  .ds-pick-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--card);
+     color: var(--foreground); border-radius: 9px; padding: 6px 9px 6px 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: border-color .12s; }
+  .ds-pick-btn:hover { border-color: var(--ring); }
+  .ds-pick-sw { width: 14px; height: 14px; border-radius: 4px; flex: 0 0 14px; }
+  .ds-pick-btn svg { width: 13px; height: 13px; opacity: .55; }
+  .ds-pop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; width: 360px; max-width: 84vw; max-height: 62vh; overflow: auto;
+     background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 18px 48px rgba(0,0,0,.2); padding: 13px; scrollbar-width: thin; }
+  .ds-pop[hidden] { display: none; }
+  .ds-pop-h { font-size: 11px; font-weight: 600; color: var(--muted-foreground); margin: 2px 2px 10px; }
+  .ds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ds-tile { border: 1px solid var(--border); border-radius: 12px; padding: 8px; cursor: pointer; background: var(--background);
+     transition: border-color .12s, transform .12s; }
+  .ds-tile:hover { border-color: var(--ring); transform: translateY(-1px); }
+  .ds-tile.active { border-color: var(--foreground); box-shadow: inset 0 0 0 1px var(--foreground); }
+  .ds-prev { display: flex; height: 56px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .ds-prev-a { width: 40%; display: flex; align-items: flex-end; padding: 6px; font-weight: 700; font-size: 15px; color: #fff; }
+  .ds-prev-b { flex: 1; background: var(--muted); display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 0 8px; }
+  .ds-prev-b i { height: 5px; border-radius: 3px; background: var(--border); }
+  .ds-prev-b i:nth-child(2) { width: 72%; } .ds-prev-b i:nth-child(3) { width: 50%; }
+  .ds-tile-name { font-size: 12px; font-weight: 550; margin-top: 7px; }
   #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools, #chat[data-mode="agent"] .chat-tools { display: none; }
   .ct-ds { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
      color: var(--foreground); border-radius: 9px; padding: 6px 26px 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer;
@@ -1322,7 +1344,16 @@
     <section id="chat" class="is-empty">
       <div id="mode-hint" hidden></div>
       <div id="chat-tools" class="chat-tools">
-        <select id="ct-ds" class="ct-ds" title="Design system"></select>
+        <div class="ds-picker">
+          <button id="ct-ds-btn" class="ds-pick-btn" title="Design system">
+            <span class="ds-pick-sw" id="ct-ds-sw"></span><span id="ct-ds-name">shadcn</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div id="ct-ds-pop" class="ds-pop" hidden>
+            <div class="ds-pop-h">Design system — the same screen, rendered in each</div>
+            <div class="ds-grid" id="ct-ds-grid"></div>
+          </div>
+        </div>
         <button id="ct-import" class="ct-btn" title="Import a design system">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
           Import
@@ -2892,11 +2923,31 @@
   }
 
   // ---- chat-tools box (top-right, chat mode): design-system switch + component catalog ----
-  function syncChatTools() {
-    const src = $("#ds-select"), dst = $("#ct-ds"); if (!dst) return;
-    dst.innerHTML = src.innerHTML; dst.value = src.value;
+  function dsBrand(id) {
+    if (id === "shadcn") return "hsl(221 83% 53%)";
+    if (id === "polaris") return "#008060";
+    const sys = window.__cat && window.__cat.get && window.__cat.get(id);
+    return (sys && sys.vars && (sys.vars["--chart-1"] || sys.vars["--primary"])) || "hsl(221 83% 53%)";
   }
-  $("#ct-ds").addEventListener("change", (e) => { window.__cat.applyDS(e.target.value); syncChatTools(); });
+  function syncChatTools() {
+    const src = $("#ds-select"), grid = $("#ct-ds-grid"); if (!src || !grid) return;
+    const cur = src.value, curOpt = [...src.options].find((o) => o.value === cur);
+    const sw = $("#ct-ds-sw"), nm = $("#ct-ds-name");
+    if (sw) sw.style.background = dsBrand(cur);
+    if (nm) nm.textContent = curOpt ? curOpt.textContent : cur;
+    grid.innerHTML = "";
+    [...src.options].forEach((o) => {
+      const tile = document.createElement("button");
+      tile.className = "ds-tile" + (o.value === cur ? " active" : "");
+      tile.innerHTML = '<div class="ds-prev"><div class="ds-prev-a">Aa</div><div class="ds-prev-b"><i></i><i></i><i></i></div></div><div class="ds-tile-name"></div>';
+      tile.querySelector(".ds-prev-a").style.background = dsBrand(o.value);
+      tile.querySelector(".ds-tile-name").textContent = o.textContent;
+      tile.onclick = () => { window.__cat.applyDS(o.value); $("#ct-ds-pop").hidden = true; };
+      grid.appendChild(tile);
+    });
+  }
+  $("#ct-ds-btn").onclick = (e) => { e.stopPropagation(); const p = $("#ct-ds-pop"); p.hidden = !p.hidden; if (!p.hidden) syncChatTools(); };
+  document.addEventListener("click", (e) => { const p = $("#ct-ds-pop"); if (p && !p.hidden && !e.target.closest(".ds-picker")) p.hidden = true; });
 
   // ---- initial paint ----   (defer Recents until the account is confirmed if signed-in — see onSignedIn)
   if (!(function () { try { return localStorage.getItem("catalyst.token"); } catch (e) { return null; } })()) renderHistory();
