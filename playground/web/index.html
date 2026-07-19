@@ -628,6 +628,11 @@
   .ds-prev-b i:nth-child(2) { width: 72%; } .ds-prev-b i:nth-child(3) { width: 50%; }
   .ds-prev-logo { background: #fff; display: flex; align-items: center; justify-content: center; padding: 8px; }
   .ds-prev-logo img { max-height: 32px; max-width: 74%; object-fit: contain; }
+  .ds-pop-foot { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px;
+     border: 1px solid var(--border); background: var(--muted); color: var(--foreground); border-radius: 10px;
+     padding: 10px; font: inherit; font-size: 12.5px; font-weight: 550; cursor: pointer; transition: border-color .12s; }
+  .ds-pop-foot:hover { border-color: var(--ring); }
+  .ds-pop-foot svg { width: 15px; height: 15px; }
   .ds-pick-sw { background-size: contain; background-repeat: no-repeat; background-position: center; }
   #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools, #chat[data-mode="agent"] .chat-tools { display: none; }
   .ct-ds { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
@@ -1354,6 +1359,10 @@
           <div id="ct-ds-pop" class="ds-pop" hidden>
             <div class="ds-pop-h">Design system — the same screen, rendered in each</div>
             <div class="ds-grid" id="ct-ds-grid"></div>
+            <button id="ct-ds-gallery" class="ds-pop-foot" title="See every component in this design system">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              See all components in this design system
+            </button>
           </div>
         </div>
         <button id="ct-import" class="ct-btn" title="Import a design system">
@@ -2959,6 +2968,7 @@
     });
   }
   $("#ct-ds-btn").onclick = (e) => { e.stopPropagation(); const p = $("#ct-ds-pop"); p.hidden = !p.hidden; if (!p.hidden) syncChatTools(); };
+  $("#ct-ds-gallery").onclick = () => { $("#ct-ds-pop").hidden = true; openGallery(); };   // see every component in the current DS
   document.addEventListener("click", (e) => { const p = $("#ct-ds-pop"); if (p && !p.hidden && !e.target.closest(".ds-picker")) p.hidden = true; });
 
   // ---- initial paint ----   (defer Recents until the account is confirmed if signed-in — see onSignedIn)
