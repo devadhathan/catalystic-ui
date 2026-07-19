@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Catalystic UI — Beta</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg" />
 <link rel="stylesheet" href="polaris-bundle.css" />
 <style>
   #boot-cover { position: fixed; inset: 0; z-index: 9999; background: #fff; }
@@ -230,6 +231,19 @@
   .msg.bot li { margin: 2px 0; }
   .msg.bot .md-line { margin: 0; }
   .msg.bot .md-line + .md-line { margin-top: 4px; }
+  /* word-by-word reveal for FRESHLY generated bot text — the words currently animating carry a
+     subtle grey→blue gradient (the "generating" edge); each settles to the normal foreground. */
+  @keyframes wordReveal {
+    0%   { opacity: 0; -webkit-text-fill-color: transparent; }
+    55%  { opacity: 1; -webkit-text-fill-color: transparent; }
+    100% { opacity: 1; -webkit-text-fill-color: var(--foreground); }
+  }
+  .msg.bot .w {
+    background: linear-gradient(90deg, hsl(220 9% 62%), hsl(221 83% 58%));
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0; animation: wordReveal .5s ease forwards;
+  }
   /* agent is thinking — a tiny 2×2 pixel matrix spins beside a shimmering label */
   .msg.thinking { align-self: flex-start; background: transparent; padding: 6px 4px; display: inline-flex; align-items: center; gap: 8px; }
   .msg.thinking .think-text { font-size: 14px; font-weight: 500;
@@ -1842,6 +1856,26 @@
     $("#messages").appendChild(m); $("#messages").scrollTop = $("#messages").scrollHeight;
     return m;
   }
+  // Wrap each word of a freshly-rendered bot message in an animated span so it reveals word-by-word
+  // (used only for newly generated replies — history replay stays instant).
+  function revealWords(el) {
+    if (!el) return;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const nodes = []; let node;
+    while ((node = walker.nextNode())) if (node.nodeValue && node.nodeValue.trim()) nodes.push(node);
+    let i = 0;
+    nodes.forEach((n) => {
+      const frag = document.createDocumentFragment();
+      n.nodeValue.split(/(\s+)/).forEach((p) => {
+        if (p === "") return;
+        if (/^\s+$/.test(p)) { frag.appendChild(document.createTextNode(p)); return; }
+        const s = document.createElement("span"); s.className = "w"; s.textContent = p;
+        s.style.animationDelay = Math.min(i * 0.035, 3) + "s"; i++;
+        frag.appendChild(s);
+      });
+      n.parentNode.replaceChild(frag, n);
+    });
+  }
   // syntax-highlight a JSON string → HTML (keys / strings / numbers / booleans / null)
   function colorJSON(obj) {
     const src = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
@@ -2026,7 +2060,7 @@
     await new Promise((r) => setTimeout(r, 1300));
     pending.remove();
     const sc = pickDemoScenario(text);
-    addMsg("bot", sc.reply);
+    revealWords(addMsg("bot", sc.reply));
     addTurnTools({ thinking: sc.thinking, model: sc.model, tier: "simple", components: sc.tree, usage: sc.usage }, sc.latency);
     components = sc.tree;
     const surf = document.createElement("div"); surf.className = "gen-surface"; surf.dataset.width = "sm";
@@ -2128,7 +2162,7 @@
       else if (!out.cached) { credits = Math.max(0, credits - 1); saveCredits(); }   // optimistic (stream corrects via onMeta)
       if (mode !== "chat") captureAgentState(components);   // for deterministic follow-ups
       const sec = Math.round(out.latency_ms / 1000);
-      addMsg("bot", out.reply);
+      revealWords(addMsg("bot", out.reply));
       if (out.searched) {
         const note = document.createElement("div");
         note.className = "search-note";
