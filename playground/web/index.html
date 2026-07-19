@@ -2294,6 +2294,19 @@
   }
   async function requestLocation(btn, label) {
     if (!navigator.geolocation) { addMsg("bot", "Location isn't available in this browser — type your area instead."); return; }
+    // Geolocation is blocked inside an iframe that wasn't granted allow="geolocation" (e.g. an embed / the demo).
+    if (window.top !== window.self) {
+      addMsg("bot", "To share your location, open the app in its own tab — or just type your area."); return;
+    }
+    // If permission was already denied for this site, the browser won't re-prompt — tell the user how to unblock.
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const st = await navigator.permissions.query({ name: "geolocation" });
+        if (st.state === "denied") {
+          addMsg("bot", "Location is blocked for this site. Click the 🔒 (or ⓘ) icon in the address bar → allow Location, then tap again — or type your area."); return;
+        }
+      } catch (e) {}
+    }
     btn.disabled = true; const svg = btn.querySelector("svg"); btn.textContent = "Locating…"; if (svg) btn.prepend(svg);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const lat = pos.coords.latitude, lon = pos.coords.longitude;
@@ -2305,10 +2318,15 @@
       } catch (e) {}
       send(place ? "My location is " + place + " (" + lat.toFixed(4) + ", " + lon.toFixed(4) + ")"
                  : "My location is " + lat.toFixed(4) + ", " + lon.toFixed(4));
-    }, () => {
+    }, (err) => {
       btn.disabled = false; btn.textContent = label;
-      addMsg("bot", "Couldn't get your location — you can type your area instead.");
-    }, { enableHighAccuracy: false, timeout: 10000 });
+      const msg = err && err.code === 1
+        ? "Location permission was declined. Click the 🔒 (or ⓘ) icon in the address bar → allow Location, then tap again — or type your area."
+        : err && err.code === 3
+        ? "Location timed out — check your connection and tap again, or type your area."
+        : "Couldn't get your location — you can type your area instead.";
+      addMsg("bot", msg);
+    }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
   }
 
   // ---- AI edit: change / add to / remove from the CURRENT screen with a prompt (shared by chat bar + agent UI tab) ----
