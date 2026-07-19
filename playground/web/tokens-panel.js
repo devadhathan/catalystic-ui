@@ -218,6 +218,44 @@
     const res = document.getElementById("ag-result"); if (res) res.hidden = false;   // reveal preview + save once there's a result
     document.getElementById("ag-save").disabled = !Object.keys(vars).length;
   }
+  // ---- turn a partial palette into a COMPLETE, contrast-safe theme ----
+  // A raw import often maps only a few vars (e.g. a dark fg + bg) and leaves the rest at their light
+  // defaults — which renders white text on a white surface. This fills every renderer var coherently,
+  // in one consistent light/dark polarity, and guarantees foreground/background contrast.
+  function _hex(c) {
+    if (!c) return null;
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(String(c).trim());
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  }
+  function _lum(c) { const r = _hex(c); if (!r) return null; return (0.2126 * r[0] + 0.7152 * r[1] + 0.0722 * r[2]) / 255; }
+  function _mix(a, b, t) {
+    const x = _hex(a), y = _hex(b); if (!x || !y) return a;
+    const p = (i) => Math.round(x[i] + (y[i] - x[i]) * t).toString(16).padStart(2, "0");
+    return "#" + p(0) + p(1) + p(2);
+  }
+  function normalizeTheme(vars) {
+    const v = Object.assign({}, vars);
+    let bg = v["--background"] || v["--card"] || "#ffffff";
+    let fg = v["--foreground"] || "#0b0f14";
+    const lbg = _lum(bg), lfg = _lum(fg);
+    const dark = lbg != null ? lbg < 0.45 : (lfg != null ? lfg > 0.55 : false);
+    // guarantee fg/bg contrast — never white-on-white / black-on-black
+    if (lbg != null && lfg != null && Math.abs(lbg - lfg) < 0.35) fg = dark ? "#f4f6f8" : "#0b0f14";
+    const toward = dark ? "#ffffff" : "#000000";      // the direction "elevated" surfaces shift
+    v["--background"] = bg;
+    v["--foreground"] = fg;
+    v["--card"] = v["--card"] || (dark ? _mix(bg, toward, 0.08) : "#ffffff");
+    v["--muted"] = dark ? _mix(bg, toward, 0.05) : (v["--muted"] || _mix(bg, toward, 0.035));
+    v["--muted-foreground"] = v["--muted-foreground"] || _mix(fg, bg, 0.42);
+    v["--secondary"] = v["--secondary"] || v["--muted"];
+    v["--border"] = v["--border"] || _mix(bg, toward, dark ? 0.14 : 0.1);
+    v["--input"] = v["--input"] || v["--border"];
+    v["--primary"] = v["--primary"] || (dark ? "#f4f6f8" : "#111318");
+    v["--primary-foreground"] = v["--primary-foreground"] || ((_lum(v["--primary"]) || 0) < 0.5 ? "#ffffff" : "#0b0f14");
+    v["--ring"] = v["--ring"] || v["--primary"];
+    return v;
+  }
+
   function ingest(json) {
     let data;
     try { data = typeof json === "string" ? JSON.parse(json) : json; }
@@ -225,6 +263,7 @@
     let rows, vars;
     if ((data.meta && data.meta.variables) || data.variables) { rows = figmaResolved(data); vars = figmaToVars(data); }
     else { const d = dtcg(data); rows = d.rows; vars = d.vars; }
+    if (Object.keys(vars).length) vars = normalizeTheme(vars);   // complete + contrast-safe
     renderColumns(rows, vars);
     const nv = Object.keys(vars).length;
     if (nv) status("Found " + rows.length + " tokens · mapped " + nv + " to the renderer. Name it & Save →");
