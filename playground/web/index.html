@@ -626,7 +626,9 @@
   .ds-prev-b { flex: 1; background: var(--muted); display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 0 8px; }
   .ds-prev-b i { height: 5px; border-radius: 3px; background: var(--border); }
   .ds-prev-b i:nth-child(2) { width: 72%; } .ds-prev-b i:nth-child(3) { width: 50%; }
-  .ds-tile-name { font-size: 12px; font-weight: 550; margin-top: 7px; }
+  .ds-prev-logo { background: #fff; display: flex; align-items: center; justify-content: center; padding: 8px; }
+  .ds-prev-logo img { max-height: 32px; max-width: 74%; object-fit: contain; }
+  .ds-pick-sw { background-size: contain; background-repeat: no-repeat; background-position: center; }
   #chat[data-mode="food"] .chat-tools, #chat[data-mode="booking"] .chat-tools, #chat[data-mode="agent"] .chat-tools { display: none; }
   .ct-ds { -webkit-appearance: none; appearance: none; border: 1px solid var(--border); background: var(--card);
      color: var(--foreground); border-radius: 9px; padding: 6px 26px 6px 11px; font: inherit; font-size: 12.5px; cursor: pointer;
@@ -2923,6 +2925,8 @@
   }
 
   // ---- chat-tools box (top-right, chat mode): design-system switch + component catalog ----
+  const DS_LOGO = { shadcn: "ds-shadcn.png", polaris: "ds-polaris.png", claude: "ds-claude.png",
+    carbon: "ds-carbon.jpg", perplexity: "ds-perplexity.png", chatgpt: "ds-chatgpt.svg", grok: "ds-grok.png" };
   function dsBrand(id) {
     if (id === "shadcn") return "hsl(221 83% 53%)";
     if (id === "polaris") return "#008060";
@@ -2933,14 +2937,21 @@
     const src = $("#ds-select"), grid = $("#ct-ds-grid"); if (!src || !grid) return;
     const cur = src.value, curOpt = [...src.options].find((o) => o.value === cur);
     const sw = $("#ct-ds-sw"), nm = $("#ct-ds-name");
-    if (sw) sw.style.background = dsBrand(cur);
+    if (sw) {                                   // the picker button shows the current system's logo (or a brand swatch)
+      if (DS_LOGO[cur]) { sw.style.background = "#fff"; sw.style.backgroundImage = "url(" + DS_LOGO[cur] + ")"; sw.style.backgroundSize = "contain"; sw.style.backgroundRepeat = "no-repeat"; sw.style.backgroundPosition = "center"; }
+      else { sw.style.backgroundImage = "none"; sw.style.background = dsBrand(cur); }
+    }
     if (nm) nm.textContent = curOpt ? curOpt.textContent : cur;
     grid.innerHTML = "";
     [...src.options].forEach((o) => {
       const tile = document.createElement("button");
       tile.className = "ds-tile" + (o.value === cur ? " active" : "");
-      tile.innerHTML = '<div class="ds-prev"><div class="ds-prev-a">Aa</div><div class="ds-prev-b"><i></i><i></i><i></i></div></div><div class="ds-tile-name"></div>';
-      tile.querySelector(".ds-prev-a").style.background = dsBrand(o.value);
+      const logo = DS_LOGO[o.value];
+      tile.innerHTML = (logo
+        ? '<div class="ds-prev ds-prev-logo"><img src="' + logo + '" alt="" loading="lazy"></div>'
+        : '<div class="ds-prev"><div class="ds-prev-a">Aa</div><div class="ds-prev-b"><i></i><i></i><i></i></div></div>')
+        + '<div class="ds-tile-name"></div>';
+      if (!logo) tile.querySelector(".ds-prev-a").style.background = dsBrand(o.value);
       tile.querySelector(".ds-tile-name").textContent = o.textContent;
       tile.onclick = () => { window.__cat.applyDS(o.value); $("#ct-ds-pop").hidden = true; };
       grid.appendChild(tile);
