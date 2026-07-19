@@ -815,6 +815,7 @@
      font-size: 11px; color: var(--muted-foreground); display: flex; flex-wrap: wrap; gap: 3px 12px; }
 
   /* inline generated UI in the thread — Chat wraps it in a grey box; agents render bare */
+  @keyframes genRise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
   .gen-surface { align-self: stretch; width: 100%; background: var(--muted); border: 1px solid var(--border);
      border-radius: 16px; padding: 20px; }
   .gen-surface[data-agent] { background: transparent; border: 0; padding: 2px 0; }
@@ -2035,14 +2036,28 @@
     scrollDown();
   }
 
-  async function send(preset) {
+  // Reveal a freshly rendered surface top-to-bottom (each content block rises in sequence) —
+  // replaces the skeleton loader with a "builds as it appears" feel.
+  function revealTopToBottom(surf) {
+    if (!surf) return;
+    let container = surf;
+    while (container.children.length === 1 && container.firstElementChild.children.length) container = container.firstElementChild;
+    [...container.children].forEach((el, i) => {
+      el.style.animation = "genRise .4s cubic-bezier(.22,.61,.36,1) both";
+      el.style.animationDelay = Math.min(i * 0.06, 0.5) + "s";
+    });
+  }
+
+  async function send(preset, hidden) {
     const text = (preset != null ? preset : $("#input").value).trim();
     if (!text) return;
     if (DEMO) { if (preset == null) $("#input").value = ""; return demoGenerate(text); }   // landing demo: canned, no API
     if (credits <= 0) { openCredits(); return; }   // out of credits — prompt to buy, keep the text
     setEmpty(false);   // first message — drop the centered hero, input goes to the bottom
     if (preset == null) $("#input").value = "";
-    addMsg("user", text); history.push({ role: "user", content: text });
+    // The chat bubble shows only `text`; any `hidden` context (e.g. the fields a tapped screen collected)
+    // rides along in the sent message so the agent keeps it, without cluttering the visible chat.
+    addMsg("user", text); history.push({ role: "user", content: hidden ? (text + " · " + hidden) : text });
     const btn = $("#send"); btn.disabled = true;
 
     // shimmering "thinking" bubble with a live seconds counter
@@ -2055,7 +2070,7 @@
     thinkText.textContent = mode === "chat" ? "Thinking…" : AGENT_PHASES[0] + "…";
     $("#messages").appendChild(pending); scrollDown();
     const apTurn = mode !== "chat" ? apStartTurn(text) : null;   // right-panel live trace for this turn
-    let streamSurf = null, buildText = "";
+    let streamSurf = null, buildText = "", sawScreen = false;
     const timer = setInterval(() => {
       const n = Math.floor((performance.now() - t0) / 1000);
       const label = mode === "chat"
@@ -2064,19 +2079,15 @@
       thinkText.textContent = label;   // the thinking bubble stays up the whole time (separate from the UI-generating loader)
       if (mode !== "chat") { if (n >= 6) apAdvance(apTurn, "compose"); else if (n >= 3) apAdvance(apTurn, "search"); }
     }, 250);
-    // once we can tell a screen is coming, show a SKELETON placeholder and hold it until the
-    // full response is ready — then paint the finished UI in one clean pass (no janky reflow).
+    // No skeleton placeholder — once we can tell a screen is coming we just advance the trace, then
+    // paint the finished UI in one pass with a top-to-bottom reveal (see revealTopToBottom).
     const onDelta = (t) => {
       buildText += t;
-      if (streamSurf) return;                   // skeleton already up; wait for the final render
+      if (sawScreen) return;
       const comps = tolerantComponents(buildText);
       if (!comps || !comps.length) return;      // still just the reply/thinking text — no screen yet
-      streamSurf = document.createElement("div"); streamSurf.className = "gen-surface";
-      if (mode !== "chat") streamSurf.dataset.agent = "";
-      streamSurf.innerHTML = SKELETON();        // UI-generating loader (blue dither) — shown BELOW the thinking bubble
-      $("#messages").appendChild(streamSurf); currentSurface = streamSurf;
+      sawScreen = true;
       apMark(apTurn, "understand", "done"); apMark(apTurn, "compose", "run");
-      scrollDown();
     };
     const onMeta = (m) => {
       if (!m) return;
@@ -2159,6 +2170,7 @@
         components = renderPinnedInto(surf, pin, out.regions);   // merged tree kept for save / replay
         surf.dataset.width = pickWidth(components);
         attachAgentClicks(surf);
+        revealTopToBottom(surf);
         apMark(apTurn, "render", "done", "pinned template");
         scrollDown();
       } else if (Array.isArray(components) && components.length) {
@@ -2174,6 +2186,7 @@
         currentSurface = surf;
         surf.innerHTML = "";
         renderCurrent();                          // authoritative final render (with Map / LocationRequest upgrades)
+        revealTopToBottom(surf);                  // top-to-bottom reveal (no skeleton)
         if (mode === "chat") attachUITools(surf);   // ✦ edit / undo / reset this screen with a prompt
         else initUIHistory();                       // agent: edits/undo happen from the UI tab's Add component
         apMark(apTurn, "render", "done");
@@ -2441,14 +2454,11 @@
           if (/checkout|proceed/.test(low)) return showPayment();
           if (/^pay\b|confirm & pay|confirm and pay/.test(low)) return showConfirmation();
         }
-        // otherwise: send the action + whatever the user filled in on this screen
-        const title = titleOf(btn.closest(".ui-card"));
-        const action = t;
-        let label = title ? (action ? action + " — " + title : title) : action;
+        // The chat shows ONLY the button text; the fields this screen collected go along as hidden
+        // context so the agent still has them, without dumping the details into the conversation.
         const form = collectFormData(surf);
-        if (form.length) label += " · " + form.join(" · ");
-        label = label.trim().replace(/\s+/g, " ").slice(0, 300);
-        if (label) send(label);
+        const hidden = form.length ? form.join(" · ").slice(0, 300) : "";
+        if (t) send(t, hidden);
         return;
       }
 

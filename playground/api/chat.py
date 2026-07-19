@@ -290,6 +290,15 @@ Rules:
 - MATCH THE STRUCTURE TYPE to the request: a form request -> a form; a dashboard request ->
   a dashboard. Do NOT add charts, KPI grids, tabs, or filter bars unless the request is
   analytical. A form must not become a dashboard.
+- COMPOSE FOR STRUCTURE — make it read as an organised screen, never a flat pile of fields:
+    • Lead with a Text title (variant "title") + a ONE-line muted subtitle that frames the screen.
+    • If the screen reports key numbers or status, put a Grid (cols 2-3) of Metric cards directly
+      under the header (label + value, e.g. Budget · Duration · Total).
+    • Group everything else into clearly LABELLED sections: a Text variant "subtitle" heading, then
+      that section's content beneath it. Don't mix unrelated things in one block.
+    • Inside a section use consistent Cards — each a title line, a short muted detail, and an optional
+      Image — laid out in a Grid or Stack so they line up.
+    • Hierarchy every time: header → key stats → labelled sections → cards. Even spacing, clear order.
 - LAYOUT / ORIENTATION — decide before you build, and default to VERTICAL:
     • Use a horizontal Row of Cards ONLY for a short set (2–4) of tappable CHOICES the user picks
       between (places, providers, options, plans). That row scrolls sideways as a pick-one rail.
