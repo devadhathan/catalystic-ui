@@ -405,7 +405,9 @@ function node(c, byId) {
 }
 
 /* ================= charts ================= */
-const PALETTE = ["#4f8df6", "#3fb27f", "#e5a13a", "#5cb85c", "#ef4444", "#06b6d4", "#a855f7"];
+// primary series follows the active design system's brand (--chart-1, falling back to --accent);
+// the rest are a fixed multi-series palette.
+const PALETTE = ["var(--chart-1, var(--accent, #4f8df6))", "#3fb27f", "#e5a13a", "#5cb85c", "#ef4444", "#06b6d4", "#a855f7"];
 
 // ---- interactive hover tooltip shared by every chart ----
 function chartTip() {
@@ -566,9 +568,13 @@ function lineChart(c) {
       svg.appendChild(svgEl("polyline", { points: pts, fill: "none", stroke: color, "stroke-width": 2.5, "stroke-linejoin": "round" }));
       xy.forEach(([x, y], i) => {
         const dot = svgEl("circle", { cx: x, cy: y, r: 3, fill: "var(--card,#fff)", stroke: color, "stroke-width": 2 });
-        bindTip(dot, () => tipRow(se.name, labels[i] ?? "", f(+se.data[i] || 0), color),
-          () => dot.setAttribute("r", "5.5"), () => dot.setAttribute("r", "3"));
         svg.appendChild(dot);
+        // a large invisible hit target so hovering ANYWHERE near a point shows its tooltip (the 3px
+        // dot alone made the chart feel dead) and enlarges the visible dot.
+        const hit = svgEl("circle", { cx: x, cy: y, r: 16, fill: "transparent", style: "cursor:pointer" });
+        bindTip(hit, () => tipRow(se.name, labels[i] ?? "", f(+se.data[i] || 0), color),
+          () => dot.setAttribute("r", "5.5"), () => dot.setAttribute("r", "3"));
+        svg.appendChild(hit);
       });
     });
     labels.forEach((l, i) => {

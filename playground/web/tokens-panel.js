@@ -8,21 +8,21 @@
 (function () {
   const SYSTEMS = [
     { id: "material", name: "Material 3",
-      vars: { "--primary": "#6750A4", "--primary-foreground": "#fff", "--background": "#fef7ff",
+      vars: { "--primary": "#6750A4", "--chart-1": "#6750A4", "--primary-foreground": "#fff", "--background": "#fef7ff",
         "--card": "#fff", "--foreground": "#1d1b20", "--muted": "#f3edf7", "--muted-foreground": "#49454f",
         "--border": "#cac4d0", "--input": "#cac4d0", "--radius": "16px" },
       css: `[data-skin=material] .ui-btn{border-radius:20px;font-weight:500}
             [data-skin=material] .ui-card{border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
             [data-skin=material] *{font-family:Roboto,ui-sans-serif,system-ui,sans-serif}` },
     { id: "carbon", name: "IBM Carbon",
-      vars: { "--primary": "#0f62fe", "--primary-foreground": "#fff", "--background": "#fff",
+      vars: { "--primary": "#0f62fe", "--chart-1": "#0f62fe", "--primary-foreground": "#fff", "--background": "#fff",
         "--card": "#fff", "--foreground": "#161616", "--muted": "#f4f4f4", "--muted-foreground": "#525252",
         "--border": "#e0e0e0", "--input": "#e0e0e0", "--radius": "0px" },
       css: `[data-skin=carbon] .ui-btn,[data-skin=carbon] .ui-card,[data-skin=carbon] .ui-input{border-radius:0}
             [data-skin=carbon] *{font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif}` },
     // brand-flavoured systems — approximations of these products' look (colour, font, radius)
     { id: "perplexity", name: "Perplexity", label: "Perplexity",
-      vars: { "--primary": "#20808d", "--primary-foreground": "#fff", "--background": "#fcfcfa",
+      vars: { "--primary": "#20808d", "--chart-1": "#20808d", "--primary-foreground": "#fff", "--background": "#fcfcfa",
         "--card": "#ffffff", "--foreground": "#091717", "--muted": "#f0f3f3", "--muted-foreground": "#4a5a5a",
         "--border": "#e2e7e7", "--input": "#e2e7e7", "--radius": "8px" },
       css: `@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -30,7 +30,7 @@
             [data-skin=perplexity] .ui-btn{border-radius:8px;font-weight:500}
             [data-skin=perplexity] .ui-card{border-radius:12px}` },
     { id: "claude", name: "Claude", label: "Claude",
-      vars: { "--primary": "#c96442", "--primary-foreground": "#fff", "--background": "#faf9f5",
+      vars: { "--primary": "#c96442", "--chart-1": "#c96442", "--primary-foreground": "#fff", "--background": "#faf9f5",
         "--card": "#ffffff", "--foreground": "#141413", "--muted": "#f0eee6", "--muted-foreground": "#6b6a63",
         "--border": "#e6e2d8", "--input": "#e6e2d8", "--radius": "10px" },
       css: `@import url('https://fonts.googleapis.com/css2?family=Lora:wght@500;600&family=Inter:wght@400;500;600&display=swap');
@@ -39,7 +39,7 @@
             [data-skin=claude] .ui-btn{border-radius:9px;font-weight:500}
             [data-skin=claude] .ui-card{border-radius:12px}` },
     { id: "chatgpt", name: "ChatGPT", label: "ChatGPT",
-      vars: { "--primary": "#10a37f", "--primary-foreground": "#fff", "--background": "#ffffff",
+      vars: { "--primary": "#10a37f", "--chart-1": "#10a37f", "--primary-foreground": "#fff", "--background": "#ffffff",
         "--card": "#ffffff", "--foreground": "#0d0d0d", "--muted": "#f7f7f8", "--muted-foreground": "#6e6e80",
         "--border": "#e5e5e5", "--input": "#e5e5e5", "--radius": "14px" },
       css: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
@@ -48,7 +48,7 @@
             [data-skin=chatgpt] .ui-card{border-radius:16px}
             [data-skin=chatgpt] .ui-input{border-radius:12px}` },
     { id: "grok", name: "Grok", label: "Grok",
-      vars: { "--primary": "#111113", "--primary-foreground": "#fff", "--background": "#ffffff",
+      vars: { "--primary": "#111113", "--chart-1": "#6366f1", "--primary-foreground": "#fff", "--background": "#ffffff",
         "--card": "#ffffff", "--foreground": "#0a0a0a", "--muted": "#f4f4f5", "--muted-foreground": "#5a5a5e",
         "--border": "#e4e4e7", "--input": "#e4e4e7", "--radius": "4px" },
       css: `@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
