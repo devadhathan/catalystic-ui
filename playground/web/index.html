@@ -1304,9 +1304,9 @@
           <button class="pm-item" id="pm-usage">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
             Usage &amp; credits</button>
-          <button class="pm-item pm-disabled" id="pm-keys" disabled>
+          <button class="pm-item" id="pm-keys">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a4 4 0 1 0-3.9 5H14l2 2 2-2 2 2 2-2-3.1-3.1A4 4 0 0 0 15 7z"/><circle cx="10.5" cy="10.5" r="1"/></svg>
-            API keys <span class="pm-soon">Coming soon</span></button>
+            API keys</button>
           <button class="pm-item" id="pm-feedback">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             Send feedback</button>
@@ -3523,7 +3523,7 @@
     } catch (e) { $("#feedback-err").textContent = "Couldn't send — try again."; $("#feedback-err").hidden = false; }
     btn.disabled = false; btn.textContent = o;
   };
-  // API keys are coming soon — the menu item is disabled, so no handler opens the modal.
+  $("#pm-keys").onclick = () => { $("#profile-menu").hidden = true; openKeys(); };
   $("#pm-theme").onclick = () => { $("#theme-btn").click(); };
 
   // ---- API keys & developers ----
