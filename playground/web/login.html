@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sign in — Catalystic UI</title>
+<title>Sign in, Catalystic UI</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
     --background: #ffffff;
@@ -20,7 +23,7 @@
     --ring: hsl(240 5% 65%);
     --accent: hsl(221 83% 53%);
     --radius: 10px;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+    font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   html.dark {
     --background: #0b0e12; --card: #151a20; --foreground: #e7ecf1; --muted: #1a2027;
@@ -33,7 +36,7 @@
   body { background: var(--background); color: var(--foreground); -webkit-font-smoothing: antialiased;
     display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
   a { color: inherit; }
-  /* mobile: single, simple, centered login — the illustration panel is dropped entirely */
+  /* mobile: single, simple, centered login, the illustration panel is dropped entirely */
   @media (max-width: 860px) {
     body { grid-template-columns: 1fr; }
     .aside { display: none; }
@@ -136,7 +139,7 @@
     <div class="form-mid">
       <div class="form-card">
         <h1 id="title">Create your account</h1>
-        <div class="sub" id="sub">Start turning intent into on-brand, interactive screens.</div>
+        <div class="sub" id="sub">Start turning intent into on brand, interactive screens.</div>
 
         <!-- Google (GSI renders into #google-btn when configured AND the origin is authorized) -->
         <div id="google-area" hidden>
@@ -195,7 +198,7 @@
           </div>
           <div class="field">
             <label for="rp-pass2">Confirm new password</label>
-            <input id="rp-pass2" type="password" placeholder="Re-enter password" autocomplete="new-password" required />
+            <input id="rp-pass2" type="password" placeholder="Confirm password" autocomplete="new-password" required />
           </div>
           <div class="err" id="rp-err" hidden></div>
           <button class="submit" id="rp-submit" type="submit">Update password</button>
@@ -222,7 +225,7 @@
     </div>
 
     <div class="stage">
-      <img class="stage-img float" src="hero-art.svg" alt="Catalystic UI — turning intent into interfaces" />
+      <img class="stage-img float" src="hero-art.svg" alt="Catalystic UI, turning intent into interfaces" />
     </div>
 
     <div class="quotes">
@@ -243,7 +246,7 @@
     mode = m;
     $("#title").textContent = m === "signup" ? "Create your account" : "Welcome back";
     $("#sub").textContent = m === "signup"
-      ? "Start turning intent into on-brand, interactive screens."
+      ? "Start turning intent into on brand, interactive screens."
       : "Sign in to keep composing screens from plain language.";
     $("#submit").textContent = m === "signup" ? "Create account" : "Sign in";
     $("#pass").autocomplete = m === "signup" ? "new-password" : "current-password";
@@ -272,7 +275,7 @@
       const out = await authPost("google", { credential: resp.credential });
       if (out.error) return showErr(out.error);
       signedIn(out.token);
-    } catch (e) { showErr("Google sign-in failed — try again."); }
+    } catch (e) { showErr("Google sign-in failed, try again."); }
   }
   function setupGoogle(clientId) {
     const area = $("#google-area");
@@ -322,7 +325,7 @@
       if (out.error) { showErr(out.error); return; }
       if (out.pending) { showVerify(email); return; }   // email verification required
       signedIn(out.token);
-    } catch (e) { showErr("Something went wrong — try again."); }
+    } catch (e) { showErr("Something went wrong, try again."); }
     finally { btn.disabled = false; }
   });
   $("#switch-link").onclick = () => setMode(mode === "signup" ? "login" : "signup");
@@ -338,7 +341,7 @@
       const out = await authPost("verify", { email: pendingEmail, code });
       if (out.error) { showVerifyErr(out.error); return; }
       signedIn(out.token);
-    } catch (e) { showVerifyErr("Something went wrong — try again."); }
+    } catch (e) { showVerifyErr("Something went wrong, try again."); }
     finally { btn.disabled = false; }
   });
   $("#resend-link").onclick = async () => {
@@ -354,7 +357,7 @@
     document.querySelector(".form-card .legal").hidden = false;
     setMode("signup");
     $("#title").textContent = "Create your account";
-    $("#sub").textContent = "Start turning intent into on-brand, interactive screens.";
+    $("#sub").textContent = "Start turning intent into on brand, interactive screens.";
   };
 
   // ---- forgot / reset password ----
@@ -407,7 +410,7 @@
       const out = await authPost("forgot", { email });
       if (out.error) { showFpErr(out.error); return; }
       showReset(email);   // we always proceed (we never reveal whether the account exists)
-    } catch (e) { showFpErr("Something went wrong — try again."); }
+    } catch (e) { showFpErr("Something went wrong, try again."); }
     finally { btn.disabled = false; }
   });
   $("#reset-form").addEventListener("submit", async (e) => {
@@ -421,7 +424,7 @@
       const out = await authPost("reset", { email: resetEmail, code, password: p1 });
       if (out.error) { showRpErr(out.error); return; }
       signedIn(out.token);   // reset succeeded → signed in with the new password
-    } catch (e) { showRpErr("Something went wrong — try again."); }
+    } catch (e) { showRpErr("Something went wrong, try again."); }
     finally { btn.disabled = false; }
   });
 
